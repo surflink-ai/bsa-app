@@ -1,78 +1,37 @@
-"use client"
-import { useState } from "react"
-import Link from "next/link"
-import type { BSAEvent } from "@/lib/liveheats"
-import { ScrollReveal } from "../components/ScrollReveal"
-import { CalendarIcon, MapPinIcon, ArrowRightIcon } from "../components/Icons"
+'use client'
+import { useState } from 'react'
+import Link from 'next/link'
+import { ScrollReveal } from '../components/ScrollReveal'
+import { CalendarIcon } from '../components/Icons'
+import type { BSAEvent } from '@/lib/liveheats'
 
-function EventCard({ event }: { event: BSAEvent }) {
-  const date = new Date(event.date)
+function Card({ event }: { event: BSAEvent }) {
+  const d = new Date(event.date)
   return (
-    <Link href={`/events/${event.id}`} style={{ textDecoration: "none", display: "block" }}>
-      <div style={{ backgroundColor: "#fff", borderRadius: 10, padding: 28, boxShadow: "0 1px 3px rgba(0,0,0,0.04)", transition: "transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s ease", cursor: "pointer" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-          <div>
-            <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 18, color: "#1A1A1A", marginBottom: 8 }}>{event.name}</h3>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(26,26,26,0.45)", marginBottom: 4 }}>
-              <CalendarIcon size={14} />
-              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}>{date.toLocaleDateString("en-US", { weekday: "short", year: "numeric", month: "long", day: "numeric" })}</span>
-            </div>
-            {event.location && (
-              <div style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(26,26,26,0.35)" }}>
-                <MapPinIcon size={14} />
-                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>{event.location.formattedAddress}</span>
-              </div>
-            )}
-          </div>
-          {event.eventDivisions.length > 0 && (
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, padding: "4px 10px", borderRadius: 16, backgroundColor: "rgba(26,26,26,0.04)", color: "rgba(26,26,26,0.5)" }}>
-              {event.eventDivisions.length} div{event.eventDivisions.length !== 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 4, color: "#1478B5", fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600 }}>
-          View Details <ArrowRightIcon size={13} />
-        </div>
+    <Link href={`/events/${event.id}`} style={{ display: 'block', textDecoration: 'none', backgroundColor: '#fff', borderRadius: '1rem', padding: 'clamp(1.25rem,3vw,1.75rem)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', transition: 'box-shadow 0.3s, transform 0.3s' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+        <h3 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: '1.05rem', color: '#0A2540' }}>{event.name}</h3>
+        <span style={{ fontSize: '0.65rem', fontWeight: 600, padding: '0.25rem 0.65rem', borderRadius: '999px', backgroundColor: event.status === 'upcoming' ? 'rgba(43,165,160,0.1)' : 'rgba(26,26,26,0.05)', color: event.status === 'upcoming' ? '#2BA5A0' : 'rgba(26,26,26,0.4)', textTransform: 'uppercase' }}>{event.status === 'upcoming' ? 'Upcoming' : 'Completed'}</span>
       </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'rgba(26,26,26,0.4)', fontSize: '0.85rem', marginBottom: '0.75rem' }}><CalendarIcon size={14} />{d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+      {event.eventDivisions.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>{event.eventDivisions.slice(0,5).map(dv => <span key={dv.id} style={{ fontSize: '0.65rem', padding: '0.2rem 0.6rem', borderRadius: '999px', backgroundColor: '#F2EDE4', color: 'rgba(26,26,26,0.5)' }}>{dv.division.name}</span>)}{event.eventDivisions.length > 5 && <span style={{ fontSize: '0.65rem', padding: '0.2rem 0.6rem', borderRadius: '999px', backgroundColor: '#F2EDE4', color: 'rgba(26,26,26,0.35)' }}>+{event.eventDivisions.length - 5}</span>}</div>}
     </Link>
   )
 }
 
-export function EventsClient({ upcomingEvents, pastEvents }: { upcomingEvents: BSAEvent[]; pastEvents: BSAEvent[] }) {
-  const years = [...new Set(pastEvents.map(e => new Date(e.date).getFullYear()))].sort((a, b) => b - a)
-  const [selectedYear, setSelectedYear] = useState(years[0] || new Date().getFullYear())
-  const filteredPast = pastEvents.filter(e => new Date(e.date).getFullYear() === selectedYear)
-
+export function EventsClient({ upcoming, past }: { upcoming: BSAEvent[]; past: BSAEvent[] }) {
+  const years = [...new Set(past.map(e => new Date(e.date).getFullYear()))].sort((a, b) => b - a)
+  const [yr, setYr] = useState<number | null>(years[0] || null)
+  const filtered = yr ? past.filter(e => new Date(e.date).getFullYear() === yr) : past
   return (
-    <div style={{ paddingTop: 64 }}>
-      <section style={{ backgroundColor: "#FAFAF8", padding: "64px 24px 48px" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 16 }}>UPCOMING EVENTS</div>
-          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem, 4vw, 3rem)", color: "#1A1A1A", marginBottom: 40 }}>Competition Calendar</h1>
-          {upcomingEvents.length > 0 ? (
-            <div style={{ display: "grid", gap: 16 }}>{upcomingEvents.map(e => <ScrollReveal key={e.id}><EventCard event={e} /></ScrollReveal>)}</div>
-          ) : (
-            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(26,26,26,0.4)" }}>No upcoming events scheduled. Check back soon.</p>
-          )}
-        </div>
-      </section>
-      <section style={{ backgroundColor: "#F2EDE4", padding: "64px 24px 96px" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 16 }}>PAST EVENTS</div>
-          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.5rem, 3vw, 2.25rem)", color: "#1A1A1A", marginBottom: 32 }}>Results Archive</h2>
-          {years.length > 0 && (
-            <div style={{ display: "flex", gap: 8, marginBottom: 32, flexWrap: "wrap" }}>
-              {years.map(y => (
-                <button key={y} onClick={() => setSelectedYear(y)} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 500, padding: "8px 18px", borderRadius: 6, border: "none", cursor: "pointer", backgroundColor: selectedYear === y ? "#0A2540" : "rgba(26,26,26,0.06)", color: selectedYear === y ? "#fff" : "rgba(26,26,26,0.5)", transition: "all 0.2s ease" }}>
-                  {y}
-                </button>
-              ))}
-            </div>
-          )}
-          <div style={{ display: "grid", gap: 16 }}>{filteredPast.map(e => <ScrollReveal key={e.id}><EventCard event={e} /></ScrollReveal>)}</div>
-          {filteredPast.length === 0 && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(26,26,26,0.4)" }}>No events for {selectedYear}.</p>}
-        </div>
-      </section>
+    <div className="pb-20 md:pb-0" style={{ paddingTop: '5rem' }}>
+      <div className="max-w-7xl mx-auto px-6 md:px-8" style={{ padding: 'clamp(2rem,4vw,4rem) 1.5rem' }}>
+        <ScrollReveal><p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#2BA5A0', marginBottom: '1rem' }}>Competition Calendar</p><h1 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 'clamp(2rem,5vw,3rem)', color: '#0A2540', marginBottom: '3rem' }}>Events</h1></ScrollReveal>
+        {upcoming.length > 0 && <><ScrollReveal><h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: '1.1rem', color: '#0A2540', marginBottom: '1.5rem' }}>Upcoming</h2></ScrollReveal><div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginBottom: '3rem' }}>{upcoming.map((e, i) => <ScrollReveal key={e.id} delay={i * 80}><Card event={e} /></ScrollReveal>)}</div></>}
+        <ScrollReveal><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}><h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: '1.1rem', color: '#0A2540' }}>Past Events</h2>{years.length > 1 && <div style={{ display: 'flex', gap: '0.35rem' }}>{years.map(y => <button key={y} onClick={() => setYr(y)} style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.75rem', padding: '0.35rem 0.85rem', borderRadius: '999px', border: 'none', cursor: 'pointer', backgroundColor: yr === y ? '#0A2540' : 'transparent', color: yr === y ? '#fff' : 'rgba(26,26,26,0.4)' }}>{y}</button>)}</div>}</div></ScrollReveal>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{filtered.map((e, i) => <ScrollReveal key={e.id} delay={i * 60}><Card event={e} /></ScrollReveal>)}</div>
+        {filtered.length === 0 && <p style={{ textAlign: 'center', color: 'rgba(26,26,26,0.3)', padding: '3rem 0' }}>No events found.</p>}
+      </div>
     </div>
   )
 }

@@ -1,8 +1,8 @@
 import { getEvent } from '@/lib/liveheats'
 import { EventDetailClient } from './EventDetailClient'
-
+export const revalidate = 300
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const event = await getEvent(id)
-  return <EventDetailClient event={event} />
+  try { return <EventDetailClient event={await getEvent(id)} /> }
+  catch { return <div style={{ paddingTop: '8rem', textAlign: 'center', color: 'rgba(26,26,26,0.4)' }}>Event not found.</div> }
 }

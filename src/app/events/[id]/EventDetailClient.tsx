@@ -1,125 +1,51 @@
-"use client"
-import { useState } from "react"
-import Link from "next/link"
-import type { EventDivisionFull } from "@/lib/liveheats"
-import { ScrollReveal } from "../../components/ScrollReveal"
-import { ChevronDownIcon } from "../../components/Icons"
+'use client'
+import { useState } from 'react'
+import Link from 'next/link'
+import { ScrollReveal } from '../../components/ScrollReveal'
+import { ChevronDownIcon } from '../../components/Icons'
+import type { EventDivisionFull } from '@/lib/liveheats'
 
-interface Props {
-  event: { id: string; name: string; date: string; status: string; eventDivisions: EventDivisionFull[] }
-}
-
-export function EventDetailClient({ event }: Props) {
-  const [activeDivIdx, setActiveDivIdx] = useState(0)
-  const [expandedHeats, setExpandedHeats] = useState<Set<string>>(new Set())
-  const date = new Date(event.date)
-  const div = event.eventDivisions[activeDivIdx]
-
-  const toggleHeat = (id: string) => {
-    setExpandedHeats(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
-  }
-
-  const heatsByRound: Record<string, typeof div.heats> = {}
-  if (div) { for (const h of div.heats) { if (!heatsByRound[h.round]) heatsByRound[h.round] = []; heatsByRound[h.round].push(h) } }
-
-  const statusColor = event.status === "in_progress" ? "#2BA5A0" : event.status === "results_published" ? "rgba(26,26,26,0.5)" : "#1478B5"
-  const statusBg = event.status === "in_progress" ? "rgba(43,165,160,0.12)" : event.status === "results_published" ? "rgba(26,26,26,0.06)" : "rgba(20,120,181,0.1)"
-  const statusText = event.status === "in_progress" ? "Live" : event.status === "results_published" ? "Complete" : "Upcoming"
-
+export function EventDetailClient({ event }: { event: { id: string; name: string; date: string; status: string; eventDivisions: EventDivisionFull[] } }) {
+  const [tab, setTab] = useState(0)
+  const [open, setOpen] = useState<string | null>(null)
+  const div = event.eventDivisions[tab]
   return (
-    <div style={{ paddingTop: 64 }}>
-      <section style={{ backgroundColor: "#FAFAF8", padding: "64px 24px 48px" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <Link href="/events" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(26,26,26,0.4)", textDecoration: "none", marginBottom: 24, display: "inline-block" }}>&larr; All Events</Link>
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16, marginBottom: 8 }}>
-            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.5rem, 4vw, 2.5rem)", color: "#1A1A1A" }}>{event.name}</h1>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, padding: "4px 12px", borderRadius: 16, backgroundColor: statusBg, color: statusColor, textTransform: "uppercase", letterSpacing: "0.1em" }}>{statusText}</span>
+    <div className="pb-20 md:pb-0" style={{ paddingTop: '5rem' }}>
+      <div className="max-w-7xl mx-auto px-6 md:px-8" style={{ padding: 'clamp(2rem,4vw,4rem) 1.5rem' }}>
+        <ScrollReveal>
+          <Link href="/events" style={{ fontSize: '0.8rem', color: 'rgba(26,26,26,0.4)', textDecoration: 'none', marginBottom: '1.5rem', display: 'inline-block' }}>&larr; Back to Events</Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+            <h1 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 'clamp(1.75rem,4vw,2.5rem)', color: '#0A2540' }}>{event.name}</h1>
+            <span style={{ fontSize: '0.65rem', fontWeight: 600, padding: '0.25rem 0.75rem', borderRadius: '999px', backgroundColor: event.status === 'results_published' ? 'rgba(20,120,181,0.1)' : 'rgba(43,165,160,0.1)', color: event.status === 'results_published' ? '#1478B5' : '#2BA5A0', textTransform: 'uppercase' }}>{event.status === 'results_published' ? 'Results' : event.status}</span>
           </div>
-          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, color: "rgba(26,26,26,0.45)" }}>
-            {date.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
-          </p>
-        </div>
-      </section>
-
-      {event.eventDivisions.length > 0 && (
-        <section style={{ backgroundColor: "#F2EDE4", padding: "0 24px" }}>
-          <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-            <div className="no-scrollbar" style={{ display: "flex", gap: 4, overflowX: "auto", padding: "16px 0" }}>
-              {event.eventDivisions.map((d, i) => (
-                <button key={d.id} onClick={() => { setActiveDivIdx(i); setExpandedHeats(new Set()) }} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500, padding: "8px 18px", borderRadius: 6, border: "none", cursor: "pointer", whiteSpace: "nowrap", backgroundColor: activeDivIdx === i ? "#0A2540" : "transparent", color: activeDivIdx === i ? "#fff" : "rgba(26,26,26,0.5)", transition: "all 0.2s ease" }}>{d.division.name}</button>
-              ))}
-            </div>
+          <p style={{ color: 'rgba(26,26,26,0.4)', fontSize: '0.9rem', marginBottom: '2rem' }}>{new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        </ScrollReveal>
+        {event.eventDivisions.length > 0 && <ScrollReveal><div className="no-scrollbar" style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', marginBottom: '2rem' }}>{event.eventDivisions.map((d, i) => <button key={d.id} onClick={() => { setTab(i); setOpen(null) }} style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: '0.8rem', fontWeight: 500, padding: '0.5rem 1rem', borderRadius: '999px', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', backgroundColor: tab === i ? '#0A2540' : '#F2EDE4', color: tab === i ? '#fff' : 'rgba(26,26,26,0.5)' }}>{d.division.name}</button>)}</div></ScrollReveal>}
+        {div?.ranking && div.ranking.length > 0 && <ScrollReveal>
+          <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: '1rem', color: '#0A2540', marginBottom: '1rem' }}>Final Rankings</h2>
+          <div style={{ backgroundColor: '#fff', borderRadius: '1rem', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', marginBottom: '2.5rem' }}>
+            {div.ranking.map((r, i) => (
+              <Link key={i} href={`/athletes/${r.competitor.athlete.id}`} style={{ display: 'flex', alignItems: 'center', padding: '0.875rem 1.25rem', gap: '1rem', textDecoration: 'none', borderBottom: i < div.ranking.length - 1 ? '1px solid rgba(26,26,26,0.04)' : 'none', backgroundColor: i % 2 === 0 ? '#fff' : '#FAFAF8' }}>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, fontSize: '0.85rem', color: i < 3 ? '#1478B5' : 'rgba(26,26,26,0.3)', width: '2rem', textAlign: 'center' }}>{r.place}</span>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#F2EDE4', overflow: 'hidden', flexShrink: 0 }}>{r.competitor.athlete.image ? <img src={r.competitor.athlete.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'rgba(10,37,64,0.2)' }}>{r.competitor.athlete.name.charAt(0)}</div>}</div>
+                <span style={{ flex: 1, fontWeight: 500, fontSize: '0.9rem', color: '#0A2540' }}>{r.competitor.athlete.name}</span>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, fontSize: '0.85rem', color: 'rgba(26,26,26,0.5)' }}>{r.total?.toFixed(2)}</span>
+              </Link>
+            ))}
           </div>
-        </section>
-      )}
-
-      {div && (
-        <section style={{ backgroundColor: "#FAFAF8", padding: "48px 24px 96px" }}>
-          <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-            {div.ranking && div.ranking.length > 0 && (
-              <ScrollReveal>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 20 }}>FINAL STANDINGS</div>
-                <div style={{ backgroundColor: "#fff", borderRadius: 10, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", marginBottom: 48 }}>
-                  {div.ranking.map((r, i) => (
-                    <Link key={`${r.competitor.athlete.id}-${i}`} href={`/athletes/${r.competitor.athlete.id}`} style={{ textDecoration: "none", display: "block" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 24px", backgroundColor: i % 2 === 0 ? "#fff" : "#FAFAF8", borderBottom: "1px solid rgba(26,26,26,0.04)" }}>
-                        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 14, color: i < 3 ? "#1478B5" : "rgba(26,26,26,0.3)", width: 32, textAlign: "center" }}>{r.place}</div>
-                        <div style={{ width: 36, height: 36, borderRadius: "50%", backgroundColor: "#F2EDE4", overflow: "hidden", flexShrink: 0 }}>
-                          {r.competitor.athlete.image ? <img src={r.competitor.athlete.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (
-                            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, color: "rgba(26,26,26,0.2)", fontWeight: 600 }}>{r.competitor.athlete.name.split(" ").map(n => n[0]).join("")}</div>
-                          )}
-                        </div>
-                        <div style={{ flex: 1, fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, color: "#1A1A1A" }}>{r.competitor.athlete.name}</div>
-                        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 14, color: "#2BA5A0" }}>{r.total.toFixed(2)}</div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </ScrollReveal>
-            )}
-            {Object.keys(heatsByRound).length > 0 && (
-              <ScrollReveal>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 20 }}>HEATS</div>
-                {Object.entries(heatsByRound).map(([round, heats]) => (
-                  <div key={round} style={{ marginBottom: 24 }}>
-                    <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 16, color: "#1A1A1A", marginBottom: 12 }}>{round}</h3>
-                    {heats.sort((a, b) => a.position - b.position).map(heat => {
-                      const isOpen = expandedHeats.has(heat.id)
-                      return (
-                        <div key={heat.id} style={{ backgroundColor: "#fff", borderRadius: 8, marginBottom: 8, overflow: "hidden", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
-                          <button onClick={() => toggleHeat(heat.id)} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 20px", border: "none", cursor: "pointer", backgroundColor: "transparent", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#1A1A1A" }}>
-                            <span>Heat {heat.position}</span>
-                            <span style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s ease", color: "rgba(26,26,26,0.3)" }}><ChevronDownIcon size={16} /></span>
-                          </button>
-                          {isOpen && heat.result && (
-                            <div style={{ padding: "0 20px 16px" }}>
-                              {heat.result.sort((a, b) => a.place - b.place).map((r, ri) => {
-                                const waves = Object.values(r.rides || {}).flat()
-                                return (
-                                  <div key={ri} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderTop: ri > 0 ? "1px solid rgba(26,26,26,0.04)" : "none" }}>
-                                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: r.place <= 2 ? "#1478B5" : "rgba(26,26,26,0.3)", width: 24, textAlign: "center", fontWeight: 600 }}>{r.place}</div>
-                                    <div style={{ flex: 1, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#1A1A1A" }}>{r.competitor.athlete.name}</div>
-                                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                                      {waves.map((w, wi) => (
-                                        <span key={wi} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: w.scoring_ride ? "rgba(43,165,160,0.1)" : "rgba(26,26,26,0.03)", color: w.scoring_ride ? "#2BA5A0" : "rgba(26,26,26,0.4)", fontWeight: w.scoring_ride ? 600 : 400 }}>{w.total.toFixed(2)}</span>
-                                      ))}
-                                    </div>
-                                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 14, color: "#1A1A1A", minWidth: 48, textAlign: "right" }}>{r.total.toFixed(2)}</div>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                ))}
-              </ScrollReveal>
-            )}
+        </ScrollReveal>}
+        {div?.heats && div.heats.length > 0 && <ScrollReveal>
+          <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: '1rem', color: '#0A2540', marginBottom: '1rem' }}>Heat Results</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {div.heats.map(h => (
+              <div key={h.id} style={{ backgroundColor: '#fff', borderRadius: '0.75rem', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <button onClick={() => setOpen(open === h.id ? null : h.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.875rem 1.25rem', border: 'none', cursor: 'pointer', backgroundColor: 'transparent', fontFamily: "'Space Grotesk',sans-serif", fontSize: '0.85rem', fontWeight: 500, color: '#0A2540' }}><span>{h.round} &middot; Heat {h.position}</span><span style={{ transform: open === h.id ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', color: 'rgba(26,26,26,0.3)' }}><ChevronDownIcon size={18} /></span></button>
+                {open === h.id && h.result && <div style={{ borderTop: '1px solid rgba(26,26,26,0.04)' }}>{h.result.map((r, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '0.75rem 1.25rem', gap: '0.75rem', borderBottom: i < h.result.length - 1 ? '1px solid rgba(26,26,26,0.04)' : 'none' }}><span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, fontSize: '0.8rem', color: r.place === 1 ? '#1478B5' : 'rgba(26,26,26,0.3)', width: '1.5rem', textAlign: 'center' }}>{r.place}</span><span style={{ flex: 1, fontSize: '0.85rem', color: '#0A2540', fontWeight: 500 }}>{r.competitor.athlete.name}</span><span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, fontSize: '0.85rem', color: r.place === 1 ? '#1478B5' : 'rgba(26,26,26,0.5)' }}>{r.total?.toFixed(2)}</span></div>)}</div>}
+              </div>
+            ))}
           </div>
-        </section>
-      )}
+        </ScrollReveal>}
+      </div>
     </div>
   )
 }

@@ -1,16 +1,35 @@
-const s = { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
-export function WaveIcon({ size = 24 }: { size?: number }) { return <svg {...s} width={size} height={size}><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0" /><path d="M2 17c2-3 4-3 6 0s4 3 6 0 4-3 6 0" opacity={0.4} /></svg> }
-export function BoardIcon({ size = 24 }: { size?: number }) { return <svg {...s} width={size} height={size}><path d="M12 2c-2 0-4 4-4 10s2 10 4 10 4-4 4-10S14 2 12 2z" /><path d="M12 6v12" /></svg> }
-export function TrophyIcon({ size = 24 }: { size?: number }) { return <svg {...s} width={size} height={size}><path d="M8 21h8" /><path d="M12 17v4" /><path d="M7 4h10v4a5 5 0 01-10 0V4z" /><path d="M7 7H4a1 1 0 00-1 1v1a3 3 0 003 3h1" /><path d="M17 7h3a1 1 0 011 1v1a3 3 0 01-3 3h-1" /></svg> }
-export function CalendarIcon({ size = 24 }: { size?: number }) { return <svg {...s} width={size} height={size}><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg> }
-export function MapPinIcon({ size = 24 }: { size?: number }) { return <svg {...s} width={size} height={size}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" /><circle cx="12" cy="9" r="2.5" /></svg> }
-export function UsersIcon({ size = 24 }: { size?: number }) { return <svg {...s} width={size} height={size}><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" /></svg> }
-export function MedalIcon({ size = 24 }: { size?: number }) { return <svg {...s} width={size} height={size}><circle cx="12" cy="14" r="6" /><path d="M8.21 3.32L7 8h10l-1.21-4.68" /><path d="M12 8v2" /><path d="M10 14l2-1.5L14 14" /></svg> }
-export function CompassIcon({ size = 24 }: { size?: number }) { return <svg {...s} width={size} height={size}><circle cx="12" cy="12" r="10" /><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" /></svg> }
-export function ChevronDownIcon({ size = 24 }: { size?: number }) { return <svg {...s} width={size} height={size}><path d="M6 9l6 6 6-6" /></svg> }
-export function ArrowRightIcon({ size = 24 }: { size?: number }) { return <svg {...s} width={size} height={size}><path d="M5 12h14M12 5l7 7-7 7" /></svg> }
-export function SearchIcon({ size = 24 }: { size?: number }) { return <svg {...s} width={size} height={size}><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg> }
-export function StarIcon({ size = 24 }: { size?: number }) { return <svg {...s} width={size} height={size}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg> }
-export function HomeIcon({ size = 24 }: { size?: number }) { return <svg {...s} width={size} height={size}><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg> }
-export function MenuIcon({ size = 24 }: { size?: number }) { return <svg {...s} width={size} height={size}><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg> }
-export function XIcon({ size = 24 }: { size?: number }) { return <svg {...s} width={size} height={size}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg> }
+const s = { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const }
+
+export function WaveIcon({ size = 24 }: { size?: number }) {
+  return <svg {...s} width={size} height={size}><path d="M2 12c1.5-2.5 3-3.5 4.5-2s3 1 4.5-1 3-3.5 4.5-2 3 2.5 4.5 0" /><path d="M2 17c1.5-2.5 3-3.5 4.5-2s3 1 4.5-1 3-3.5 4.5-2 3 2.5 4.5 0" opacity={0.4} /></svg>
+}
+export function TrophyIcon({ size = 24 }: { size?: number }) {
+  return <svg {...s} width={size} height={size}><path d="M6 9V4h12v5a6 6 0 01-12 0z" /><path d="M6 5H4a2 2 0 000 4h2" /><path d="M18 5h2a2 2 0 010 4h-2" /><line x1="12" y1="15" x2="12" y2="19" /><path d="M8 21h8" /></svg>
+}
+export function CalendarIcon({ size = 24 }: { size?: number }) {
+  return <svg {...s} width={size} height={size}><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+}
+export function MapPinIcon({ size = 24 }: { size?: number }) {
+  return <svg {...s} width={size} height={size}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" /><circle cx="12" cy="9" r="2.5" /></svg>
+}
+export function UsersIcon({ size = 24 }: { size?: number }) {
+  return <svg {...s} width={size} height={size}><circle cx="9" cy="7" r="3" /><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" /><circle cx="17" cy="8" r="2.5" /><path d="M21 21v-1.5a3.5 3.5 0 00-2.5-3.36" /></svg>
+}
+export function CompassIcon({ size = 24 }: { size?: number }) {
+  return <svg {...s} width={size} height={size}><circle cx="12" cy="12" r="9" /><polygon points="16,6 14,14 10,18 8,10" fill="none" /></svg>
+}
+export function ChevronDownIcon({ size = 24 }: { size?: number }) {
+  return <svg {...s} width={size} height={size}><polyline points="6 9 12 15 18 9" /></svg>
+}
+export function ArrowRightIcon({ size = 24 }: { size?: number }) {
+  return <svg {...s} width={size} height={size}><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+}
+export function SearchIcon({ size = 24 }: { size?: number }) {
+  return <svg {...s} width={size} height={size}><circle cx="10.5" cy="10.5" r="6.5" /><line x1="15.5" y1="15.5" x2="21" y2="21" /></svg>
+}
+export function HomeIcon({ size = 24 }: { size?: number }) {
+  return <svg {...s} width={size} height={size}><path d="M3 12l9-8 9 8" /><path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9" /></svg>
+}
+export function BarChartIcon({ size = 24 }: { size?: number }) {
+  return <svg {...s} width={size} height={size}><line x1="6" y1="20" x2="6" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="18" y1="20" x2="18" y2="14" /></svg>
+}

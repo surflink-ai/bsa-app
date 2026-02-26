@@ -1,11 +1,11 @@
-import type { Metadata } from 'next'
-import './globals.css'
-import Navigation from './components/Navigation'
-import Footer from './components/Footer'
+import type { Metadata } from "next"
+import "./globals.css"
+import { Navigation } from "./components/Navigation"
+import { Footer } from "./components/Footer"
 
 export const metadata: Metadata = {
-  title: 'Barbados Surfing Association',
-  description: 'The governing body for competitive surfing in Barbados.',
+  title: "Barbados Surfing Association",
+  description: "The National Governing Body for Surfing in Barbados. ISA Member Federation.",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -14,11 +14,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body style={{ background: '#FAFAF8', fontFamily: "'DM Sans', sans-serif", color: '#1A1A1A', minHeight: '100vh' }}>
+      <body style={{ backgroundColor: "#FAFAF8", color: "#1A1A1A" }}>
         <Navigation />
-        <main className="pb-20 md:pb-0">{children}</main>
+        <main style={{ paddingBottom: 80 }} className="md:pb-0">{children}</main>
         <Footer />
       </body>
     </html>

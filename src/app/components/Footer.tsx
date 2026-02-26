@@ -1,36 +1,36 @@
-import Link from 'next/link'
-import { WaveIcon } from './Icons'
+import Link from "next/link"
 
-export default function Footer() {
+export function Footer() {
   return (
-    <footer style={{ background: '#0A2540', color: 'rgba(255,255,255,0.6)', paddingBottom: '5rem' }}>
-      <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '4rem 2rem 2rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '3rem' }}>
+    <footer style={{ backgroundColor: "#0A2540", color: "rgba(255,255,255,0.6)", paddingBottom: 80 }} className="md:pb-0">
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "64px 32px 40px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 48 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-              <div style={{ color: '#2BA5A0' }}><WaveIcon size={24} /></div>
-              <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: '1.125rem', color: '#fff' }}>Barbados Surfing Association</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <img src="https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp" alt="BSA" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+              <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 16, color: "#fff" }}>Barbados Surfing Association</span>
             </div>
-            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem', lineHeight: 1.7, maxWidth: '280px' }}>Governing body for competitive surfing in Barbados. Developing talent, building community, riding waves since 2009.</p>
+            <p style={{ fontSize: 14, lineHeight: 1.7, maxWidth: 280 }}>The National Governing Body for Surfing in Barbados. ISA Member Federation since 1995.</p>
           </div>
           <div>
-            <h4 style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#2BA5A0', marginBottom: '1.25rem' }}>Navigate</h4>
-            {[{ href: '/events', label: 'Events' }, { href: '/athletes', label: 'Athletes' }, { href: '/rankings', label: 'Rankings' }].map(l => (
-              <Link key={l.href} href={l.href} style={{ display: 'block', marginBottom: '0.75rem', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem' }}>{l.label}</Link>
+            <h4 style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 20 }}>Navigate</h4>
+            {[["/", "Home"], ["/events", "Events"], ["/athletes", "Athletes"], ["/rankings", "Rankings"]].map(([href, label]) => (
+              <Link key={href} href={href} style={{ display: "block", textDecoration: "none", color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 10 }}>{label}</Link>
             ))}
           </div>
           <div>
-            <h4 style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#2BA5A0', marginBottom: '1.25rem' }}>Connect</h4>
-            <a href="https://www.instagram.com/barbadossurfing/" target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginBottom: '0.75rem', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem' }}>Instagram</a>
-            <a href="https://www.facebook.com/BarbadosSurfingAssociation/" target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginBottom: '0.75rem', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem' }}>Facebook</a>
+            <h4 style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 20 }}>Connect</h4>
+            <a href="https://instagram.com/barbadossurfing" target="_blank" rel="noopener noreferrer" style={{ display: "block", textDecoration: "none", color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 10 }}>Instagram</a>
+            <a href="https://facebook.com/BarbadosSurfingAssociation" target="_blank" rel="noopener noreferrer" style={{ display: "block", textDecoration: "none", color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 10 }}>Facebook</a>
           </div>
           <div>
-            <h4 style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#2BA5A0', marginBottom: '1.25rem' }}>Contact</h4>
-            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem', lineHeight: 1.7 }}>Barbados Surfing Association<br />Bridgetown, Barbados</p>
-            <a href="mailto:info@barbadossurfing.org" style={{ color: '#1478B5', textDecoration: 'none', fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem', marginTop: '0.5rem', display: 'inline-block' }}>info@barbadossurfing.org</a>
+            <h4 style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 20 }}>Contact</h4>
+            <p style={{ fontSize: 14, lineHeight: 1.8 }}>Barbados Surfing Association<br />Bridgetown, Barbados<br />info@barbadossurfing.org</p>
           </div>
         </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: '3rem', paddingTop: '2rem', fontFamily: "'DM Sans', sans-serif", fontSize: '0.8125rem', color: 'rgba(255,255,255,0.3)' }}>2025 Barbados Surfing Association. All rights reserved.</div>
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: 48, paddingTop: 24, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>
+          {new Date().getFullYear()} Barbados Surfing Association. All rights reserved.
+        </div>
       </div>
     </footer>
   )

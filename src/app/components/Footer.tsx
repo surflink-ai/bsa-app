@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import Image from 'next/image'
+
 
 export function Footer() {
   return (
@@ -8,11 +8,9 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3 mb-4">
-              <Image
+              <img
                 src="https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp"
                 alt="BSA Logo"
-                width={48}
-                height={48}
                 className="rounded-full"
               />
               <div>

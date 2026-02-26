@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+
 
 interface AthleteResult {
   id: string
@@ -96,7 +96,7 @@ export default function ClaimPage() {
                   className="w-full flex items-center gap-3 bg-white hover:bg-[#F2EDE4] rounded-xl px-4 py-3 transition-colors text-left shadow-sm"
                 >
                   {a.image ? (
-                    <Image src={a.image} alt={a.name} width={40} height={40} className="rounded-full object-cover" />
+                    <img src={a.image} alt={a.name} className="rounded-full object-cover" />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-[#F2EDE4] flex items-center justify-center text-[#0A2540]/30 text-sm font-medium">
                       {a.name.charAt(0)}
@@ -117,7 +117,7 @@ export default function ClaimPage() {
         <div>
           <div className="bg-white rounded-xl p-4 mb-6 flex items-center gap-4 shadow-sm">
             {selected.image ? (
-              <Image src={selected.image} alt={selected.name} width={48} height={48} className="rounded-full" />
+              <img src={selected.image} alt={selected.name} className="rounded-full" />
             ) : (
               <div className="w-12 h-12 rounded-full bg-[#F2EDE4] flex items-center justify-center text-lg font-medium text-[#0A2540]/30">
                 {selected.name.charAt(0)}

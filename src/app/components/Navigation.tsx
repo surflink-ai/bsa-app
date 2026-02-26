@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+
 import { usePathname } from 'next/navigation'
 
 const NAV_LINKS = [
@@ -44,11 +44,9 @@ export function Navigation() {
       >
         <div className="max-w-7xl mx-auto px-6 md:px-8 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <Image
+            <img
               src="https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp"
               alt="BSA Logo"
-              width={36}
-              height={36}
               className="rounded-full"
             />
             <span className="font-heading font-bold text-sm tracking-wide" style={{ color: '#ffffff' }}>BSA</span>

@@ -1,6 +1,6 @@
 'use client'
 
-import Image from 'next/image'
+
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { FadeIn, StaggerContainer, StaggerItem } from '../../components/AnimatedSection'
@@ -37,7 +37,7 @@ export function AthleteDetailClient({ athlete, competitions, stats, heatTotals }
             <div className="flex items-center gap-6">
               <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                 {athlete.image ? (
-                  <Image src={athlete.image} alt={athlete.name} width={128} height={128} className="w-full h-full object-cover" />
+                  <img src={athlete.image} alt={athlete.name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center font-heading text-4xl" style={{ color: 'rgba(255,255,255,0.2)' }}>{athlete.name.charAt(0)}</div>
                 )}
@@ -75,7 +75,7 @@ export function AthleteDetailClient({ athlete, competitions, stats, heatTotals }
             <div className="grid md:grid-cols-2 gap-6 mb-12">
               <div className="bg-white rounded-2xl p-6 shadow-sm">
                 <h3 className="font-heading font-semibold mb-4" style={{ color: '#0A2540' }}>Heat Totals Over Time</h3>
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%">
                   <LineChart data={lineData}>
                     <XAxis dataKey="heat" tick={{ fontSize: 10 }} stroke="#1A1A1A40" />
                     <YAxis tick={{ fontSize: 10 }} stroke="#1A1A1A40" />
@@ -86,7 +86,7 @@ export function AthleteDetailClient({ athlete, competitions, stats, heatTotals }
               </div>
               <div className="bg-white rounded-2xl p-6 shadow-sm">
                 <h3 className="font-heading font-semibold mb-4" style={{ color: '#0A2540' }}>Score Distribution</h3>
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%">
                   <BarChart data={barData}>
                     <XAxis dataKey="range" tick={{ fontSize: 10 }} stroke="#1A1A1A40" />
                     <YAxis tick={{ fontSize: 10 }} stroke="#1A1A1A40" />

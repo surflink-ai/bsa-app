@@ -1,6 +1,6 @@
 'use client'
 
-import Image from 'next/image'
+
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { FadeIn, StaggerContainer, StaggerItem, ScaleCard } from './components/AnimatedSection'
@@ -61,13 +61,10 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
           >
-            <Image
+            <img
               src="https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp"
               alt="BSA Logo"
-              width={120}
-              height={120}
               className="mx-auto mb-8 rounded-full"
-              priority
             />
           </motion.div>
           <motion.h1
@@ -240,7 +237,7 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
                 <div className="text-center" style={{ order: 1 }}>
                   <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-3 rounded-full overflow-hidden" style={{ backgroundColor: '#F2EDE4' }}>
                     {topThree[1]?.competitor.athlete.image ? (
-                      <Image src={topThree[1].competitor.athlete.image} alt={topThree[1].competitor.athlete.name} width={96} height={96} className="w-full h-full object-cover" />
+                      <img src={topThree[1].competitor.athlete.image} alt={topThree[1].competitor.athlete.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center font-heading text-xl" style={{ color: 'rgba(10,37,64,0.3)' }}>2</div>
                     )}
@@ -256,7 +253,7 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
                 <div className="text-center" style={{ order: 2 }}>
                   <div className="w-24 h-24 md:w-32 md:h-32 mx-auto mb-3 rounded-full overflow-hidden ring-4" style={{ backgroundColor: '#F2EDE4', boxShadow: '0 0 0 4px #D4944A' }}>
                     {topThree[0]?.competitor.athlete.image ? (
-                      <Image src={topThree[0].competitor.athlete.image} alt={topThree[0].competitor.athlete.name} width={128} height={128} className="w-full h-full object-cover" />
+                      <img src={topThree[0].competitor.athlete.image} alt={topThree[0].competitor.athlete.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center font-heading text-2xl" style={{ color: 'rgba(10,37,64,0.3)' }}>1</div>
                     )}
@@ -272,7 +269,7 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
                 <div className="text-center" style={{ order: 3 }}>
                   <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-3 rounded-full overflow-hidden" style={{ backgroundColor: '#F2EDE4' }}>
                     {topThree[2]?.competitor.athlete.image ? (
-                      <Image src={topThree[2].competitor.athlete.image} alt={topThree[2].competitor.athlete.name} width={96} height={96} className="w-full h-full object-cover" />
+                      <img src={topThree[2].competitor.athlete.image} alt={topThree[2].competitor.athlete.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center font-heading text-xl" style={{ color: 'rgba(10,37,64,0.3)' }}>3</div>
                     )}
@@ -330,7 +327,7 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
                     <Link href={`/athletes/${athlete.id}`} className="block">
                       <div className="aspect-square rounded-2xl overflow-hidden mb-4" style={{ backgroundColor: '#F2EDE4' }}>
                         {athlete.image ? (
-                          <Image src={athlete.image} alt={athlete.name} width={400} height={400} className="w-full h-full object-cover" />
+                          <img src={athlete.image} alt={athlete.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center font-heading text-4xl" style={{ color: 'rgba(10,37,64,0.2)' }}>
                             {athlete.name.charAt(0)}

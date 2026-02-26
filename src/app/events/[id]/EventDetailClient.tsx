@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
+
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FadeIn } from '../../components/AnimatedSection'
@@ -129,7 +129,7 @@ export function EventDetailClient({ event }: Props) {
                             style={{ backgroundColor: '#F2EDE4', ...(isFirst ? { boxShadow: '0 0 0 4px #D4944A' } : {}) }}
                           >
                             {r.competitor.athlete.image ? (
-                              <Image src={r.competitor.athlete.image} alt={r.competitor.athlete.name} width={128} height={128} className="w-full h-full object-cover" />
+                              <img src={r.competitor.athlete.image} alt={r.competitor.athlete.name} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center font-heading text-xl" style={{ color: 'rgba(10,37,64,0.3)' }}>{r.place}</div>
                             )}
@@ -165,7 +165,7 @@ export function EventDetailClient({ event }: Props) {
                         <span className="font-mono w-8 text-sm" style={{ color: 'rgba(26,26,26,0.3)' }}>{r.place}</span>
                         <div className="w-10 h-10 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: '#F2EDE4' }}>
                           {r.competitor.athlete.image ? (
-                            <Image src={r.competitor.athlete.image} alt="" width={40} height={40} className="w-full h-full object-cover" />
+                            <img src={r.competitor.athlete.image} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-sm font-heading" style={{ color: 'rgba(10,37,64,0.2)' }}>{r.competitor.athlete.name.charAt(0)}</div>
                           )}
@@ -223,7 +223,7 @@ export function EventDetailClient({ event }: Props) {
                                         <div key={r.competitor?.athlete?.id || Math.random()} className="flex items-start gap-4" style={{ opacity: r.place === 1 ? 1 : 0.6 }}>
                                           <div className="w-10 h-10 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: '#F2EDE4' }}>
                                             {r.competitor?.athlete?.image ? (
-                                              <Image src={r.competitor.athlete.image} alt="" width={40} height={40} className="w-full h-full object-cover" />
+                                              <img src={r.competitor.athlete.image} alt="" className="w-full h-full object-cover" />
                                             ) : (
                                               <div className="w-full h-full flex items-center justify-center text-xs" style={{ color: 'rgba(10,37,64,0.2)' }}>{r.place}</div>
                                             )}

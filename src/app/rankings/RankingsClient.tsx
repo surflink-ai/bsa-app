@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
+
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FadeIn } from '../components/AnimatedSection'
@@ -94,7 +94,7 @@ export function RankingsClient({ series }: { series: SeriesData[] }) {
                       </span>
                       <div className="w-10 h-10 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: '#F2EDE4' }}>
                         {r.athleteImage ? (
-                          <Image src={r.athleteImage} alt="" width={40} height={40} className="w-full h-full object-cover" />
+                          <img src={r.athleteImage} alt="" className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-sm font-heading" style={{ color: 'rgba(10,37,64,0.2)' }}>{r.athleteName.charAt(0)}</div>
                         )}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import Image from 'next/image'
+
 import Link from 'next/link'
 import { FadeIn, StaggerContainer, StaggerItem, ScaleCard } from '../components/AnimatedSection'
 
@@ -56,7 +56,7 @@ export function AthletesClient({ athletes }: { athletes: Athlete[] }) {
                   <Link href={`/athletes/${athlete.id}`} className="block text-center group">
                     <div className="aspect-square rounded-2xl overflow-hidden mb-3 mx-auto" style={{ backgroundColor: '#F2EDE4' }}>
                       {athlete.image ? (
-                        <Image src={athlete.image} alt={athlete.name} width={200} height={200} className="w-full h-full object-cover" />
+                        <img src={athlete.image} alt={athlete.name} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center font-heading text-3xl" style={{ color: 'rgba(10,37,64,0.2)' }}>
                           {athlete.name.charAt(0)}

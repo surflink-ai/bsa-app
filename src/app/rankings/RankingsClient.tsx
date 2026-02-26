@@ -1,0 +1,126 @@
+'use client'
+
+import { useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
+import { FadeIn } from '../components/AnimatedSection'
+
+interface SeriesData {
+  id: string; name: string
+  divisions: {
+    name: string
+    rankings: { place: number; total: number; athleteId: string; athleteName: string; athleteImage: string | null }[]
+  }[]
+}
+
+export function RankingsClient({ series }: { series: SeriesData[] }) {
+  const [selectedSeries, setSelectedSeries] = useState(series.length - 1)
+  const [selectedDiv, setSelectedDiv] = useState(0)
+
+  const currentSeries = series[selectedSeries]
+  const currentDivision = currentSeries?.divisions[selectedDiv]
+  const maxPoints = currentDivision?.rankings[0]?.total || 1
+
+  return (
+    <div className="pb-24 md:pb-0">
+      {/* Hero */}
+      <section className="bg-navy pt-28 pb-16 md:pt-32 md:pb-20">
+        <div className="max-w-6xl mx-auto px-6">
+          <FadeIn>
+            <h1 className="font-heading font-bold text-4xl md:text-6xl text-white mb-4">RANKINGS</h1>
+            <p className="text-white/50 text-lg">SOTY Championship Standings</p>
+          </FadeIn>
+        </div>
+      </section>
+
+      <section className="max-w-4xl mx-auto px-6 py-8">
+        {/* Series Selector */}
+        {series.length > 1 && (
+          <div className="mb-6">
+            <select
+              value={selectedSeries}
+              onChange={e => { setSelectedSeries(Number(e.target.value)); setSelectedDiv(0) }}
+              className="bg-white border border-dark/10 rounded-full px-5 py-2.5 text-sm text-navy font-medium focus:outline-none focus:ring-2 focus:ring-ocean/30"
+            >
+              {series.map((s, i) => (
+                <option key={s.id} value={i}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Division tabs */}
+        {currentSeries && currentSeries.divisions.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto no-scrollbar mb-8">
+            {currentSeries.divisions.map((div, idx) => (
+              <button
+                key={div.name}
+                onClick={() => setSelectedDiv(idx)}
+                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  idx === selectedDiv ? 'bg-navy text-white' : 'bg-sand text-dark/50 hover:text-dark/70'
+                }`}
+              >
+                {div.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Rankings */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${selectedSeries}-${selectedDiv}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {!currentDivision || currentDivision.rankings.length === 0 ? (
+              <p className="text-dark/40 text-center py-20">No rankings available for this series.</p>
+            ) : (
+              <div className="space-y-3">
+                {currentDivision.rankings.map((r, i) => (
+                  <motion.div
+                    key={r.athleteId}
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05, duration: 0.4 }}
+                    className="bg-white rounded-xl p-4 shadow-sm"
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className={`font-mono font-bold w-8 text-center ${r.place <= 3 ? 'text-amber' : 'text-dark/30'}`}>
+                        {r.place}
+                      </span>
+                      <div className="w-10 h-10 rounded-full bg-sand overflow-hidden shrink-0">
+                        {r.athleteImage ? (
+                          <Image src={r.athleteImage} alt="" width={40} height={40} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-navy/20 text-sm font-heading">{r.athleteName.charAt(0)}</div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <Link href={`/athletes/${r.athleteId}`} className="font-heading font-semibold text-sm text-navy hover:text-ocean transition-colors block truncate">
+                          {r.athleteName}
+                        </Link>
+                        <div className="mt-1.5 h-2 bg-sand rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(r.total / maxPoints) * 100}%` }}
+                            transition={{ delay: i * 0.05 + 0.3, duration: 0.6, ease: 'easeOut' }}
+                            className={`h-full rounded-full ${r.place === 1 ? 'bg-amber' : r.place <= 3 ? 'bg-ocean' : 'bg-teal/50'}`}
+                          />
+                        </div>
+                      </div>
+                      <span className="font-mono text-sm font-semibold text-navy">{r.total.toFixed(2)}</span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </section>
+    </div>
+  )
+}

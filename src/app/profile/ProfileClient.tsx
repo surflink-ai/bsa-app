@@ -27,63 +27,60 @@ export default function ProfileClient({ user, profile, claims, athleteProfile }:
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 pb-24">
+    <div className="max-w-2xl mx-auto px-4 py-8 pb-24 pt-24 md:pt-28">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold">Profile</h1>
-        <button onClick={handleSignOut} className="text-sm text-white/40 hover:text-white">
+        <h1 className="font-heading text-2xl font-bold text-navy">Profile</h1>
+        <button onClick={handleSignOut} className="text-sm text-dark/40 hover:text-dark">
           Sign Out
         </button>
       </div>
 
-      {/* User Info */}
-      <div className="bg-white/5 rounded-xl p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Account</h2>
+      <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+        <h2 className="font-heading text-lg font-semibold text-navy mb-4">Account</h2>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-white/60">Name</span>
-            <span>{profile?.display_name || 'Not set'}</span>
+            <span className="text-dark/50">Name</span>
+            <span className="text-dark">{profile?.display_name || 'Not set'}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-white/60">Email</span>
-            <span>{user.email}</span>
+            <span className="text-dark/50">Email</span>
+            <span className="text-dark">{user.email}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-white/60">Role</span>
-            <span className="capitalize">{profile?.role || 'user'}</span>
+            <span className="text-dark/50">Role</span>
+            <span className="capitalize text-dark">{profile?.role || 'user'}</span>
           </div>
         </div>
       </div>
 
-      {/* Athlete Profile (if claimed) */}
       {athleteProfile ? (
         <AthleteProfileEditor profile={athleteProfile} />
       ) : (
-        <div className="bg-white/5 rounded-xl p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-2">Athlete Profile</h2>
-          <p className="text-white/60 text-sm mb-4">
+        <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+          <h2 className="font-heading text-lg font-semibold text-navy mb-2">Athlete Profile</h2>
+          <p className="text-dark/50 text-sm mb-4">
             Are you a BSA competitor? Claim your athlete profile to add your bio, photos, and more.
           </p>
           <a
             href="/profile/claim"
-            className="inline-block bg-ocean hover:bg-ocean/80 text-white font-semibold rounded-lg px-4 py-2 text-sm transition-colors"
+            className="inline-block bg-ocean hover:bg-ocean/80 text-white font-semibold rounded-xl px-4 py-2 text-sm transition-colors"
           >
             Claim Your Profile
           </a>
         </div>
       )}
 
-      {/* Claim History */}
       {claims.length > 0 && (
-        <div className="bg-white/5 rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Claim Requests</h2>
+        <div className="bg-white rounded-xl p-6 shadow-sm">
+          <h2 className="font-heading text-lg font-semibold text-navy mb-4">Claim Requests</h2>
           <div className="space-y-3">
             {claims.map((claim) => (
               <div key={claim.id} className="flex items-center justify-between text-sm">
-                <span>{claim.athlete_name}</span>
+                <span className="text-dark">{claim.athlete_name}</span>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                  claim.status === 'approved' ? 'bg-teal/20 text-teal' :
-                  claim.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
-                  'bg-amber/20 text-amber'
+                  claim.status === 'approved' ? 'bg-teal/10 text-teal' :
+                  claim.status === 'rejected' ? 'bg-red-100 text-red-600' :
+                  'bg-amber/10 text-amber'
                 }`}>
                   {claim.status}
                 </span>
@@ -120,77 +117,51 @@ function AthleteProfileEditor({ profile }: { profile: NonNullable<Props['athlete
     setTimeout(() => setSaved(false), 2000)
   }
 
+  const inputClass = "w-full bg-warm-white border border-dark/10 rounded-xl px-4 py-3 text-dark placeholder-dark/30 focus:outline-none focus:ring-2 focus:ring-ocean/30 text-sm"
+
   return (
-    <div className="bg-white/5 rounded-xl p-6 mb-6">
+    <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Athlete Profile — {profile.name}</h2>
-        <span className="text-xs bg-teal/20 text-teal px-2 py-0.5 rounded-full">Claimed</span>
+        <h2 className="font-heading text-lg font-semibold text-navy">Athlete Profile — {profile.name}</h2>
+        <span className="text-xs bg-teal/10 text-teal px-2 py-0.5 rounded-full">Claimed</span>
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm text-white/60 mb-1">Bio</label>
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            rows={3}
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-ocean text-sm resize-none"
-            placeholder="Tell people about yourself..."
-          />
+          <label className="block text-sm text-dark/50 mb-1">Bio</label>
+          <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} className={inputClass + ' resize-none'} placeholder="Tell people about yourself..." />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-white/60 mb-1">Stance</label>
-            <select
-              value={stance}
-              onChange={(e) => setStance(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-ocean text-sm"
-            >
+            <label className="block text-sm text-dark/50 mb-1">Stance</label>
+            <select value={stance} onChange={(e) => setStance(e.target.value)} className={inputClass}>
               <option value="unknown">Not set</option>
               <option value="regular">Regular</option>
               <option value="goofy">Goofy</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm text-white/60 mb-1">Home Break</label>
-            <input
-              type="text"
-              value={homeBreak}
-              onChange={(e) => setHomeBreak(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-ocean text-sm"
-              placeholder="e.g. Soup Bowl"
-            />
+            <label className="block text-sm text-dark/50 mb-1">Home Break</label>
+            <input type="text" value={homeBreak} onChange={(e) => setHomeBreak(e.target.value)} className={inputClass} placeholder="e.g. Soup Bowl" />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-white/60 mb-1">Instagram</label>
-            <input
-              type="text"
-              value={instagram}
-              onChange={(e) => setInstagram(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-ocean text-sm"
-              placeholder="@username"
-            />
+            <label className="block text-sm text-dark/50 mb-1">Instagram</label>
+            <input type="text" value={instagram} onChange={(e) => setInstagram(e.target.value)} className={inputClass} placeholder="@username" />
           </div>
           <div>
-            <label className="block text-sm text-white/60 mb-1">Twitter / X</label>
-            <input
-              type="text"
-              value={twitter}
-              onChange={(e) => setTwitter(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-ocean text-sm"
-              placeholder="@username"
-            />
+            <label className="block text-sm text-dark/50 mb-1">Twitter / X</label>
+            <input type="text" value={twitter} onChange={(e) => setTwitter(e.target.value)} className={inputClass} placeholder="@username" />
           </div>
         </div>
 
         <button
           onClick={handleSave}
           disabled={saving}
-          className="bg-ocean hover:bg-ocean/80 text-white font-semibold rounded-lg px-6 py-2 text-sm transition-colors disabled:opacity-50"
+          className="bg-ocean hover:bg-ocean/80 text-white font-semibold rounded-xl px-6 py-2 text-sm transition-colors disabled:opacity-50"
         >
           {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Profile'}
         </button>

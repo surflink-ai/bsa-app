@@ -1,47 +1,33 @@
-import { getOrg, getEvent } from '@/lib/liveheats'
-import type { Athlete } from '@/lib/liveheats'
-import { AthleteGrid } from './athlete-grid'
+import { AthletesClient } from './AthletesClient'
 
-export const revalidate = 300
+export const revalidate = 3600
 
 export default async function AthletesPage() {
-  const org = await getOrg()
-
-  // Extract unique athletes from all events
-  const athleteMap = new Map<string, Athlete>()
-
-  await Promise.all(
-    org.events.map(async (e) => {
+  // Fetch athletes from our API route at build/request time
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  let athletes: { id: string; name: string; nationality: string | null; image: string | null }[] = []
+  try {
+    const res = await fetch(`${baseUrl}/api/athletes`, { next: { revalidate: 3600 } })
+    const data = await res.json()
+    athletes = data.athletes || []
+  } catch {
+    // Fallback: fetch directly
+    const { getOrg, getEvent } = await import('@/lib/liveheats')
+    const org = await getOrg()
+    const athleteMap = new Map<string, { id: string; name: string; nationality: string | null; image: string | null }>()
+    for (const event of org.events.slice(0, 5)) {
       try {
-        const full = await getEvent(e.id)
-        for (const div of full.eventDivisions) {
-          for (const heat of div.heats ?? []) {
-            for (const r of heat.result ?? []) {
-              const a = r.competitor.athlete
-              if (a.id && !athleteMap.has(a.id)) {
-                athleteMap.set(a.id, a)
-              }
-            }
-          }
-          for (const r of div.ranking ?? []) {
-            const a = r.competitor.athlete
-            if (a.id && !athleteMap.has(a.id)) {
-              athleteMap.set(a.id, a)
-            }
+        const full = await getEvent(event.id)
+        for (const ed of full.eventDivisions) {
+          for (const r of ed.ranking || []) {
+            const a = r.competitor?.athlete
+            if (a && !athleteMap.has(a.id)) athleteMap.set(a.id, a)
           }
         }
-      } catch {
-        // skip failed events
-      }
-    })
-  )
+      } catch { /* skip */ }
+    }
+    athletes = Array.from(athleteMap.values()).sort((a, b) => a.name.localeCompare(b.name))
+  }
 
-  const athletes = Array.from(athleteMap.values()).sort((a, b) => a.name.localeCompare(b.name))
-
-  return (
-    <div className="pb-20 px-4 md:px-8 pt-8">
-      <h1 className="text-3xl font-bold mb-6">Athletes</h1>
-      <AthleteGrid athletes={athletes} />
-    </div>
-  )
+  return <AthletesClient athletes={athletes} />
 }

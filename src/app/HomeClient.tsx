@@ -35,11 +35,9 @@ const SURF_SPOTS = [
 export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, featuredAthletes }: Props) {
   const nextEvent = upcoming[0] || null
 
-  // Get Open Mens division from latest event for podium
   const openMensDivision = latestEvent?.eventDivisions.find(d => d.division.name.toLowerCase().includes('open') && d.division.name.toLowerCase().includes('men'))
   const topThree = openMensDivision?.ranking?.slice(0, 3) || []
 
-  // Collect unique athlete count
   const totalAthletes = new Set<string>()
   if (latestEvent) {
     for (const div of latestEvent.eventDivisions) {
@@ -52,9 +50,12 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
   return (
     <div className="pb-16 md:pb-0">
       {/* HERO */}
-      <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-b from-navy via-[#0d2f4f] to-[#0a1f35] overflow-hidden">
+      <section
+        className="relative min-h-screen flex items-center justify-center overflow-hidden"
+        style={{ background: 'linear-gradient(to bottom, #0A2540, #0d2f4f, #0a1f35)' }}
+      >
         <div className="wave-pattern absolute inset-0 opacity-30" />
-        <div className="relative z-10 text-center px-6 max-w-4xl">
+        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -73,7 +74,8 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="font-heading font-bold text-white text-4xl md:text-7xl lg:text-8xl tracking-tight leading-none mb-6"
+            className="font-heading font-bold text-4xl md:text-7xl lg:text-8xl tracking-tight leading-none mb-6"
+            style={{ color: '#ffffff' }}
           >
             BARBADOS SURFING<br />ASSOCIATION
           </motion.h1>
@@ -81,7 +83,8 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-white/60 text-lg md:text-xl mb-4"
+            className="text-lg md:text-xl mb-4"
+            style={{ color: 'rgba(255,255,255,0.6)' }}
           >
             The National Governing Body for Surfing in Barbados
           </motion.p>
@@ -89,7 +92,8 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="text-white/30 text-sm font-mono tracking-widest"
+            className="text-sm font-mono tracking-widest"
+            style={{ color: 'rgba(255,255,255,0.3)' }}
           >
             EST. 1995 — ISA MEMBER FEDERATION
           </motion.p>
@@ -102,7 +106,8 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
             <motion.div
               animate={{ y: [0, 10, 0] }}
               transition={{ repeat: Infinity, duration: 2 }}
-              className="text-white/30 text-2xl"
+              style={{ color: 'rgba(255,255,255,0.3)' }}
+              className="text-2xl"
             >
               ↓
             </motion.div>
@@ -111,8 +116,8 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
       </section>
 
       {/* STATS */}
-      <section className="py-20 md:py-28 bg-warm-white">
-        <div className="max-w-6xl mx-auto px-6">
+      <section className="py-20 md:py-28" style={{ backgroundColor: '#FAFAF8' }}>
+        <div className="max-w-7xl mx-auto px-6 md:px-8">
           <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
               { value: Math.max(totalAthletes.size, 250), suffix: '+', label: 'Athletes' },
@@ -121,10 +126,10 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
               { value: 10, suffix: '', label: 'Surf Breaks' },
             ].map((stat, i) => (
               <StaggerItem key={i}>
-                <div className="font-heading font-bold text-5xl md:text-6xl text-navy mb-2">
+                <div className="font-heading font-bold text-5xl md:text-6xl mb-2" style={{ color: '#0A2540' }}>
                   <CountUp end={stat.value} suffix={stat.suffix} />
                 </div>
-                <div className="text-dark/50 text-sm font-medium uppercase tracking-wider">{stat.label}</div>
+                <div className="text-sm font-medium uppercase tracking-wider" style={{ color: 'rgba(26,26,26,0.5)' }}>{stat.label}</div>
               </StaggerItem>
             ))}
           </StaggerContainer>
@@ -133,12 +138,12 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
 
       {/* NEXT EVENT */}
       {nextEvent && (
-        <section className="py-20 md:py-28 bg-sand">
-          <div className="max-w-5xl mx-auto px-6 text-center">
+        <section className="py-20 md:py-28" style={{ backgroundColor: '#F2EDE4' }}>
+          <div className="max-w-7xl mx-auto px-6 md:px-8 text-center">
             <FadeIn>
-              <p className="text-amber font-mono text-xs uppercase tracking-[0.2em] mb-4">Next Event</p>
-              <h2 className="font-heading font-bold text-3xl md:text-5xl lg:text-6xl text-navy mb-6">{nextEvent.name}</h2>
-              <p className="text-dark/50 text-lg mb-8">
+              <p className="font-mono text-xs uppercase tracking-[0.2em] mb-4" style={{ color: '#D4944A' }}>Next Event</p>
+              <h2 className="font-heading font-bold text-3xl md:text-5xl lg:text-6xl mb-6" style={{ color: '#0A2540' }}>{nextEvent.name}</h2>
+              <p className="text-lg mb-8" style={{ color: 'rgba(26,26,26,0.5)' }}>
                 {new Date(nextEvent.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                 {' • Barbados'}
               </p>
@@ -150,7 +155,7 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
               <FadeIn delay={0.3}>
                 <div className="flex flex-wrap justify-center gap-3 mt-8 mb-8">
                   {nextEvent.eventDivisions.map(div => (
-                    <span key={div.id} className="bg-white/80 text-dark/70 text-xs font-medium px-4 py-2 rounded-full">
+                    <span key={div.id} className="text-xs font-medium px-4 py-2 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.8)', color: 'rgba(26,26,26,0.7)' }}>
                       {div.division.name}
                     </span>
                   ))}
@@ -162,7 +167,8 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
                 href="https://www.liveheats.com/organisations/BarbadosSurfingAssociation"
                 target="_blank"
                 rel="noopener"
-                className="inline-block bg-ocean hover:bg-ocean/80 text-white font-semibold px-8 py-4 rounded-full text-lg transition-colors"
+                className="inline-block font-semibold px-8 py-4 rounded-full text-lg transition-colors hover:opacity-80"
+                style={{ backgroundColor: '#1478B5', color: '#ffffff' }}
               >
                 Register Now
               </a>
@@ -172,11 +178,11 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
       )}
 
       {/* ABOUT BSA */}
-      <section id="about" className="py-20 md:py-28 bg-navy text-white">
-        <div className="max-w-6xl mx-auto px-6">
+      <section id="about" className="py-20 md:py-28" style={{ backgroundColor: '#0A2540', color: '#ffffff' }}>
+        <div className="max-w-7xl mx-auto px-6 md:px-8">
           <FadeIn>
-            <p className="text-teal font-mono text-xs uppercase tracking-[0.2em] mb-4">Who We Are</p>
-            <p className="text-xl md:text-2xl lg:text-3xl leading-relaxed text-white/80 max-w-4xl mb-16">
+            <p className="font-mono text-xs uppercase tracking-[0.2em] mb-4" style={{ color: '#2BA5A0' }}>Who We Are</p>
+            <p className="text-xl md:text-2xl lg:text-3xl leading-relaxed max-w-4xl mb-16" style={{ color: 'rgba(255,255,255,0.8)' }}>
               The Barbados Surfing Association is the National Governing Body for all forms of surfing in Barbados. As a proud member of the International Surfing Association (ISA) and the Barbados Olympic Association, we are dedicated to developing competitive surfing at every level — from grassroots junior programs to international championship representation.
             </p>
           </FadeIn>
@@ -187,9 +193,9 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
               { title: 'REPRESENT', text: 'Proudly representing Barbados at the ISA World Surfing Games, Pan American Games, and on the world stage' },
             ].map((pillar) => (
               <StaggerItem key={pillar.title}>
-                <div className="border-t border-white/20 pt-6">
-                  <h3 className="font-heading font-bold text-lg text-teal mb-3">{pillar.title}</h3>
-                  <p className="text-white/50 leading-relaxed">{pillar.text}</p>
+                <div className="border-t pt-6" style={{ borderColor: 'rgba(255,255,255,0.2)' }}>
+                  <h3 className="font-heading font-bold text-lg mb-3" style={{ color: '#2BA5A0' }}>{pillar.title}</h3>
+                  <p className="leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>{pillar.text}</p>
                 </div>
               </StaggerItem>
             ))}
@@ -198,20 +204,20 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
       </section>
 
       {/* BOARD OF DIRECTORS */}
-      <section className="py-20 md:py-28 bg-warm-white">
-        <div className="max-w-6xl mx-auto px-6">
+      <section className="py-20 md:py-28" style={{ backgroundColor: '#FAFAF8' }}>
+        <div className="max-w-7xl mx-auto px-6 md:px-8">
           <FadeIn>
-            <p className="text-amber font-mono text-xs uppercase tracking-[0.2em] mb-4">Leadership</p>
-            <h2 className="font-heading font-bold text-3xl md:text-4xl text-navy mb-12">Board of Directors</h2>
+            <p className="font-mono text-xs uppercase tracking-[0.2em] mb-4" style={{ color: '#D4944A' }}>Leadership</p>
+            <h2 className="font-heading font-bold text-3xl md:text-4xl mb-12" style={{ color: '#0A2540' }}>Board of Directors</h2>
           </FadeIn>
           <StaggerContainer className="grid grid-cols-2 md:grid-cols-5 gap-6">
             {BOARD_MEMBERS.map((member, i) => (
               <StaggerItem key={i} className="text-center">
-                <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-sand flex items-center justify-center">
-                  <span className="font-heading font-bold text-navy/40 text-xl">{member.initials}</span>
+                <div className="w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F2EDE4' }}>
+                  <span className="font-heading font-bold text-xl" style={{ color: 'rgba(10,37,64,0.4)' }}>{member.initials}</span>
                 </div>
-                <p className="font-heading font-semibold text-sm text-navy">{member.name}</p>
-                <p className="text-dark/40 text-xs mt-1">{member.title}</p>
+                <p className="font-heading font-semibold text-sm" style={{ color: '#0A2540' }}>{member.name}</p>
+                <p className="text-xs mt-1" style={{ color: 'rgba(26,26,26,0.4)' }}>{member.title}</p>
               </StaggerItem>
             ))}
           </StaggerContainer>
@@ -220,68 +226,68 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
 
       {/* LATEST RESULTS */}
       {latestEvent && topThree.length >= 3 && (
-        <section className="py-20 md:py-28 bg-white">
-          <div className="max-w-6xl mx-auto px-6">
+        <section className="py-20 md:py-28" style={{ backgroundColor: '#ffffff' }}>
+          <div className="max-w-7xl mx-auto px-6 md:px-8">
             <FadeIn>
-              <p className="text-amber font-mono text-xs uppercase tracking-[0.2em] mb-4">Latest Results</p>
-              <h2 className="font-heading font-bold text-3xl md:text-4xl text-navy mb-2">{latestEvent.name}</h2>
-              <p className="text-dark/40 text-sm mb-12">Open Mens — Top 3</p>
+              <p className="font-mono text-xs uppercase tracking-[0.2em] mb-4" style={{ color: '#D4944A' }}>Latest Results</p>
+              <h2 className="font-heading font-bold text-3xl md:text-4xl mb-2" style={{ color: '#0A2540' }}>{latestEvent.name}</h2>
+              <p className="text-sm mb-12" style={{ color: 'rgba(26,26,26,0.4)' }}>Open Mens — Top 3</p>
             </FadeIn>
 
             <FadeIn delay={0.2}>
               <div className="flex items-end justify-center gap-4 md:gap-8 mb-12">
                 {/* 2nd place */}
-                <div className="text-center podium-2">
-                  <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-3 rounded-full bg-sand overflow-hidden">
+                <div className="text-center" style={{ order: 1 }}>
+                  <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-3 rounded-full overflow-hidden" style={{ backgroundColor: '#F2EDE4' }}>
                     {topThree[1]?.competitor.athlete.image ? (
                       <Image src={topThree[1].competitor.athlete.image} alt={topThree[1].competitor.athlete.name} width={96} height={96} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-navy/30 font-heading text-xl">2</div>
+                      <div className="w-full h-full flex items-center justify-center font-heading text-xl" style={{ color: 'rgba(10,37,64,0.3)' }}>2</div>
                     )}
                   </div>
-                  <p className="font-heading font-semibold text-sm text-navy">{topThree[1]?.competitor.athlete.name}</p>
-                  <p className="font-mono text-xs text-dark/40">{topThree[1]?.total?.toFixed(2)} pts</p>
-                  <div className="bg-sand w-20 md:w-28 h-20 md:h-24 mx-auto mt-3 rounded-t-lg flex items-center justify-center">
-                    <span className="font-heading font-bold text-2xl text-navy/30">2</span>
+                  <p className="font-heading font-semibold text-sm" style={{ color: '#0A2540' }}>{topThree[1]?.competitor.athlete.name}</p>
+                  <p className="font-mono text-xs" style={{ color: 'rgba(26,26,26,0.4)' }}>{topThree[1]?.total?.toFixed(2)} pts</p>
+                  <div className="w-20 md:w-28 h-20 md:h-24 mx-auto mt-3 rounded-t-lg flex items-center justify-center" style={{ backgroundColor: '#F2EDE4' }}>
+                    <span className="font-heading font-bold text-2xl" style={{ color: 'rgba(10,37,64,0.3)' }}>2</span>
                   </div>
                 </div>
 
                 {/* 1st place */}
-                <div className="text-center podium-1">
-                  <div className="w-24 h-24 md:w-32 md:h-32 mx-auto mb-3 rounded-full bg-sand overflow-hidden ring-4 ring-amber">
+                <div className="text-center" style={{ order: 2 }}>
+                  <div className="w-24 h-24 md:w-32 md:h-32 mx-auto mb-3 rounded-full overflow-hidden ring-4" style={{ backgroundColor: '#F2EDE4', boxShadow: '0 0 0 4px #D4944A' }}>
                     {topThree[0]?.competitor.athlete.image ? (
                       <Image src={topThree[0].competitor.athlete.image} alt={topThree[0].competitor.athlete.name} width={128} height={128} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-navy/30 font-heading text-2xl">1</div>
+                      <div className="w-full h-full flex items-center justify-center font-heading text-2xl" style={{ color: 'rgba(10,37,64,0.3)' }}>1</div>
                     )}
                   </div>
-                  <p className="font-heading font-bold text-navy">{topThree[0]?.competitor.athlete.name}</p>
-                  <p className="font-mono text-sm text-amber">{topThree[0]?.total?.toFixed(2)} pts</p>
-                  <div className="bg-amber/20 w-24 md:w-32 h-28 md:h-32 mx-auto mt-3 rounded-t-lg flex items-center justify-center">
-                    <span className="font-heading font-bold text-3xl text-amber">1</span>
+                  <p className="font-heading font-bold" style={{ color: '#0A2540' }}>{topThree[0]?.competitor.athlete.name}</p>
+                  <p className="font-mono text-sm" style={{ color: '#D4944A' }}>{topThree[0]?.total?.toFixed(2)} pts</p>
+                  <div className="w-24 md:w-32 h-28 md:h-32 mx-auto mt-3 rounded-t-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(212,148,74,0.2)' }}>
+                    <span className="font-heading font-bold text-3xl" style={{ color: '#D4944A' }}>1</span>
                   </div>
                 </div>
 
                 {/* 3rd place */}
-                <div className="text-center podium-3">
-                  <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-3 rounded-full bg-sand overflow-hidden">
+                <div className="text-center" style={{ order: 3 }}>
+                  <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-3 rounded-full overflow-hidden" style={{ backgroundColor: '#F2EDE4' }}>
                     {topThree[2]?.competitor.athlete.image ? (
                       <Image src={topThree[2].competitor.athlete.image} alt={topThree[2].competitor.athlete.name} width={96} height={96} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-navy/30 font-heading text-xl">3</div>
+                      <div className="w-full h-full flex items-center justify-center font-heading text-xl" style={{ color: 'rgba(10,37,64,0.3)' }}>3</div>
                     )}
                   </div>
-                  <p className="font-heading font-semibold text-sm text-navy">{topThree[2]?.competitor.athlete.name}</p>
-                  <p className="font-mono text-xs text-dark/40">{topThree[2]?.total?.toFixed(2)} pts</p>
-                  <div className="bg-sand w-20 md:w-28 h-16 md:h-20 mx-auto mt-3 rounded-t-lg flex items-center justify-center">
-                    <span className="font-heading font-bold text-2xl text-navy/30">3</span>
+                  <p className="font-heading font-semibold text-sm" style={{ color: '#0A2540' }}>{topThree[2]?.competitor.athlete.name}</p>
+                  <p className="font-mono text-xs" style={{ color: 'rgba(26,26,26,0.4)' }}>{topThree[2]?.total?.toFixed(2)} pts</p>
+                  <div className="w-20 md:w-28 h-16 md:h-20 mx-auto mt-3 rounded-t-lg flex items-center justify-center" style={{ backgroundColor: '#F2EDE4' }}>
+                    <span className="font-heading font-bold text-2xl" style={{ color: 'rgba(10,37,64,0.3)' }}>3</span>
                   </div>
                 </div>
               </div>
             </FadeIn>
 
             <div className="text-center">
-              <Link href={`/events/${latestEvent.id}`} className="text-ocean hover:text-ocean/70 font-medium transition-colors">
+              <Link href={`/events/${latestEvent.id}`} className="font-medium transition-colors hover:opacity-70" style={{ color: '#1478B5' }}>
                 View All Results →
               </Link>
             </div>
@@ -289,19 +295,19 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
         </section>
       )}
 
-      {/* SOTY STANDINGS PREVIEW - skipping if no series data since we need event details */}
+      {/* SOTY STANDINGS PREVIEW */}
       {latestSeries && (
-        <section className="py-20 md:py-28 bg-navy text-white">
-          <div className="max-w-4xl mx-auto px-6">
+        <section className="py-20 md:py-28" style={{ backgroundColor: '#0A2540', color: '#ffffff' }}>
+          <div className="max-w-7xl mx-auto px-6 md:px-8">
             <FadeIn>
-              <p className="text-teal font-mono text-xs uppercase tracking-[0.2em] mb-4">Rankings</p>
+              <p className="font-mono text-xs uppercase tracking-[0.2em] mb-4" style={{ color: '#2BA5A0' }}>Rankings</p>
               <h2 className="font-heading font-bold text-3xl md:text-4xl mb-12">
                 Surfer of the Year {new Date().getFullYear()}
               </h2>
             </FadeIn>
             <FadeIn delay={0.2}>
-              <p className="text-white/50 mb-8">View the full championship standings on the rankings page.</p>
-              <Link href="/rankings" className="text-teal hover:text-teal/70 font-medium transition-colors">
+              <p className="mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>View the full championship standings on the rankings page.</p>
+              <Link href="/rankings" className="font-medium transition-colors hover:opacity-70" style={{ color: '#2BA5A0' }}>
                 View Full Rankings →
               </Link>
             </FadeIn>
@@ -311,28 +317,28 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
 
       {/* FEATURED ATHLETES */}
       {featuredAthletes.length > 0 && (
-        <section className="py-20 md:py-28 bg-warm-white">
-          <div className="max-w-6xl mx-auto px-6">
+        <section className="py-20 md:py-28" style={{ backgroundColor: '#FAFAF8' }}>
+          <div className="max-w-7xl mx-auto px-6 md:px-8">
             <FadeIn>
-              <p className="text-amber font-mono text-xs uppercase tracking-[0.2em] mb-4">Representing Barbados</p>
-              <h2 className="font-heading font-bold text-3xl md:text-4xl text-navy mb-12">Featured Athletes</h2>
+              <p className="font-mono text-xs uppercase tracking-[0.2em] mb-4" style={{ color: '#D4944A' }}>Representing Barbados</p>
+              <h2 className="font-heading font-bold text-3xl md:text-4xl mb-12" style={{ color: '#0A2540' }}>Featured Athletes</h2>
             </FadeIn>
             <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {featuredAthletes.map((athlete) => (
                 <StaggerItem key={athlete.id}>
                   <ScaleCard>
                     <Link href={`/athletes/${athlete.id}`} className="block">
-                      <div className="aspect-square rounded-2xl bg-sand overflow-hidden mb-4">
+                      <div className="aspect-square rounded-2xl overflow-hidden mb-4" style={{ backgroundColor: '#F2EDE4' }}>
                         {athlete.image ? (
                           <Image src={athlete.image} alt={athlete.name} width={400} height={400} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-navy/20 font-heading text-4xl">
+                          <div className="w-full h-full flex items-center justify-center font-heading text-4xl" style={{ color: 'rgba(10,37,64,0.2)' }}>
                             {athlete.name.charAt(0)}
                           </div>
                         )}
                       </div>
-                      <h3 className="font-heading font-semibold text-navy">{athlete.name}</h3>
-                      <p className="text-dark/40 text-sm">Barbados</p>
+                      <h3 className="font-heading font-semibold" style={{ color: '#0A2540' }}>{athlete.name}</h3>
+                      <p className="text-sm" style={{ color: 'rgba(26,26,26,0.4)' }}>Barbados</p>
                     </Link>
                   </ScaleCard>
                 </StaggerItem>
@@ -343,21 +349,21 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
       )}
 
       {/* SURF SPOTS */}
-      <section className="py-20 md:py-28 bg-sand">
-        <div className="max-w-6xl mx-auto px-6">
+      <section className="py-20 md:py-28" style={{ backgroundColor: '#F2EDE4' }}>
+        <div className="max-w-7xl mx-auto px-6 md:px-8">
           <FadeIn>
-            <p className="text-amber font-mono text-xs uppercase tracking-[0.2em] mb-4">Our Waves</p>
-            <h2 className="font-heading font-bold text-3xl md:text-4xl text-navy mb-12">Surf Breaks</h2>
+            <p className="font-mono text-xs uppercase tracking-[0.2em] mb-4" style={{ color: '#D4944A' }}>Our Waves</p>
+            <h2 className="font-heading font-bold text-3xl md:text-4xl mb-12" style={{ color: '#0A2540' }}>Surf Breaks</h2>
           </FadeIn>
-          <StaggerContainer className="grid md:grid-cols-2 gap-6">
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {SURF_SPOTS.map((spot) => (
               <StaggerItem key={spot.name}>
-                <div className="bg-white rounded-2xl p-8 shadow-sm">
+                <div className="rounded-2xl p-8 shadow-sm" style={{ backgroundColor: '#ffffff' }}>
                   <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-heading font-bold text-xl text-navy">{spot.name}</h3>
-                    <span className="text-xs font-mono text-dark/30 uppercase">{spot.coast}</span>
+                    <h3 className="font-heading font-bold text-xl" style={{ color: '#0A2540' }}>{spot.name}</h3>
+                    <span className="text-xs font-mono uppercase" style={{ color: 'rgba(26,26,26,0.3)' }}>{spot.coast}</span>
                   </div>
-                  <p className="text-dark/60 leading-relaxed">{spot.description}</p>
+                  <p className="leading-relaxed" style={{ color: 'rgba(26,26,26,0.6)' }}>{spot.description}</p>
                 </div>
               </StaggerItem>
             ))}
@@ -366,13 +372,13 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
       </section>
 
       {/* GET INVOLVED */}
-      <section className="py-20 md:py-28 bg-warm-white">
-        <div className="max-w-6xl mx-auto px-6">
+      <section className="py-20 md:py-28" style={{ backgroundColor: '#FAFAF8' }}>
+        <div className="max-w-7xl mx-auto px-6 md:px-8">
           <FadeIn>
-            <p className="text-amber font-mono text-xs uppercase tracking-[0.2em] mb-4 text-center">Join Us</p>
-            <h2 className="font-heading font-bold text-3xl md:text-4xl text-navy mb-12 text-center">Get Involved</h2>
+            <p className="font-mono text-xs uppercase tracking-[0.2em] mb-4 text-center" style={{ color: '#D4944A' }}>Join Us</p>
+            <h2 className="font-heading font-bold text-3xl md:text-4xl mb-12 text-center" style={{ color: '#0A2540' }}>Get Involved</h2>
           </FadeIn>
-          <StaggerContainer className="grid md:grid-cols-3 gap-6">
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               { title: 'COMPETE', text: 'Join the SOTY Championship series. Open to all Barbadian surfers.', link: '/events', linkText: 'View Events →' },
               { title: 'MEMBERSHIP', text: 'Become a BSA member and represent Barbados.', link: '/profile', linkText: 'Learn More →' },
@@ -380,10 +386,10 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
             ].map((card) => (
               <StaggerItem key={card.title}>
                 <ScaleCard>
-                  <div className="bg-white rounded-2xl p-8 shadow-sm h-full flex flex-col">
-                    <h3 className="font-heading font-bold text-lg text-navy mb-3">{card.title}</h3>
-                    <p className="text-dark/60 leading-relaxed mb-6 flex-1">{card.text}</p>
-                    <Link href={card.link} className="text-ocean hover:text-ocean/70 font-medium text-sm transition-colors">
+                  <div className="rounded-2xl p-8 shadow-sm h-full flex flex-col" style={{ backgroundColor: '#ffffff' }}>
+                    <h3 className="font-heading font-bold text-lg mb-3" style={{ color: '#0A2540' }}>{card.title}</h3>
+                    <p className="leading-relaxed mb-6 flex-1" style={{ color: 'rgba(26,26,26,0.6)' }}>{card.text}</p>
+                    <Link href={card.link} className="font-medium text-sm transition-colors hover:opacity-70" style={{ color: '#1478B5' }}>
                       {card.linkText}
                     </Link>
                   </div>

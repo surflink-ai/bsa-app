@@ -25,8 +25,8 @@ export function CountdownTimer({ targetDate }: { targetDate: string }) {
     <div className="flex justify-center gap-4 md:gap-8">
       {Object.entries(timeLeft).map(([label, value]) => (
         <div key={label} className="text-center">
-          <div className="font-mono font-bold text-4xl md:text-6xl text-navy">{String(value).padStart(2, '0')}</div>
-          <div className="text-dark/40 text-xs uppercase tracking-wider mt-2">{label}</div>
+          <div className="font-mono font-bold text-4xl md:text-6xl text-[#0A2540]">{String(value).padStart(2, '0')}</div>
+          <div className="text-[#1A1A1A]/40 text-xs uppercase tracking-wider mt-2">{label}</div>
         </div>
       ))}
     </div>

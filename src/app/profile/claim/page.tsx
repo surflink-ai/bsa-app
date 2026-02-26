@@ -54,23 +54,23 @@ export default function ClaimPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-warm-white">
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#FAFAF8]">
         <div className="text-center">
           <div className="text-4xl mb-4">🤙</div>
-          <h1 className="font-heading text-2xl font-bold text-navy mb-2">Claim Submitted</h1>
-          <p className="text-dark/50">A BSA admin will review your request. Redirecting...</p>
+          <h1 className="font-heading text-2xl font-bold text-[#0A2540] mb-2">Claim Submitted</h1>
+          <p className="text-[#1A1A1A]/50">A BSA admin will review your request. Redirecting...</p>
         </div>
       </div>
     )
   }
 
-  const inputClass = "w-full bg-white border border-dark/10 rounded-xl px-4 py-3 text-dark placeholder-dark/30 focus:outline-none focus:ring-2 focus:ring-ocean/30"
+  const inputClass = "w-full bg-white border border-[#1A1A1A]/10 rounded-xl px-4 py-3 text-[#1A1A1A] placeholder-[#1A1A1A]/30 focus:outline-none focus:ring-2 focus:ring-[#1478B5]/30"
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 pb-24 pt-24 md:pt-28">
-      <a href="/profile" className="text-ocean text-sm hover:underline mb-4 inline-block">← Back to Profile</a>
-      <h1 className="font-heading text-2xl font-bold text-navy mb-2">Claim Your Athlete Profile</h1>
-      <p className="text-dark/50 text-sm mb-6">
+      <a href="/profile" className="text-[#1478B5] text-sm hover:underline mb-4 inline-block">← Back to Profile</a>
+      <h1 className="font-heading text-2xl font-bold text-[#0A2540] mb-2">Claim Your Athlete Profile</h1>
+      <p className="text-[#1A1A1A]/50 text-sm mb-6">
         Search for your name and claim your profile to add your bio, photos, and more.
       </p>
 
@@ -86,31 +86,31 @@ export default function ClaimPage() {
           />
 
           {loading ? (
-            <div className="text-dark/40 text-sm">Loading athletes...</div>
+            <div className="text-[#1A1A1A]/40 text-sm">Loading athletes...</div>
           ) : athletes.length > 0 ? (
             <div className="space-y-2">
               {athletes.map((a) => (
                 <button
                   key={a.id}
                   onClick={() => setSelected(a)}
-                  className="w-full flex items-center gap-3 bg-white hover:bg-sand rounded-xl px-4 py-3 transition-colors text-left shadow-sm"
+                  className="w-full flex items-center gap-3 bg-white hover:bg-[#F2EDE4] rounded-xl px-4 py-3 transition-colors text-left shadow-sm"
                 >
                   {a.image ? (
                     <Image src={a.image} alt={a.name} width={40} height={40} className="rounded-full object-cover" />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-sand flex items-center justify-center text-navy/30 text-sm font-medium">
+                    <div className="w-10 h-10 rounded-full bg-[#F2EDE4] flex items-center justify-center text-[#0A2540]/30 text-sm font-medium">
                       {a.name.charAt(0)}
                     </div>
                   )}
                   <div>
-                    <div className="font-medium text-navy">{a.name}</div>
-                    {a.nationality && <div className="text-xs text-dark/40">{a.nationality}</div>}
+                    <div className="font-medium text-[#0A2540]">{a.name}</div>
+                    {a.nationality && <div className="text-xs text-[#1A1A1A]/40">{a.nationality}</div>}
                   </div>
                 </button>
               ))}
             </div>
           ) : search.trim() ? (
-            <div className="text-dark/40 text-sm">No athletes found matching &ldquo;{search}&rdquo;</div>
+            <div className="text-[#1A1A1A]/40 text-sm">No athletes found matching &ldquo;{search}&rdquo;</div>
           ) : null}
         </>
       ) : (
@@ -119,19 +119,19 @@ export default function ClaimPage() {
             {selected.image ? (
               <Image src={selected.image} alt={selected.name} width={48} height={48} className="rounded-full" />
             ) : (
-              <div className="w-12 h-12 rounded-full bg-sand flex items-center justify-center text-lg font-medium text-navy/30">
+              <div className="w-12 h-12 rounded-full bg-[#F2EDE4] flex items-center justify-center text-lg font-medium text-[#0A2540]/30">
                 {selected.name.charAt(0)}
               </div>
             )}
             <div>
-              <div className="font-semibold text-navy">{selected.name}</div>
-              {selected.nationality && <div className="text-xs text-dark/40">{selected.nationality}</div>}
+              <div className="font-semibold text-[#0A2540]">{selected.name}</div>
+              {selected.nationality && <div className="text-xs text-[#1A1A1A]/40">{selected.nationality}</div>}
             </div>
-            <button onClick={() => setSelected(null)} className="ml-auto text-sm text-dark/40 hover:text-dark">Change</button>
+            <button onClick={() => setSelected(null)} className="ml-auto text-sm text-[#1A1A1A]/40 hover:text-[#1A1A1A]">Change</button>
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm text-dark/50 mb-1">How can we verify this is you? (optional)</label>
+            <label className="block text-sm text-[#1A1A1A]/50 mb-1">How can we verify this is you? (optional)</label>
             <textarea
               value={proof}
               onChange={(e) => setProof(e.target.value)}
@@ -144,7 +144,7 @@ export default function ClaimPage() {
           <button
             onClick={handleClaim}
             disabled={submitting}
-            className="bg-ocean hover:bg-ocean/80 text-white font-semibold rounded-xl px-6 py-3 transition-colors disabled:opacity-50"
+            className="bg-[#1478B5] hover:bg-[#1478B5]/80 text-white font-semibold rounded-xl px-6 py-3 transition-colors disabled:opacity-50"
           >
             {submitting ? 'Submitting...' : 'Submit Claim'}
           </button>

@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
         <meta name="theme-color" content="#0A2540" />
       </head>
-      <body className="min-h-screen bg-warm-white text-dark font-body antialiased">
+      <body className="min-h-screen antialiased" style={{ backgroundColor: "#FAFAF8", color: "#1A1A1A", fontFamily: "'DM Sans', sans-serif" }}>
         <Navigation />
         <main>{children}</main>
         <Footer />

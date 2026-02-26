@@ -1,61 +1,42 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { ReactNode } from 'react'
+import { useScrollReveal } from '../hooks/useScrollReveal'
 
 export function FadeIn({ children, className = '', delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
+  const { ref, visible } = useScrollReveal()
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
-      transition={{ duration: 0.6, delay, ease: 'easeOut' }}
-      className={className}
+    <div
+      ref={ref}
+      className={`fade-in ${visible ? 'visible' : ''} ${className}`}
+      style={delay ? { transitionDelay: `${delay}s` } : undefined}
     >
       {children}
-    </motion.div>
+    </div>
   )
 }
 
 export function StaggerContainer({ children, className = '' }: { children: ReactNode; className?: string }) {
+  const { ref, visible } = useScrollReveal()
   return (
-    <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: '-50px' }}
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren: 0.1 } },
-      }}
-      className={className}
-    >
+    <div ref={ref} className={`stagger-container ${visible ? 'visible' : ''} ${className}`}>
       {children}
-    </motion.div>
+    </div>
   )
 }
 
 export function StaggerItem({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <motion.div
-      variants={{
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-      }}
-      className={className}
-    >
+    <div className={`fade-in stagger-item ${className}`}>
       {children}
-    </motion.div>
+    </div>
   )
 }
 
 export function ScaleCard({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <motion.div
-      whileHover={{ scale: 1.03, y: -4 }}
-      transition={{ duration: 0.2 }}
-      className={className}
-    >
+    <div className={`scale-hover ${className}`}>
       {children}
-    </motion.div>
+    </div>
   )
 }

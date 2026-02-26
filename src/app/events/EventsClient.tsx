@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
 import { FadeIn, StaggerContainer, StaggerItem, ScaleCard } from '../components/AnimatedSection'
 import type { BSAEvent } from '@/lib/liveheats'
 
@@ -37,53 +36,45 @@ export function EventsClient({ upcoming, past }: { upcoming: BSAEvent[]; past: B
           ))}
         </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={tab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-          >
-            {events.length === 0 ? (
-              <p className="text-center py-20" style={{ color: 'rgba(26,26,26,0.4)' }}>No {tab} events found.</p>
-            ) : (
-              <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {events.map(event => (
-                  <StaggerItem key={event.id}>
-                    <ScaleCard>
-                      <Link href={`/events/${event.id}`} className="block bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-3">
-                          <span className="text-xs font-mono px-3 py-1 rounded-full" style={
-                            event.status === 'upcoming' ? { backgroundColor: 'rgba(43,165,160,0.1)', color: '#2BA5A0' } :
-                            event.status === 'registration_open' ? { backgroundColor: '#dcfce7', color: '#16a34a' } :
-                            { backgroundColor: 'rgba(212,148,74,0.1)', color: '#D4944A' }
-                          }>
-                            {event.status === 'results_published' ? 'Results' : event.status === 'registration_open' ? 'Registration Open' : 'Upcoming'}
+        <div key={tab}>
+          {events.length === 0 ? (
+            <p className="text-center py-20" style={{ color: 'rgba(26,26,26,0.4)' }}>No {tab} events found.</p>
+          ) : (
+            <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {events.map(event => (
+                <StaggerItem key={event.id}>
+                  <ScaleCard>
+                    <Link href={`/events/${event.id}`} className="block bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between mb-3">
+                        <span className="text-xs font-mono px-3 py-1 rounded-full" style={
+                          event.status === 'upcoming' ? { backgroundColor: 'rgba(43,165,160,0.1)', color: '#2BA5A0' } :
+                          event.status === 'registration_open' ? { backgroundColor: '#dcfce7', color: '#16a34a' } :
+                          { backgroundColor: 'rgba(212,148,74,0.1)', color: '#D4944A' }
+                        }>
+                          {event.status === 'results_published' ? 'Results' : event.status === 'registration_open' ? 'Registration Open' : 'Upcoming'}
+                        </span>
+                      </div>
+                      <h3 className="font-heading font-bold text-lg mb-2" style={{ color: '#0A2540' }}>{event.name}</h3>
+                      <p className="text-sm mb-4" style={{ color: 'rgba(26,26,26,0.4)' }}>
+                        {new Date(event.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {event.eventDivisions.slice(0, 4).map(div => (
+                          <span key={div.id} className="text-xs px-2 py-1 rounded" style={{ color: 'rgba(26,26,26,0.3)', backgroundColor: '#F2EDE4' }}>
+                            {div.division.name}
                           </span>
-                        </div>
-                        <h3 className="font-heading font-bold text-lg mb-2" style={{ color: '#0A2540' }}>{event.name}</h3>
-                        <p className="text-sm mb-4" style={{ color: 'rgba(26,26,26,0.4)' }}>
-                          {new Date(event.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {event.eventDivisions.slice(0, 4).map(div => (
-                            <span key={div.id} className="text-xs px-2 py-1 rounded" style={{ color: 'rgba(26,26,26,0.3)', backgroundColor: '#F2EDE4' }}>
-                              {div.division.name}
-                            </span>
-                          ))}
-                          {event.eventDivisions.length > 4 && (
-                            <span className="text-xs" style={{ color: 'rgba(26,26,26,0.3)' }}>+{event.eventDivisions.length - 4}</span>
-                          )}
-                        </div>
-                      </Link>
-                    </ScaleCard>
-                  </StaggerItem>
-                ))}
-              </StaggerContainer>
-            )}
-          </motion.div>
-        </AnimatePresence>
+                        ))}
+                        {event.eventDivisions.length > 4 && (
+                          <span className="text-xs" style={{ color: 'rgba(26,26,26,0.3)' }}>+{event.eventDivisions.length - 4}</span>
+                        )}
+                      </div>
+                    </Link>
+                  </ScaleCard>
+                </StaggerItem>
+              ))}
+            </StaggerContainer>
+          )}
+        </div>
       </section>
     </div>
   )

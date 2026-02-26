@@ -2,7 +2,6 @@
 
 
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { FadeIn, StaggerContainer, StaggerItem } from '../../components/AnimatedSection'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts'
 

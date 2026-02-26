@@ -3,7 +3,6 @@
 import { useState } from 'react'
 
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
 import { FadeIn } from '../components/AnimatedSection'
 
 interface SeriesData {
@@ -68,59 +67,45 @@ export function RankingsClient({ series }: { series: SeriesData[] }) {
         )}
 
         {/* Rankings */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${selectedSeries}-${selectedDiv}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {!currentDivision || currentDivision.rankings.length === 0 ? (
-              <p className="text-center py-20" style={{ color: 'rgba(26,26,26,0.4)' }}>No rankings available for this series.</p>
-            ) : (
-              <div className="space-y-3">
-                {currentDivision.rankings.map((r, i) => (
-                  <motion.div
-                    key={r.athleteId}
-                    initial={{ opacity: 0, x: -30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05, duration: 0.4 }}
-                    className="bg-white rounded-xl p-4 shadow-sm"
-                  >
-                    <div className="flex items-center gap-4">
-                      <span className="font-mono font-bold w-8 text-center" style={{ color: r.place <= 3 ? '#D4944A' : 'rgba(26,26,26,0.3)' }}>
-                        {r.place}
-                      </span>
-                      <div className="w-10 h-10 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: '#F2EDE4' }}>
-                        {r.athleteImage ? (
-                          <img src={r.athleteImage} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-sm font-heading" style={{ color: 'rgba(10,37,64,0.2)' }}>{r.athleteName.charAt(0)}</div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <Link href={`/athletes/${r.athleteId}`} className="font-heading font-semibold text-sm transition-colors block truncate" style={{ color: '#0A2540' }}>
-                          {r.athleteName}
-                        </Link>
-                        <div className="mt-1.5 h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#F2EDE4' }}>
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(r.total / maxPoints) * 100}%` }}
-                            transition={{ delay: i * 0.05 + 0.3, duration: 0.6, ease: 'easeOut' }}
-                            className="h-full rounded-full"
-                            style={{ backgroundColor: r.place === 1 ? '#D4944A' : r.place <= 3 ? '#1478B5' : 'rgba(43,165,160,0.5)' }}
-                          />
-                        </div>
-                      </div>
-                      <span className="font-mono text-sm font-semibold" style={{ color: '#0A2540' }}>{r.total.toFixed(2)}</span>
+        <div key={`${selectedSeries}-${selectedDiv}`}>
+          {!currentDivision || currentDivision.rankings.length === 0 ? (
+            <p className="text-center py-20" style={{ color: 'rgba(26,26,26,0.4)' }}>No rankings available for this series.</p>
+          ) : (
+            <div className="space-y-3">
+              {currentDivision.rankings.map((r) => (
+                <div
+                  key={r.athleteId}
+                  className="bg-white rounded-xl p-4 shadow-sm"
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="font-mono font-bold w-8 text-center" style={{ color: r.place <= 3 ? '#D4944A' : 'rgba(26,26,26,0.3)' }}>
+                      {r.place}
+                    </span>
+                    <div className="w-10 h-10 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: '#F2EDE4' }}>
+                      {r.athleteImage ? (
+                        <img src={r.athleteImage} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-sm font-heading" style={{ color: 'rgba(10,37,64,0.2)' }}>{r.athleteName.charAt(0)}</div>
+                      )}
                     </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
+                    <div className="flex-1 min-w-0">
+                      <Link href={`/athletes/${r.athleteId}`} className="font-heading font-semibold text-sm transition-colors block truncate" style={{ color: '#0A2540' }}>
+                        {r.athleteName}
+                      </Link>
+                      <div className="mt-1.5 h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#F2EDE4' }}>
+                        <div
+                          className="h-full rounded-full transition-all duration-700 ease-out"
+                          style={{ width: `${(r.total / maxPoints) * 100}%`, backgroundColor: r.place === 1 ? '#D4944A' : r.place <= 3 ? '#1478B5' : 'rgba(43,165,160,0.5)' }}
+                        />
+                      </div>
+                    </div>
+                    <span className="font-mono text-sm font-semibold" style={{ color: '#0A2540' }}>{r.total.toFixed(2)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
     </div>
   )

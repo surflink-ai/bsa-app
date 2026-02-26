@@ -59,3 +59,54 @@ h1, h2, h3, h4, h5, h6 {
 .podium-1 { order: 2; }
 .podium-2 { order: 1; }
 .podium-3 { order: 3; }
+
+/* Fade in on scroll */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.fade-in.visible,
+.stagger-container.visible .fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Hero stagger animations */
+@keyframes heroFadeIn {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes heroScale {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes heroBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(10px); }
+}
+.hero-scale { animation: heroScale 0.8s ease-out forwards; }
+.hero-fade-1 { animation: heroFadeIn 0.8s ease-out 0.2s forwards; opacity: 0; }
+.hero-fade-2 { animation: heroFadeIn 0.8s ease-out 0.4s forwards; opacity: 0; }
+.hero-fade-3 { animation: heroFadeIn 0.8s ease-out 0.6s forwards; opacity: 0; }
+.hero-fade-4 { animation: heroFadeIn 0.8s ease-out 1.2s forwards; opacity: 0; }
+.hero-bounce { animation: heroBounce 2s ease-in-out infinite; }
+
+/* Scale on hover */
+.scale-hover { transition: transform 0.2s ease; }
+.scale-hover:hover { transform: scale(1.03) translateY(-4px); }
+
+/* Stagger children */
+.stagger-container .stagger-item:nth-child(1) { transition-delay: 0s; }
+.stagger-container .stagger-item:nth-child(2) { transition-delay: 0.1s; }
+.stagger-container .stagger-item:nth-child(3) { transition-delay: 0.1s; }
+.stagger-container .stagger-item:nth-child(4) { transition-delay: 0.15s; }
+.stagger-container .stagger-item:nth-child(5) { transition-delay: 0.2s; }
+
+/* Ensure content visible without JS */
+@media (scripting: none) {
+  .fade-in, .hero-fade-1, .hero-fade-2, .hero-fade-3, .hero-fade-4 {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

@@ -2,7 +2,6 @@
 
 
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { FadeIn, StaggerContainer, StaggerItem, ScaleCard } from './components/AnimatedSection'
 import { CountUp } from './components/CountUp'
 import { CountdownTimer } from './components/CountdownTimer'
@@ -56,59 +55,39 @@ export function HomeClient({ org, upcoming, past, latestEvent, latestSeries, fea
       >
         <div className="wave-pattern absolute inset-0 opacity-30" />
         <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
-          >
+          <div className="hero-scale">
             <img
               src="https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp"
               alt="BSA Logo"
               className="mx-auto mb-8 rounded-full"
             />
-          </motion.div>
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="font-heading font-bold text-4xl md:text-7xl lg:text-8xl tracking-tight leading-none mb-6"
+          </div>
+          <h1
+            className="hero-fade-1 font-heading font-bold text-4xl md:text-7xl lg:text-8xl tracking-tight leading-none mb-6"
             style={{ color: '#ffffff' }}
           >
             BARBADOS SURFING<br />ASSOCIATION
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-lg md:text-xl mb-4"
+          </h1>
+          <p
+            className="hero-fade-2 text-lg md:text-xl mb-4"
             style={{ color: 'rgba(255,255,255,0.6)' }}
           >
             The National Governing Body for Surfing in Barbados
-          </motion.p>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="text-sm font-mono tracking-widest"
+          </p>
+          <p
+            className="hero-fade-3 text-sm font-mono tracking-widest"
             style={{ color: 'rgba(255,255,255,0.3)' }}
           >
             EST. 1995 — ISA MEMBER FEDERATION
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2, duration: 1 }}
-            className="mt-16"
-          >
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ repeat: Infinity, duration: 2 }}
+          </p>
+          <div className="hero-fade-4 mt-16">
+            <div
+              className="hero-bounce text-2xl"
               style={{ color: 'rgba(255,255,255,0.3)' }}
-              className="text-2xl"
             >
               ↓
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         </div>
       </section>
 

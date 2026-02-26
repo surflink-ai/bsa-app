@@ -3,7 +3,6 @@
 import { useState } from 'react'
 
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
 import { FadeIn } from '../../components/AnimatedSection'
 import type { EventDivisionFull, Heat, HeatResult, RideScore } from '@/lib/liveheats'
 
@@ -99,165 +98,143 @@ export function EventDetailClient({ event }: Props) {
           ))}
         </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${selectedDivIdx}-${viewTab}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {viewTab === 'rankings' ? (
-              <div>
-                {/* Podium */}
-                {topThree.length >= 3 && (
-                  <div className="flex items-end justify-center gap-4 md:gap-8 mb-12">
-                    {[1, 0, 2].map(i => {
-                      const r = topThree[i]
-                      if (!r) return null
-                      const isFirst = i === 0
-                      return (
-                        <motion.div
-                          key={r.competitor.athlete.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.15, duration: 0.5 }}
-                          className="text-center"
+        <div key={`${selectedDivIdx}-${viewTab}`}>
+          {viewTab === 'rankings' ? (
+            <div>
+              {/* Podium */}
+              {topThree.length >= 3 && (
+                <div className="flex items-end justify-center gap-4 md:gap-8 mb-12">
+                  {[1, 0, 2].map(i => {
+                    const r = topThree[i]
+                    if (!r) return null
+                    const isFirst = i === 0
+                    return (
+                      <div
+                        key={r.competitor.athlete.id}
+                        className="text-center"
+                      >
+                        <div
+                          className={`${isFirst ? 'w-24 h-24 md:w-32 md:h-32' : 'w-20 h-20 md:w-24 md:h-24'} mx-auto mb-3 rounded-full overflow-hidden`}
+                          style={{ backgroundColor: '#F2EDE4', ...(isFirst ? { boxShadow: '0 0 0 4px #D4944A' } : {}) }}
                         >
-                          <div
-                            className={`${isFirst ? 'w-24 h-24 md:w-32 md:h-32' : 'w-20 h-20 md:w-24 md:h-24'} mx-auto mb-3 rounded-full overflow-hidden`}
-                            style={{ backgroundColor: '#F2EDE4', ...(isFirst ? { boxShadow: '0 0 0 4px #D4944A' } : {}) }}
+                          {r.competitor.athlete.image ? (
+                            <img src={r.competitor.athlete.image} alt={r.competitor.athlete.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center font-heading text-xl" style={{ color: 'rgba(10,37,64,0.3)' }}>{r.place}</div>
+                          )}
+                        </div>
+                        <Link href={`/athletes/${r.competitor.athlete.id}`} className="font-heading font-semibold text-sm transition-colors" style={{ color: '#0A2540' }}>
+                          {r.competitor.athlete.name}
+                        </Link>
+                        <p className="font-mono text-xs" style={{ color: 'rgba(26,26,26,0.4)' }}>{r.total?.toFixed(2)} pts</p>
+                        <div
+                          className={`${isFirst ? 'h-28 md:h-32 w-24 md:w-32' : i === 1 ? 'h-20 md:h-24 w-20 md:w-28' : 'h-16 md:h-20 w-20 md:w-28'} mx-auto mt-3 rounded-t-lg flex items-center justify-center`}
+                          style={{ backgroundColor: isFirst ? 'rgba(212,148,74,0.2)' : '#F2EDE4' }}
+                        >
+                          <span className="font-heading font-bold text-2xl" style={{ color: isFirst ? '#D4944A' : 'rgba(10,37,64,0.3)' }}>{r.place}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Rankings table */}
+              {rest.length > 0 && (
+                <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+                  {rest.map((r) => (
+                    <div
+                      key={r.competitor.athlete.id}
+                      className="flex items-center gap-4 px-6 py-4 border-b last:border-0"
+                      style={{ borderColor: 'rgba(26,26,26,0.05)' }}
+                    >
+                      <span className="font-mono w-8 text-sm" style={{ color: 'rgba(26,26,26,0.3)' }}>{r.place}</span>
+                      <div className="w-10 h-10 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: '#F2EDE4' }}>
+                        {r.competitor.athlete.image ? (
+                          <img src={r.competitor.athlete.image} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-sm font-heading" style={{ color: 'rgba(10,37,64,0.2)' }}>{r.competitor.athlete.name.charAt(0)}</div>
+                        )}
+                      </div>
+                      <Link href={`/athletes/${r.competitor.athlete.id}`} className="font-medium transition-colors flex-1" style={{ color: '#0A2540' }}>
+                        {r.competitor.athlete.name}
+                      </Link>
+                      <span className="font-mono text-sm" style={{ color: 'rgba(26,26,26,0.5)' }}>{r.total?.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* HEATS VIEW */
+            <div className="space-y-8">
+              {roundOrder.map(([round, heats]) => (
+                <div key={round}>
+                  <h3 className="font-heading font-bold text-lg mb-4" style={{ color: '#0A2540' }}>{round}</h3>
+                  <div className="space-y-3">
+                    {heats.sort((a, b) => a.position - b.position).map(heat => {
+                      const isExpanded = expandedHeat === heat.id
+                      return (
+                        <div key={heat.id} className="bg-white rounded-xl overflow-hidden shadow-sm">
+                          <button
+                            onClick={() => setExpandedHeat(isExpanded ? null : heat.id)}
+                            className="w-full px-6 py-4 flex items-center justify-between text-left"
                           >
-                            {r.competitor.athlete.image ? (
-                              <img src={r.competitor.athlete.image} alt={r.competitor.athlete.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center font-heading text-xl" style={{ color: 'rgba(10,37,64,0.3)' }}>{r.place}</div>
-                            )}
-                          </div>
-                          <Link href={`/athletes/${r.competitor.athlete.id}`} className="font-heading font-semibold text-sm transition-colors" style={{ color: '#0A2540' }}>
-                            {r.competitor.athlete.name}
-                          </Link>
-                          <p className="font-mono text-xs" style={{ color: 'rgba(26,26,26,0.4)' }}>{r.total?.toFixed(2)} pts</p>
-                          <div
-                            className={`${isFirst ? 'h-28 md:h-32 w-24 md:w-32' : i === 1 ? 'h-20 md:h-24 w-20 md:w-28' : 'h-16 md:h-20 w-20 md:w-28'} mx-auto mt-3 rounded-t-lg flex items-center justify-center`}
-                            style={{ backgroundColor: isFirst ? 'rgba(212,148,74,0.2)' : '#F2EDE4' }}
-                          >
-                            <span className="font-heading font-bold text-2xl" style={{ color: isFirst ? '#D4944A' : 'rgba(10,37,64,0.3)' }}>{r.place}</span>
-                          </div>
-                        </motion.div>
+                            <div className="flex items-center gap-4">
+                              <span className="font-mono text-xs" style={{ color: 'rgba(26,26,26,0.3)' }}>H{heat.position}</span>
+                              <div className="flex gap-3">
+                                {(heat.result || []).map((r, i) => (
+                                  <span key={i} className="text-sm" style={r.place === 1 ? { fontWeight: 600, color: '#0A2540' } : { color: 'rgba(26,26,26,0.5)' }}>
+                                    {r.competitor?.athlete?.name || 'TBD'}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            <span className="text-sm" style={{ color: 'rgba(26,26,26,0.3)' }}>{isExpanded ? '−' : '+'}</span>
+                          </button>
+
+                          {isExpanded && (
+                            <div className="overflow-hidden">
+                              <div className="px-6 pb-4 space-y-3 pt-4" style={{ borderTop: '1px solid rgba(26,26,26,0.05)' }}>
+                                {(heat.result || []).sort((a, b) => a.place - b.place).map((r) => {
+                                  const rides = getRides(r)
+                                  return (
+                                    <div key={r.competitor?.athlete?.id || Math.random()} className="flex items-start gap-4" style={{ opacity: r.place === 1 ? 1 : 0.6 }}>
+                                      <div className="w-10 h-10 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: '#F2EDE4' }}>
+                                        {r.competitor?.athlete?.image ? (
+                                          <img src={r.competitor.athlete.image} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                          <div className="w-full h-full flex items-center justify-center text-xs" style={{ color: 'rgba(10,37,64,0.2)' }}>{r.place}</div>
+                                        )}
+                                      </div>
+                                      <div className="flex-1">
+                                        <div className="flex items-center justify-between mb-1">
+                                          <span className="font-medium text-sm" style={{ color: '#0A2540' }}>{r.competitor?.athlete?.name}</span>
+                                          <span className="font-mono text-sm font-semibold" style={{ color: '#0A2540' }}>{r.total?.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex gap-1.5 flex-wrap">
+                                          {rides.map((ride, j) => (
+                                            <span key={j} className="font-mono text-xs px-2 py-0.5 rounded" style={ride.scoring ? { backgroundColor: 'rgba(212,148,74,0.15)', color: '#D4944A', fontWeight: 500 } : { backgroundColor: 'rgba(26,26,26,0.05)', color: 'rgba(26,26,26,0.4)' }}>
+                                              {ride.total.toFixed(2)}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       )
                     })}
                   </div>
-                )}
-
-                {/* Rankings table */}
-                {rest.length > 0 && (
-                  <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-                    {rest.map((r, i) => (
-                      <motion.div
-                        key={r.competitor.athlete.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.05 }}
-                        className="flex items-center gap-4 px-6 py-4 border-b last:border-0"
-                        style={{ borderColor: 'rgba(26,26,26,0.05)' }}
-                      >
-                        <span className="font-mono w-8 text-sm" style={{ color: 'rgba(26,26,26,0.3)' }}>{r.place}</span>
-                        <div className="w-10 h-10 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: '#F2EDE4' }}>
-                          {r.competitor.athlete.image ? (
-                            <img src={r.competitor.athlete.image} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-sm font-heading" style={{ color: 'rgba(10,37,64,0.2)' }}>{r.competitor.athlete.name.charAt(0)}</div>
-                          )}
-                        </div>
-                        <Link href={`/athletes/${r.competitor.athlete.id}`} className="font-medium transition-colors flex-1" style={{ color: '#0A2540' }}>
-                          {r.competitor.athlete.name}
-                        </Link>
-                        <span className="font-mono text-sm" style={{ color: 'rgba(26,26,26,0.5)' }}>{r.total?.toFixed(2)}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* HEATS VIEW */
-              <div className="space-y-8">
-                {roundOrder.map(([round, heats]) => (
-                  <div key={round}>
-                    <h3 className="font-heading font-bold text-lg mb-4" style={{ color: '#0A2540' }}>{round}</h3>
-                    <div className="space-y-3">
-                      {heats.sort((a, b) => a.position - b.position).map(heat => {
-                        const isExpanded = expandedHeat === heat.id
-                        return (
-                          <div key={heat.id} className="bg-white rounded-xl overflow-hidden shadow-sm">
-                            <button
-                              onClick={() => setExpandedHeat(isExpanded ? null : heat.id)}
-                              className="w-full px-6 py-4 flex items-center justify-between text-left"
-                            >
-                              <div className="flex items-center gap-4">
-                                <span className="font-mono text-xs" style={{ color: 'rgba(26,26,26,0.3)' }}>H{heat.position}</span>
-                                <div className="flex gap-3">
-                                  {(heat.result || []).map((r, i) => (
-                                    <span key={i} className="text-sm" style={r.place === 1 ? { fontWeight: 600, color: '#0A2540' } : { color: 'rgba(26,26,26,0.5)' }}>
-                                      {r.competitor?.athlete?.name || 'TBD'}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                              <span className="text-sm" style={{ color: 'rgba(26,26,26,0.3)' }}>{isExpanded ? '−' : '+'}</span>
-                            </button>
-
-                            <AnimatePresence>
-                              {isExpanded && (
-                                <motion.div
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: 'auto', opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ duration: 0.3 }}
-                                  className="overflow-hidden"
-                                >
-                                  <div className="px-6 pb-4 space-y-3 pt-4" style={{ borderTop: '1px solid rgba(26,26,26,0.05)' }}>
-                                    {(heat.result || []).sort((a, b) => a.place - b.place).map((r) => {
-                                      const rides = getRides(r)
-                                      return (
-                                        <div key={r.competitor?.athlete?.id || Math.random()} className="flex items-start gap-4" style={{ opacity: r.place === 1 ? 1 : 0.6 }}>
-                                          <div className="w-10 h-10 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: '#F2EDE4' }}>
-                                            {r.competitor?.athlete?.image ? (
-                                              <img src={r.competitor.athlete.image} alt="" className="w-full h-full object-cover" />
-                                            ) : (
-                                              <div className="w-full h-full flex items-center justify-center text-xs" style={{ color: 'rgba(10,37,64,0.2)' }}>{r.place}</div>
-                                            )}
-                                          </div>
-                                          <div className="flex-1">
-                                            <div className="flex items-center justify-between mb-1">
-                                              <span className="font-medium text-sm" style={{ color: '#0A2540' }}>{r.competitor?.athlete?.name}</span>
-                                              <span className="font-mono text-sm font-semibold" style={{ color: '#0A2540' }}>{r.total?.toFixed(2)}</span>
-                                            </div>
-                                            <div className="flex gap-1.5 flex-wrap">
-                                              {rides.map((ride, j) => (
-                                                <span key={j} className="font-mono text-xs px-2 py-0.5 rounded" style={ride.scoring ? { backgroundColor: 'rgba(212,148,74,0.15)', color: '#D4944A', fontWeight: 500 } : { backgroundColor: 'rgba(26,26,26,0.05)', color: 'rgba(26,26,26,0.4)' }}>
-                                                  {ride.total.toFixed(2)}
-                                                </span>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      )
-                                    })}
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
     </div>
   )

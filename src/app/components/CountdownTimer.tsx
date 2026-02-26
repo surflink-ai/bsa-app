@@ -1,34 +1,29 @@
 'use client'
+import { useEffect, useState } from 'react'
 
-import { useState, useEffect } from 'react'
-
-export function CountdownTimer({ targetDate }: { targetDate: string }) {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-
+export function CountdownTimer({ target, targetDate }: { target?: string; targetDate?: string }) {
+  const tgt = target || targetDate || ''
+  const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 })
   useEffect(() => {
-    const update = () => {
-      const diff = new Date(targetDate).getTime() - Date.now()
-      if (diff <= 0) return setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-      setTimeLeft({
-        days: Math.floor(diff / 86400000),
-        hours: Math.floor((diff % 86400000) / 3600000),
-        minutes: Math.floor((diff % 3600000) / 60000),
-        seconds: Math.floor((diff % 60000) / 1000),
-      })
+    const calc = () => {
+      const diff = Math.max(0, new Date(tgt).getTime() - Date.now())
+      setT({ d: Math.floor(diff / 86400000), h: Math.floor((diff / 3600000) % 24), m: Math.floor((diff / 60000) % 60), s: Math.floor((diff / 1000) % 60) })
     }
-    update()
-    const timer = setInterval(update, 1000)
-    return () => clearInterval(timer)
-  }, [targetDate])
-
+    calc()
+    const i = setInterval(calc, 1000)
+    return () => clearInterval(i)
+  }, [tgt])
+  const units = [{ label: 'Days', value: t.d }, { label: 'Hours', value: t.h }, { label: 'Minutes', value: t.m }, { label: 'Seconds', value: t.s }]
   return (
-    <div className="flex justify-center gap-4 md:gap-8">
-      {Object.entries(timeLeft).map(([label, value]) => (
-        <div key={label} className="text-center">
-          <div className="font-mono font-bold text-4xl md:text-6xl text-[#0A2540]">{String(value).padStart(2, '0')}</div>
-          <div className="text-[#1A1A1A]/40 text-xs uppercase tracking-wider mt-2">{label}</div>
+    <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center' }}>
+      {units.map(u => (
+        <div key={u.label} style={{ textAlign: 'center' }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 700, color: '#1478B5', lineHeight: 1 }}>{String(u.value).padStart(2, '0')}</div>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(26,26,26,0.4)', marginTop: '0.5rem' }}>{u.label}</div>
         </div>
       ))}
     </div>
   )
 }
+
+export default CountdownTimer

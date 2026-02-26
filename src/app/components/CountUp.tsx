@@ -1,26 +1,27 @@
 'use client'
-
-import { useEffect, useState } from 'react'
-import { useInViewOnce } from '../hooks/useScrollReveal'
+import { useEffect, useRef, useState } from 'react'
 
 export function CountUp({ end, suffix = '', duration = 2000 }: { end: number; suffix?: string; duration?: number }) {
-  const { ref, inView } = useInViewOnce()
-  const [count, setCount] = useState(0)
-
+  const [val, setVal] = useState(0)
+  const ref = useRef<HTMLSpanElement>(null)
   useEffect(() => {
-    if (!inView) return
-    let start = 0
-    const startTime = Date.now()
-    const timer = setInterval(() => {
-      const elapsed = Date.now() - startTime
-      const progress = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3)
-      start = Math.floor(eased * end)
-      setCount(start)
-      if (progress >= 1) clearInterval(timer)
-    }, 16)
-    return () => clearInterval(timer)
-  }, [inView, end, duration])
-
-  return <span ref={ref}>{count}{suffix}</span>
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return
+      obs.unobserve(el)
+      const start = performance.now()
+      const tick = (now: number) => {
+        const p = Math.min((now - start) / duration, 1)
+        setVal(Math.round((1 - Math.pow(1 - p, 3)) * end))
+        if (p < 1) requestAnimationFrame(tick)
+      }
+      requestAnimationFrame(tick)
+    }, { threshold: 0.5 })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [end, duration])
+  return <span ref={ref}>{val}{suffix}</span>
 }
+
+export default CountUp

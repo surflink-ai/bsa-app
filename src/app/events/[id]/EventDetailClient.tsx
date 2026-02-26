@@ -1,241 +1,125 @@
-'use client'
-
-import { useState } from 'react'
-
-import Link from 'next/link'
-import { FadeIn } from '../../components/AnimatedSection'
-import type { EventDivisionFull, Heat, HeatResult, RideScore } from '@/lib/liveheats'
+"use client"
+import { useState } from "react"
+import Link from "next/link"
+import type { EventDivisionFull } from "@/lib/liveheats"
+import { ScrollReveal } from "../../components/ScrollReveal"
+import { ChevronDownIcon } from "../../components/Icons"
 
 interface Props {
-  event: {
-    id: string; name: string; date: string; status: string
-    eventDivisions: EventDivisionFull[]
-  }
-}
-
-function getRides(result: HeatResult): { total: number; scoring: boolean }[] {
-  const rides: { total: number; scoring: boolean }[] = []
-  for (const rideList of Object.values(result.rides || {})) {
-    for (const ride of rideList as RideScore[]) {
-      rides.push({ total: ride.total, scoring: !!ride.scoring_ride })
-    }
-  }
-  return rides.sort((a, b) => b.total - a.total)
+  event: { id: string; name: string; date: string; status: string; eventDivisions: EventDivisionFull[] }
 }
 
 export function EventDetailClient({ event }: Props) {
-  const [selectedDivIdx, setSelectedDivIdx] = useState(0)
-  const [viewTab, setViewTab] = useState<'rankings' | 'heats'>('rankings')
-  const [expandedHeat, setExpandedHeat] = useState<string | null>(null)
+  const [activeDivIdx, setActiveDivIdx] = useState(0)
+  const [expandedHeats, setExpandedHeats] = useState<Set<string>>(new Set())
+  const date = new Date(event.date)
+  const div = event.eventDivisions[activeDivIdx]
 
-  const division = event.eventDivisions[selectedDivIdx]
-  if (!division) return <div className="min-h-screen pt-32 text-center" style={{ color: 'rgba(26,26,26,0.4)' }}>No divisions found.</div>
-
-  const ranking = division.ranking || []
-  const topThree = ranking.slice(0, 3)
-  const rest = ranking.slice(3)
-
-  const heatsByRound: Record<string, Heat[]> = {}
-  for (const heat of division.heats || []) {
-    const round = heat.round || 'Unknown'
-    if (!heatsByRound[round]) heatsByRound[round] = []
-    heatsByRound[round].push(heat)
+  const toggleHeat = (id: string) => {
+    setExpandedHeats(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
   }
-  const roundOrder = Object.entries(heatsByRound).sort((a, b) => {
-    const aPos = Math.min(...a[1].map(h => h.position))
-    const bPos = Math.min(...b[1].map(h => h.position))
-    return aPos - bPos
-  })
+
+  const heatsByRound: Record<string, typeof div.heats> = {}
+  if (div) { for (const h of div.heats) { if (!heatsByRound[h.round]) heatsByRound[h.round] = []; heatsByRound[h.round].push(h) } }
+
+  const statusColor = event.status === "in_progress" ? "#2BA5A0" : event.status === "results_published" ? "rgba(26,26,26,0.5)" : "#1478B5"
+  const statusBg = event.status === "in_progress" ? "rgba(43,165,160,0.12)" : event.status === "results_published" ? "rgba(26,26,26,0.06)" : "rgba(20,120,181,0.1)"
+  const statusText = event.status === "in_progress" ? "Live" : event.status === "results_published" ? "Complete" : "Upcoming"
 
   return (
-    <div className="pb-24 md:pb-0">
-      {/* Hero */}
-      <section className="pt-28 pb-12 md:pt-32 md:pb-16" style={{ backgroundColor: '#0A2540' }}>
-        <div className="max-w-7xl mx-auto px-6 md:px-8">
-          <Link href="/events" className="text-sm transition-colors mb-4 inline-block" style={{ color: 'rgba(255,255,255,0.3)' }}>← Events</Link>
-          <FadeIn>
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-xs font-mono px-3 py-1 rounded-full" style={
-                event.status === 'results_published' ? { backgroundColor: 'rgba(212,148,74,0.2)', color: '#D4944A' } : { backgroundColor: 'rgba(43,165,160,0.2)', color: '#2BA5A0' }
-              }>
-                {event.status === 'results_published' ? 'Results' : 'Upcoming'}
-              </span>
-            </div>
-            <h1 className="font-heading font-bold text-3xl md:text-5xl mb-4" style={{ color: '#ffffff' }}>{event.name}</h1>
-            <p style={{ color: 'rgba(255,255,255,0.5)' }}>
-              {new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
-          </FadeIn>
+    <div style={{ paddingTop: 64 }}>
+      <section style={{ backgroundColor: "#FAFAF8", padding: "64px 24px 48px" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <Link href="/events" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(26,26,26,0.4)", textDecoration: "none", marginBottom: 24, display: "inline-block" }}>&larr; All Events</Link>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16, marginBottom: 8 }}>
+            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.5rem, 4vw, 2.5rem)", color: "#1A1A1A" }}>{event.name}</h1>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, padding: "4px 12px", borderRadius: 16, backgroundColor: statusBg, color: statusColor, textTransform: "uppercase", letterSpacing: "0.1em" }}>{statusText}</span>
+          </div>
+          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, color: "rgba(26,26,26,0.45)" }}>
+            {date.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          </p>
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-6 md:px-8 py-8">
-        {/* Division Selector */}
-        <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6">
-          {event.eventDivisions.map((div, idx) => (
-            <button
-              key={div.id}
-              onClick={() => { setSelectedDivIdx(idx); setViewTab('rankings') }}
-              className="whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all"
-              style={idx === selectedDivIdx ? { backgroundColor: '#0A2540', color: '#ffffff' } : { backgroundColor: '#F2EDE4', color: 'rgba(26,26,26,0.5)' }}
-            >
-              {div.division.name}
-            </button>
-          ))}
-        </div>
+      {event.eventDivisions.length > 0 && (
+        <section style={{ backgroundColor: "#F2EDE4", padding: "0 24px" }}>
+          <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+            <div className="no-scrollbar" style={{ display: "flex", gap: 4, overflowX: "auto", padding: "16px 0" }}>
+              {event.eventDivisions.map((d, i) => (
+                <button key={d.id} onClick={() => { setActiveDivIdx(i); setExpandedHeats(new Set()) }} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500, padding: "8px 18px", borderRadius: 6, border: "none", cursor: "pointer", whiteSpace: "nowrap", backgroundColor: activeDivIdx === i ? "#0A2540" : "transparent", color: activeDivIdx === i ? "#fff" : "rgba(26,26,26,0.5)", transition: "all 0.2s ease" }}>{d.division.name}</button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
-        {/* View Tabs */}
-        <div className="flex gap-1 rounded-full p-1 w-fit mb-8" style={{ backgroundColor: '#F2EDE4' }}>
-          {(['rankings', 'heats'] as const).map(t => (
-            <button
-              key={t}
-              onClick={() => setViewTab(t)}
-              className="px-5 py-2 rounded-full text-sm font-medium transition-all capitalize"
-              style={viewTab === t ? { backgroundColor: '#0A2540', color: '#ffffff' } : { color: 'rgba(26,26,26,0.4)' }}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-
-        <div key={`${selectedDivIdx}-${viewTab}`}>
-          {viewTab === 'rankings' ? (
-            <div>
-              {/* Podium */}
-              {topThree.length >= 3 && (
-                <div className="flex items-end justify-center gap-4 md:gap-8 mb-12">
-                  {[1, 0, 2].map(i => {
-                    const r = topThree[i]
-                    if (!r) return null
-                    const isFirst = i === 0
-                    return (
-                      <div
-                        key={r.competitor.athlete.id}
-                        className="text-center"
-                      >
-                        <div
-                          className={`${isFirst ? 'w-24 h-24 md:w-32 md:h-32' : 'w-20 h-20 md:w-24 md:h-24'} mx-auto mb-3 rounded-full overflow-hidden`}
-                          style={{ backgroundColor: '#F2EDE4', ...(isFirst ? { boxShadow: '0 0 0 4px #D4944A' } : {}) }}
-                        >
-                          {r.competitor.athlete.image ? (
-                            <img src={r.competitor.athlete.image} alt={r.competitor.athlete.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center font-heading text-xl" style={{ color: 'rgba(10,37,64,0.3)' }}>{r.place}</div>
+      {div && (
+        <section style={{ backgroundColor: "#FAFAF8", padding: "48px 24px 96px" }}>
+          <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+            {div.ranking && div.ranking.length > 0 && (
+              <ScrollReveal>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 20 }}>FINAL STANDINGS</div>
+                <div style={{ backgroundColor: "#fff", borderRadius: 10, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", marginBottom: 48 }}>
+                  {div.ranking.map((r, i) => (
+                    <Link key={`${r.competitor.athlete.id}-${i}`} href={`/athletes/${r.competitor.athlete.id}`} style={{ textDecoration: "none", display: "block" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 24px", backgroundColor: i % 2 === 0 ? "#fff" : "#FAFAF8", borderBottom: "1px solid rgba(26,26,26,0.04)" }}>
+                        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 14, color: i < 3 ? "#1478B5" : "rgba(26,26,26,0.3)", width: 32, textAlign: "center" }}>{r.place}</div>
+                        <div style={{ width: 36, height: 36, borderRadius: "50%", backgroundColor: "#F2EDE4", overflow: "hidden", flexShrink: 0 }}>
+                          {r.competitor.athlete.image ? <img src={r.competitor.athlete.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (
+                            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, color: "rgba(26,26,26,0.2)", fontWeight: 600 }}>{r.competitor.athlete.name.split(" ").map(n => n[0]).join("")}</div>
                           )}
                         </div>
-                        <Link href={`/athletes/${r.competitor.athlete.id}`} className="font-heading font-semibold text-sm transition-colors" style={{ color: '#0A2540' }}>
-                          {r.competitor.athlete.name}
-                        </Link>
-                        <p className="font-mono text-xs" style={{ color: 'rgba(26,26,26,0.4)' }}>{r.total?.toFixed(2)} pts</p>
-                        <div
-                          className={`${isFirst ? 'h-28 md:h-32 w-24 md:w-32' : i === 1 ? 'h-20 md:h-24 w-20 md:w-28' : 'h-16 md:h-20 w-20 md:w-28'} mx-auto mt-3 rounded-t-lg flex items-center justify-center`}
-                          style={{ backgroundColor: isFirst ? 'rgba(212,148,74,0.2)' : '#F2EDE4' }}
-                        >
-                          <span className="font-heading font-bold text-2xl" style={{ color: isFirst ? '#D4944A' : 'rgba(10,37,64,0.3)' }}>{r.place}</span>
-                        </div>
+                        <div style={{ flex: 1, fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, color: "#1A1A1A" }}>{r.competitor.athlete.name}</div>
+                        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 14, color: "#2BA5A0" }}>{r.total.toFixed(2)}</div>
                       </div>
-                    )
-                  })}
-                </div>
-              )}
-
-              {/* Rankings table */}
-              {rest.length > 0 && (
-                <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-                  {rest.map((r) => (
-                    <div
-                      key={r.competitor.athlete.id}
-                      className="flex items-center gap-4 px-6 py-4 border-b last:border-0"
-                      style={{ borderColor: 'rgba(26,26,26,0.05)' }}
-                    >
-                      <span className="font-mono w-8 text-sm" style={{ color: 'rgba(26,26,26,0.3)' }}>{r.place}</span>
-                      <div className="w-10 h-10 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: '#F2EDE4' }}>
-                        {r.competitor.athlete.image ? (
-                          <img src={r.competitor.athlete.image} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-sm font-heading" style={{ color: 'rgba(10,37,64,0.2)' }}>{r.competitor.athlete.name.charAt(0)}</div>
-                        )}
-                      </div>
-                      <Link href={`/athletes/${r.competitor.athlete.id}`} className="font-medium transition-colors flex-1" style={{ color: '#0A2540' }}>
-                        {r.competitor.athlete.name}
-                      </Link>
-                      <span className="font-mono text-sm" style={{ color: 'rgba(26,26,26,0.5)' }}>{r.total?.toFixed(2)}</span>
-                    </div>
+                    </Link>
                   ))}
                 </div>
-              )}
-            </div>
-          ) : (
-            /* HEATS VIEW */
-            <div className="space-y-8">
-              {roundOrder.map(([round, heats]) => (
-                <div key={round}>
-                  <h3 className="font-heading font-bold text-lg mb-4" style={{ color: '#0A2540' }}>{round}</h3>
-                  <div className="space-y-3">
+              </ScrollReveal>
+            )}
+            {Object.keys(heatsByRound).length > 0 && (
+              <ScrollReveal>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 20 }}>HEATS</div>
+                {Object.entries(heatsByRound).map(([round, heats]) => (
+                  <div key={round} style={{ marginBottom: 24 }}>
+                    <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 16, color: "#1A1A1A", marginBottom: 12 }}>{round}</h3>
                     {heats.sort((a, b) => a.position - b.position).map(heat => {
-                      const isExpanded = expandedHeat === heat.id
+                      const isOpen = expandedHeats.has(heat.id)
                       return (
-                        <div key={heat.id} className="bg-white rounded-xl overflow-hidden shadow-sm">
-                          <button
-                            onClick={() => setExpandedHeat(isExpanded ? null : heat.id)}
-                            className="w-full px-6 py-4 flex items-center justify-between text-left"
-                          >
-                            <div className="flex items-center gap-4">
-                              <span className="font-mono text-xs" style={{ color: 'rgba(26,26,26,0.3)' }}>H{heat.position}</span>
-                              <div className="flex gap-3">
-                                {(heat.result || []).map((r, i) => (
-                                  <span key={i} className="text-sm" style={r.place === 1 ? { fontWeight: 600, color: '#0A2540' } : { color: 'rgba(26,26,26,0.5)' }}>
-                                    {r.competitor?.athlete?.name || 'TBD'}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                            <span className="text-sm" style={{ color: 'rgba(26,26,26,0.3)' }}>{isExpanded ? '−' : '+'}</span>
+                        <div key={heat.id} style={{ backgroundColor: "#fff", borderRadius: 8, marginBottom: 8, overflow: "hidden", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
+                          <button onClick={() => toggleHeat(heat.id)} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 20px", border: "none", cursor: "pointer", backgroundColor: "transparent", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#1A1A1A" }}>
+                            <span>Heat {heat.position}</span>
+                            <span style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s ease", color: "rgba(26,26,26,0.3)" }}><ChevronDownIcon size={16} /></span>
                           </button>
-
-                          {isExpanded && (
-                            <div className="overflow-hidden">
-                              <div className="px-6 pb-4 space-y-3 pt-4" style={{ borderTop: '1px solid rgba(26,26,26,0.05)' }}>
-                                {(heat.result || []).sort((a, b) => a.place - b.place).map((r) => {
-                                  const rides = getRides(r)
-                                  return (
-                                    <div key={r.competitor?.athlete?.id || Math.random()} className="flex items-start gap-4" style={{ opacity: r.place === 1 ? 1 : 0.6 }}>
-                                      <div className="w-10 h-10 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: '#F2EDE4' }}>
-                                        {r.competitor?.athlete?.image ? (
-                                          <img src={r.competitor.athlete.image} alt="" className="w-full h-full object-cover" />
-                                        ) : (
-                                          <div className="w-full h-full flex items-center justify-center text-xs" style={{ color: 'rgba(10,37,64,0.2)' }}>{r.place}</div>
-                                        )}
-                                      </div>
-                                      <div className="flex-1">
-                                        <div className="flex items-center justify-between mb-1">
-                                          <span className="font-medium text-sm" style={{ color: '#0A2540' }}>{r.competitor?.athlete?.name}</span>
-                                          <span className="font-mono text-sm font-semibold" style={{ color: '#0A2540' }}>{r.total?.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex gap-1.5 flex-wrap">
-                                          {rides.map((ride, j) => (
-                                            <span key={j} className="font-mono text-xs px-2 py-0.5 rounded" style={ride.scoring ? { backgroundColor: 'rgba(212,148,74,0.15)', color: '#D4944A', fontWeight: 500 } : { backgroundColor: 'rgba(26,26,26,0.05)', color: 'rgba(26,26,26,0.4)' }}>
-                                              {ride.total.toFixed(2)}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      </div>
+                          {isOpen && heat.result && (
+                            <div style={{ padding: "0 20px 16px" }}>
+                              {heat.result.sort((a, b) => a.place - b.place).map((r, ri) => {
+                                const waves = Object.values(r.rides || {}).flat()
+                                return (
+                                  <div key={ri} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderTop: ri > 0 ? "1px solid rgba(26,26,26,0.04)" : "none" }}>
+                                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: r.place <= 2 ? "#1478B5" : "rgba(26,26,26,0.3)", width: 24, textAlign: "center", fontWeight: 600 }}>{r.place}</div>
+                                    <div style={{ flex: 1, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#1A1A1A" }}>{r.competitor.athlete.name}</div>
+                                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                                      {waves.map((w, wi) => (
+                                        <span key={wi} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: w.scoring_ride ? "rgba(43,165,160,0.1)" : "rgba(26,26,26,0.03)", color: w.scoring_ride ? "#2BA5A0" : "rgba(26,26,26,0.4)", fontWeight: w.scoring_ride ? 600 : 400 }}>{w.total.toFixed(2)}</span>
+                                      ))}
                                     </div>
-                                  )
-                                })}
-                              </div>
+                                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 14, color: "#1A1A1A", minWidth: 48, textAlign: "right" }}>{r.total.toFixed(2)}</div>
+                                  </div>
+                                )
+                              })}
                             </div>
                           )}
                         </div>
                       )
                     })}
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+                ))}
+              </ScrollReveal>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

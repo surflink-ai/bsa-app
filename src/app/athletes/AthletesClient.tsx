@@ -1,78 +1,43 @@
-'use client'
+"use client"
+import { useState } from "react"
+import Link from "next/link"
+import { ScrollReveal } from "../components/ScrollReveal"
+import { SearchIcon } from "../components/Icons"
 
-import { useState, useMemo } from 'react'
-
-import Link from 'next/link'
-import { FadeIn, StaggerContainer, StaggerItem, ScaleCard } from '../components/AnimatedSection'
-
-interface Athlete {
-  id: string
-  name: string
-  nationality: string | null
-  image: string | null
-}
+interface Athlete { id: string; name: string; image: string | null; nationality: string | null; eventCount: number }
 
 export function AthletesClient({ athletes }: { athletes: Athlete[] }) {
-  const [search, setSearch] = useState('')
-
-  const filtered = useMemo(() => {
-    if (!search.trim()) return athletes
-    const q = search.toLowerCase()
-    return athletes.filter(a => a.name.toLowerCase().includes(q))
-  }, [search, athletes])
-
+  const [search, setSearch] = useState("")
+  const filtered = athletes.filter(a => a.name.toLowerCase().includes(search.toLowerCase()))
   return (
-    <div className="pb-24 md:pb-0">
-      {/* Hero */}
-      <section className="pt-28 pb-16 md:pt-32 md:pb-20" style={{ backgroundColor: '#0A2540' }}>
-        <div className="max-w-7xl mx-auto px-6 md:px-8">
-          <FadeIn>
-            <h1 className="font-heading font-bold text-4xl md:text-6xl mb-4" style={{ color: '#ffffff' }}>ATHLETES</h1>
-            <p className="text-lg" style={{ color: 'rgba(255,255,255,0.5)' }}>{athletes.length} athletes competing in BSA events</p>
-          </FadeIn>
-        </div>
-      </section>
-
-      <section className="max-w-7xl mx-auto px-6 md:px-8 py-8">
-        {/* Search */}
-        <div className="mb-8">
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search athletes..."
-            className="w-full max-w-md bg-white rounded-full px-6 py-3 text-sm focus:outline-none focus:ring-2"
-            style={{ border: '1px solid rgba(26,26,26,0.1)', color: '#1A1A1A' }}
-          />
-        </div>
-
-        {filtered.length === 0 ? (
-          <p className="text-center py-20" style={{ color: 'rgba(26,26,26,0.4)' }}>No athletes found.</p>
-        ) : (
-          <StaggerContainer className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-            {filtered.map(athlete => (
-              <StaggerItem key={athlete.id}>
-                <ScaleCard>
-                  <Link href={`/athletes/${athlete.id}`} className="block text-center group">
-                    <div className="aspect-square rounded-2xl overflow-hidden mb-3 mx-auto" style={{ backgroundColor: '#F2EDE4' }}>
-                      {athlete.image ? (
-                        <img src={athlete.image} alt={athlete.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center font-heading text-3xl" style={{ color: 'rgba(10,37,64,0.2)' }}>
-                          {athlete.name.charAt(0)}
-                        </div>
+    <div style={{ paddingTop: 64 }}>
+      <section style={{ backgroundColor: "#FAFAF8", padding: "64px 24px 96px" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 16 }}>ATHLETES</div>
+          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem, 4vw, 3rem)", color: "#1A1A1A", marginBottom: 32 }}>BSA Competitors</h1>
+          <div style={{ position: "relative", maxWidth: 400, marginBottom: 48 }}>
+            <div style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "rgba(26,26,26,0.3)" }}><SearchIcon size={18} /></div>
+            <input type="text" placeholder="Search athletes..." value={search} onChange={e => setSearch(e.target.value)} style={{ width: "100%", padding: "12px 16px 12px 42px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, border: "1px solid rgba(26,26,26,0.1)", borderRadius: 8, backgroundColor: "#fff", outline: "none" }} />
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 24 }}>
+            {filtered.map(a => (
+              <ScrollReveal key={a.id}>
+                <Link href={`/athletes/${a.id}`} style={{ textDecoration: "none", display: "block" }}>
+                  <div style={{ backgroundColor: "#fff", borderRadius: 10, padding: 24, textAlign: "center", transition: "transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s ease", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                    <div style={{ width: 80, height: 80, borderRadius: "50%", margin: "0 auto 16px", backgroundColor: "#F2EDE4", overflow: "hidden" }}>
+                      {a.image ? <img src={a.image} alt={a.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (
+                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 600, color: "rgba(26,26,26,0.15)" }}>{a.name.split(" ").map(n => n[0]).join("")}</div>
                       )}
                     </div>
-                    <h3 className="font-heading font-semibold text-sm transition-colors" style={{ color: '#0A2540' }}>{athlete.name}</h3>
-                    {athlete.nationality && (
-                      <p className="text-xs" style={{ color: 'rgba(26,26,26,0.4)' }}>{athlete.nationality}</p>
-                    )}
-                  </Link>
-                </ScaleCard>
-              </StaggerItem>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 15, color: "#1A1A1A", marginBottom: 4 }}>{a.name}</div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(26,26,26,0.35)", letterSpacing: "0.1em" }}>{a.eventCount} event{a.eventCount !== 1 ? "s" : ""}</div>
+                  </div>
+                </Link>
+              </ScrollReveal>
             ))}
-          </StaggerContainer>
-        )}
+          </div>
+          {filtered.length === 0 && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(26,26,26,0.4)", textAlign: "center", padding: "48px 0" }}>No athletes found.</p>}
+        </div>
       </section>
     </div>
   )

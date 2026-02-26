@@ -1,58 +1,36 @@
 import Link from 'next/link'
+import { WaveIcon } from './Icons'
 
-
-export function Footer() {
+export default function Footer() {
   return (
-    <footer className="pb-24 md:pb-0" style={{ backgroundColor: '#0A2540', color: '#ffffff' }}>
-      <div className="max-w-7xl mx-auto px-6 md:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-          <div className="md:col-span-2">
-            <div className="flex items-center gap-3 mb-4">
-              <img
-                src="https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp"
-                alt="BSA Logo"
-                className="rounded-full"
-              />
-              <div>
-                <div className="font-heading font-bold text-lg">Barbados Surfing Association</div>
-                <div className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>The National Governing Body for Surfing in Barbados</div>
-              </div>
-            </div>
-            <p className="text-sm leading-relaxed max-w-md" style={{ color: 'rgba(255,255,255,0.4)' }}>
-              Member of the International Surfing Association (ISA) and the Barbados Olympic Association.
-            </p>
-          </div>
-
+    <footer style={{ background: '#0A2540', color: 'rgba(255,255,255,0.6)', paddingBottom: '5rem' }}>
+      <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '4rem 2rem 2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '3rem' }}>
           <div>
-            <h4 className="font-heading font-semibold text-sm uppercase tracking-wider mb-4" style={{ color: 'rgba(255,255,255,0.6)' }}>Navigate</h4>
-            <div className="space-y-2">
-              {[
-                { href: '/events', label: 'Events' },
-                { href: '/athletes', label: 'Athletes' },
-                { href: '/rankings', label: 'Rankings' },
-                { href: '/profile', label: 'Account' },
-              ].map(link => (
-                <Link key={link.href} href={link.href} className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                  {link.label}
-                </Link>
-              ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div style={{ color: '#2BA5A0' }}><WaveIcon size={24} /></div>
+              <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: '1.125rem', color: '#fff' }}>Barbados Surfing Association</span>
             </div>
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem', lineHeight: 1.7, maxWidth: '280px' }}>Governing body for competitive surfing in Barbados. Developing talent, building community, riding waves since 2009.</p>
           </div>
-
           <div>
-            <h4 className="font-heading font-semibold text-sm uppercase tracking-wider mb-4" style={{ color: 'rgba(255,255,255,0.6)' }}>Connect</h4>
-            <div className="space-y-2">
-              <a href="https://www.facebook.com/bsasurf" target="_blank" rel="noopener" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.5)' }}>Facebook</a>
-              <a href="https://www.instagram.com/barbadossurfingassociation/" target="_blank" rel="noopener" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.5)' }}>Instagram</a>
-              <a href="mailto:barbadossurfingassociation@gmail.com" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.5)' }}>barbadossurfingassociation@gmail.com</a>
-            </div>
+            <h4 style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#2BA5A0', marginBottom: '1.25rem' }}>Navigate</h4>
+            {[{ href: '/events', label: 'Events' }, { href: '/athletes', label: 'Athletes' }, { href: '/rankings', label: 'Rankings' }].map(l => (
+              <Link key={l.href} href={l.href} style={{ display: 'block', marginBottom: '0.75rem', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem' }}>{l.label}</Link>
+            ))}
+          </div>
+          <div>
+            <h4 style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#2BA5A0', marginBottom: '1.25rem' }}>Connect</h4>
+            <a href="https://www.instagram.com/barbadossurfing/" target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginBottom: '0.75rem', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem' }}>Instagram</a>
+            <a href="https://www.facebook.com/BarbadosSurfingAssociation/" target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginBottom: '0.75rem', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem' }}>Facebook</a>
+          </div>
+          <div>
+            <h4 style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#2BA5A0', marginBottom: '1.25rem' }}>Contact</h4>
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem', lineHeight: 1.7 }}>Barbados Surfing Association<br />Bridgetown, Barbados</p>
+            <a href="mailto:info@barbadossurfing.org" style={{ color: '#1478B5', textDecoration: 'none', fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem', marginTop: '0.5rem', display: 'inline-block' }}>info@barbadossurfing.org</a>
           </div>
         </div>
-
-        <div className="mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>© {new Date().getFullYear()} Barbados Surfing Association. All rights reserved.</p>
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Powered by <a href="https://liveheats.com" target="_blank" rel="noopener" className="hover:text-white/50">LiveHeats</a></p>
-        </div>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: '3rem', paddingTop: '2rem', fontFamily: "'DM Sans', sans-serif", fontSize: '0.8125rem', color: 'rgba(255,255,255,0.3)' }}>2025 Barbados Surfing Association. All rights reserved.</div>
       </div>
     </footer>
   )

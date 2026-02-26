@@ -1,107 +1,94 @@
-'use client'
+"use client"
+import { useState, useEffect } from "react"
+import type { SeriesInfo, EventDivisionFull } from "@/lib/liveheats"
+import { ScrollReveal } from "../components/ScrollReveal"
 
-import { useState } from 'react'
+interface RankEntry { athleteId: string; name: string; image: string | null; points: number; eventsCount: number }
 
-import Link from 'next/link'
-import { FadeIn } from '../components/AnimatedSection'
+export function RankingsClient({ series }: { series: SeriesInfo[] }) {
+  const [selectedIdx, setSelectedIdx] = useState(0)
+  const [rankings, setRankings] = useState<RankEntry[]>([])
+  const [loading, setLoading] = useState(false)
+  const selected = series[selectedIdx]
 
-interface SeriesData {
-  id: string; name: string
-  divisions: {
-    name: string
-    rankings: { place: number; total: number; athleteId: string; athleteName: string; athleteImage: string | null }[]
-  }[]
-}
+  useEffect(() => {
+    if (!selected) return
+    setLoading(true)
+    const run = async () => {
+      const map = new Map<string, RankEntry>()
+      for (const sEvent of selected.events) {
+        try {
+          const res = await fetch(`/api/event/${sEvent.id}`)
+          if (!res.ok) continue
+          const ev = await res.json() as { eventDivisions: EventDivisionFull[] }
+          for (const div of ev.eventDivisions) {
+            for (const r of div.ranking || []) {
+              const a = r.competitor.athlete
+              const ex = map.get(a.id)
+              if (ex) { ex.points += r.total; ex.eventsCount++; if (!ex.image && a.image) ex.image = a.image }
+              else map.set(a.id, { athleteId: a.id, name: a.name, image: a.image, points: r.total, eventsCount: 1 })
+            }
+          }
+        } catch { /* skip */ }
+      }
+      setRankings(Array.from(map.values()).sort((a, b) => b.points - a.points))
+      setLoading(false)
+    }
+    run()
+  }, [selected])
 
-export function RankingsClient({ series }: { series: SeriesData[] }) {
-  const [selectedSeries, setSelectedSeries] = useState(series.length - 1)
-  const [selectedDiv, setSelectedDiv] = useState(0)
+  const maxPts = rankings[0]?.points || 1
 
-  const currentSeries = series[selectedSeries]
-  const currentDivision = currentSeries?.divisions[selectedDiv]
-  const maxPoints = currentDivision?.rankings[0]?.total || 1
+  if (series.length === 0) {
+    return (
+      <div style={{ paddingTop: 64 }}>
+        <section style={{ backgroundColor: "#FAFAF8", padding: "64px 24px 96px" }}>
+          <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 16 }}>RANKINGS</div>
+            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem, 4vw, 3rem)", color: "#1A1A1A", marginBottom: 24 }}>Season Rankings</h1>
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(26,26,26,0.4)", lineHeight: 1.75 }}>No series data available yet.</p>
+          </div>
+        </section>
+      </div>
+    )
+  }
 
   return (
-    <div className="pb-24 md:pb-0">
-      {/* Hero */}
-      <section className="pt-28 pb-16 md:pt-32 md:pb-20" style={{ backgroundColor: '#0A2540' }}>
-        <div className="max-w-7xl mx-auto px-6 md:px-8">
-          <FadeIn>
-            <h1 className="font-heading font-bold text-4xl md:text-6xl mb-4" style={{ color: '#ffffff' }}>RANKINGS</h1>
-            <p className="text-lg" style={{ color: 'rgba(255,255,255,0.5)' }}>SOTY Championship Standings</p>
-          </FadeIn>
-        </div>
-      </section>
-
-      <section className="max-w-4xl mx-auto px-6 md:px-8 py-8">
-        {/* Series Selector */}
-        {series.length > 1 && (
-          <div className="mb-6">
-            <select
-              value={selectedSeries}
-              onChange={e => { setSelectedSeries(Number(e.target.value)); setSelectedDiv(0) }}
-              className="bg-white rounded-full px-5 py-2.5 text-sm font-medium focus:outline-none focus:ring-2"
-              style={{ border: '1px solid rgba(26,26,26,0.1)', color: '#0A2540' }}
-            >
-              {series.map((s, i) => (
-                <option key={s.id} value={i}>{s.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* Division tabs */}
-        {currentSeries && currentSeries.divisions.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto no-scrollbar mb-8">
-            {currentSeries.divisions.map((div, idx) => (
-              <button
-                key={div.name}
-                onClick={() => setSelectedDiv(idx)}
-                className="whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all"
-                style={idx === selectedDiv ? { backgroundColor: '#0A2540', color: '#ffffff' } : { backgroundColor: '#F2EDE4', color: 'rgba(26,26,26,0.5)' }}
-              >
-                {div.name}
+    <div style={{ paddingTop: 64 }}>
+      <section style={{ backgroundColor: "#FAFAF8", padding: "64px 24px 96px" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 16 }}>RANKINGS</div>
+          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem, 4vw, 3rem)", color: "#1A1A1A", marginBottom: 32 }}>Season Rankings</h1>
+          <div style={{ display: "flex", gap: 8, marginBottom: 40, flexWrap: "wrap" }}>
+            {series.map((s, i) => (
+              <button key={s.id} onClick={() => setSelectedIdx(i)} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500, padding: "8px 18px", borderRadius: 6, border: "none", cursor: "pointer", backgroundColor: selectedIdx === i ? "#0A2540" : "rgba(26,26,26,0.06)", color: selectedIdx === i ? "#fff" : "rgba(26,26,26,0.5)", transition: "all 0.2s ease" }}>
+                {s.name}
               </button>
             ))}
           </div>
-        )}
-
-        {/* Rankings */}
-        <div key={`${selectedSeries}-${selectedDiv}`}>
-          {!currentDivision || currentDivision.rankings.length === 0 ? (
-            <p className="text-center py-20" style={{ color: 'rgba(26,26,26,0.4)' }}>No rankings available for this series.</p>
-          ) : (
-            <div className="space-y-3">
-              {currentDivision.rankings.map((r) => (
-                <div
-                  key={r.athleteId}
-                  className="bg-white rounded-xl p-4 shadow-sm"
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="font-mono font-bold w-8 text-center" style={{ color: r.place <= 3 ? '#D4944A' : 'rgba(26,26,26,0.3)' }}>
-                      {r.place}
-                    </span>
-                    <div className="w-10 h-10 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: '#F2EDE4' }}>
-                      {r.athleteImage ? (
-                        <img src={r.athleteImage} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-sm font-heading" style={{ color: 'rgba(10,37,64,0.2)' }}>{r.athleteName.charAt(0)}</div>
+          {loading && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(26,26,26,0.35)" }}>Loading rankings...</p>}
+          {!loading && rankings.length === 0 && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(26,26,26,0.4)" }}>No ranking data for this series yet.</p>}
+          {rankings.length > 0 && (
+            <div style={{ backgroundColor: "#fff", borderRadius: 10, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+              {rankings.map((r, i) => (
+                <ScrollReveal key={r.athleteId}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 24px", backgroundColor: i % 2 === 0 ? "#fff" : "#FAFAF8", borderBottom: "1px solid rgba(26,26,26,0.04)" }}>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 14, color: i < 3 ? "#1478B5" : "rgba(26,26,26,0.3)", width: 32, textAlign: "center" }}>{i + 1}</div>
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", backgroundColor: "#F2EDE4", overflow: "hidden", flexShrink: 0 }}>
+                      {r.image ? <img src={r.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (
+                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, color: "rgba(26,26,26,0.2)", fontWeight: 600 }}>{r.name.split(" ").map(n => n[0]).join("")}</div>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <Link href={`/athletes/${r.athleteId}`} className="font-heading font-semibold text-sm transition-colors block truncate" style={{ color: '#0A2540' }}>
-                        {r.athleteName}
-                      </Link>
-                      <div className="mt-1.5 h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#F2EDE4' }}>
-                        <div
-                          className="h-full rounded-full transition-all duration-700 ease-out"
-                          style={{ width: `${(r.total / maxPoints) * 100}%`, backgroundColor: r.place === 1 ? '#D4944A' : r.place <= 3 ? '#1478B5' : 'rgba(43,165,160,0.5)' }}
-                        />
-                      </div>
+                    <div style={{ flex: 1, minWidth: 120 }}>
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, color: "#1A1A1A" }}>{r.name}</div>
+                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(26,26,26,0.3)", marginTop: 2 }}>{r.eventsCount} event{r.eventsCount !== 1 ? "s" : ""}</div>
                     </div>
-                    <span className="font-mono text-sm font-semibold" style={{ color: '#0A2540' }}>{r.total.toFixed(2)}</span>
+                    <div style={{ flex: 1, maxWidth: 200, height: 6, backgroundColor: "rgba(26,26,26,0.04)", borderRadius: 3, overflow: "hidden" }}>
+                      <div style={{ width: `${(r.points / maxPts) * 100}%`, height: "100%", backgroundColor: "#2BA5A0", borderRadius: 3, transition: "width 0.6s cubic-bezier(0.16,1,0.3,1)" }} />
+                    </div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 14, color: "#2BA5A0", minWidth: 56, textAlign: "right" }}>{r.points.toFixed(1)}</div>
                   </div>
-                </div>
+                </ScrollReveal>
               ))}
             </div>
           )}

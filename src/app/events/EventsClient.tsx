@@ -1,79 +1,76 @@
-'use client'
+"use client"
+import { useState } from "react"
+import Link from "next/link"
+import type { BSAEvent } from "@/lib/liveheats"
+import { ScrollReveal } from "../components/ScrollReveal"
+import { CalendarIcon, MapPinIcon, ArrowRightIcon } from "../components/Icons"
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { FadeIn, StaggerContainer, StaggerItem, ScaleCard } from '../components/AnimatedSection'
-import type { BSAEvent } from '@/lib/liveheats'
+function EventCard({ event }: { event: BSAEvent }) {
+  const date = new Date(event.date)
+  return (
+    <Link href={`/events/${event.id}`} style={{ textDecoration: "none", display: "block" }}>
+      <div style={{ backgroundColor: "#fff", borderRadius: 10, padding: 28, boxShadow: "0 1px 3px rgba(0,0,0,0.04)", transition: "transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s ease", cursor: "pointer" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+          <div>
+            <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 18, color: "#1A1A1A", marginBottom: 8 }}>{event.name}</h3>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(26,26,26,0.45)", marginBottom: 4 }}>
+              <CalendarIcon size={14} />
+              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}>{date.toLocaleDateString("en-US", { weekday: "short", year: "numeric", month: "long", day: "numeric" })}</span>
+            </div>
+            {event.location && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(26,26,26,0.35)" }}>
+                <MapPinIcon size={14} />
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>{event.location.formattedAddress}</span>
+              </div>
+            )}
+          </div>
+          {event.eventDivisions.length > 0 && (
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, padding: "4px 10px", borderRadius: 16, backgroundColor: "rgba(26,26,26,0.04)", color: "rgba(26,26,26,0.5)" }}>
+              {event.eventDivisions.length} div{event.eventDivisions.length !== 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 4, color: "#1478B5", fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600 }}>
+          View Details <ArrowRightIcon size={13} />
+        </div>
+      </div>
+    </Link>
+  )
+}
 
-export function EventsClient({ upcoming, past }: { upcoming: BSAEvent[]; past: BSAEvent[] }) {
-  const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming')
-  const events = tab === 'upcoming' ? upcoming : past
+export function EventsClient({ upcomingEvents, pastEvents }: { upcomingEvents: BSAEvent[]; pastEvents: BSAEvent[] }) {
+  const years = [...new Set(pastEvents.map(e => new Date(e.date).getFullYear()))].sort((a, b) => b - a)
+  const [selectedYear, setSelectedYear] = useState(years[0] || new Date().getFullYear())
+  const filteredPast = pastEvents.filter(e => new Date(e.date).getFullYear() === selectedYear)
 
   return (
-    <div className="pb-24 md:pb-0">
-      {/* Hero */}
-      <section className="pt-28 pb-16 md:pt-32 md:pb-20" style={{ backgroundColor: '#0A2540' }}>
-        <div className="max-w-7xl mx-auto px-6 md:px-8">
-          <FadeIn>
-            <h1 className="font-heading font-bold text-4xl md:text-6xl mb-4" style={{ color: '#ffffff' }}>EVENTS</h1>
-            <p className="text-lg" style={{ color: 'rgba(255,255,255,0.5)' }}>Competition calendar and results</p>
-          </FadeIn>
+    <div style={{ paddingTop: 64 }}>
+      <section style={{ backgroundColor: "#FAFAF8", padding: "64px 24px 48px" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 16 }}>UPCOMING EVENTS</div>
+          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem, 4vw, 3rem)", color: "#1A1A1A", marginBottom: 40 }}>Competition Calendar</h1>
+          {upcomingEvents.length > 0 ? (
+            <div style={{ display: "grid", gap: 16 }}>{upcomingEvents.map(e => <ScrollReveal key={e.id}><EventCard event={e} /></ScrollReveal>)}</div>
+          ) : (
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(26,26,26,0.4)" }}>No upcoming events scheduled. Check back soon.</p>
+          )}
         </div>
       </section>
-
-      {/* Tabs */}
-      <section className="max-w-7xl mx-auto px-6 md:px-8 py-8">
-        <div className="flex gap-1 bg-sand rounded-full p-1 w-fit mb-8">
-          {(['upcoming', 'past'] as const).map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className="px-6 py-2 rounded-full text-sm font-medium transition-all"
-              style={tab === t ? { backgroundColor: '#0A2540', color: '#ffffff' } : { color: 'rgba(26,26,26,0.4)' }}
-            >
-              {t === 'upcoming' ? 'Upcoming' : 'Past Results'}
-            </button>
-          ))}
-        </div>
-
-        <div key={tab}>
-          {events.length === 0 ? (
-            <p className="text-center py-20" style={{ color: 'rgba(26,26,26,0.4)' }}>No {tab} events found.</p>
-          ) : (
-            <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.map(event => (
-                <StaggerItem key={event.id}>
-                  <ScaleCard>
-                    <Link href={`/events/${event.id}`} className="block bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between mb-3">
-                        <span className="text-xs font-mono px-3 py-1 rounded-full" style={
-                          event.status === 'upcoming' ? { backgroundColor: 'rgba(43,165,160,0.1)', color: '#2BA5A0' } :
-                          event.status === 'registration_open' ? { backgroundColor: '#dcfce7', color: '#16a34a' } :
-                          { backgroundColor: 'rgba(212,148,74,0.1)', color: '#D4944A' }
-                        }>
-                          {event.status === 'results_published' ? 'Results' : event.status === 'registration_open' ? 'Registration Open' : 'Upcoming'}
-                        </span>
-                      </div>
-                      <h3 className="font-heading font-bold text-lg mb-2" style={{ color: '#0A2540' }}>{event.name}</h3>
-                      <p className="text-sm mb-4" style={{ color: 'rgba(26,26,26,0.4)' }}>
-                        {new Date(event.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {event.eventDivisions.slice(0, 4).map(div => (
-                          <span key={div.id} className="text-xs px-2 py-1 rounded" style={{ color: 'rgba(26,26,26,0.3)', backgroundColor: '#F2EDE4' }}>
-                            {div.division.name}
-                          </span>
-                        ))}
-                        {event.eventDivisions.length > 4 && (
-                          <span className="text-xs" style={{ color: 'rgba(26,26,26,0.3)' }}>+{event.eventDivisions.length - 4}</span>
-                        )}
-                      </div>
-                    </Link>
-                  </ScaleCard>
-                </StaggerItem>
+      <section style={{ backgroundColor: "#F2EDE4", padding: "64px 24px 96px" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 16 }}>PAST EVENTS</div>
+          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.5rem, 3vw, 2.25rem)", color: "#1A1A1A", marginBottom: 32 }}>Results Archive</h2>
+          {years.length > 0 && (
+            <div style={{ display: "flex", gap: 8, marginBottom: 32, flexWrap: "wrap" }}>
+              {years.map(y => (
+                <button key={y} onClick={() => setSelectedYear(y)} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 500, padding: "8px 18px", borderRadius: 6, border: "none", cursor: "pointer", backgroundColor: selectedYear === y ? "#0A2540" : "rgba(26,26,26,0.06)", color: selectedYear === y ? "#fff" : "rgba(26,26,26,0.5)", transition: "all 0.2s ease" }}>
+                  {y}
+                </button>
               ))}
-            </StaggerContainer>
+            </div>
           )}
+          <div style={{ display: "grid", gap: 16 }}>{filteredPast.map(e => <ScrollReveal key={e.id}><EventCard event={e} /></ScrollReveal>)}</div>
+          {filteredPast.length === 0 && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(26,26,26,0.4)" }}>No events for {selectedYear}.</p>}
         </div>
       </section>
     </div>

@@ -1,130 +1,69 @@
-'use client'
-
-
-import Link from 'next/link'
-import { FadeIn, StaggerContainer, StaggerItem } from '../../components/AnimatedSection'
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts'
+"use client"
+import Link from "next/link"
+import { ScrollReveal } from "../../components/ScrollReveal"
 
 interface Props {
-  athlete: { id: string; name: string; nationality: string | null; image: string | null }
-  competitions: {
-    eventId: string; eventName: string; eventDate: string
-    divisionName: string; place: number; total: number
-    heatTotals: number[]
-  }[]
-  stats: { events: number; heats: number; bestScore: number; avgHeatTotal: number }
-  heatTotals: number[]
+  athlete: { id: string; name: string; image: string | null; nationality: string | null }
+  history: { eventId: string; eventName: string; eventDate: string; division: string; place: number; score: number }[]
 }
 
-export function AthleteDetailClient({ athlete, competitions, stats, heatTotals }: Props) {
-  const lineData = heatTotals.map((total, i) => ({ heat: i + 1, total: Number(total.toFixed(2)) }))
-
-  const buckets: Record<string, number> = {}
-  for (const t of heatTotals) {
-    const bucket = `${Math.floor(t)}-${Math.floor(t) + 1}`
-    buckets[bucket] = (buckets[bucket] || 0) + 1
-  }
-  const barData = Object.entries(buckets).map(([range, count]) => ({ range, count })).sort((a, b) => a.range.localeCompare(b.range))
-
+export function AthleteDetailClient({ athlete, history }: Props) {
+  const bestFinish = history.length > 0 ? Math.min(...history.map(h => h.place)) : null
+  const avgScore = history.length > 0 ? history.reduce((s, h) => s + h.score, 0) / history.length : 0
   return (
-    <div className="pb-24 md:pb-0">
-      {/* Hero */}
-      <section className="pt-28 pb-12 md:pt-32 md:pb-16" style={{ backgroundColor: '#0A2540' }}>
-        <div className="max-w-7xl mx-auto px-6 md:px-8">
-          <Link href="/athletes" className="text-sm transition-colors mb-6 inline-block" style={{ color: 'rgba(255,255,255,0.3)' }}>← Athletes</Link>
-          <FadeIn>
-            <div className="flex items-center gap-6">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                {athlete.image ? (
-                  <img src={athlete.image} alt={athlete.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center font-heading text-4xl" style={{ color: 'rgba(255,255,255,0.2)' }}>{athlete.name.charAt(0)}</div>
-                )}
-              </div>
-              <div>
-                <h1 className="font-heading font-bold text-3xl md:text-5xl mb-2" style={{ color: '#ffffff' }}>{athlete.name}</h1>
-                <p style={{ color: 'rgba(255,255,255,0.5)' }}>{athlete.nationality || 'Barbados'}</p>
-              </div>
+    <div style={{ paddingTop: 64 }}>
+      <section style={{ backgroundColor: "#FAFAF8", padding: "64px 24px" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <Link href="/athletes" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(26,26,26,0.4)", textDecoration: "none", marginBottom: 32, display: "inline-block" }}>&larr; All Athletes</Link>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 32, alignItems: "center", marginBottom: 48 }}>
+            <div style={{ width: 120, height: 120, borderRadius: "50%", backgroundColor: "#F2EDE4", overflow: "hidden", flexShrink: 0 }}>
+              {athlete.image ? <img src={athlete.image} alt={athlete.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Space Grotesk', sans-serif", fontSize: 36, fontWeight: 600, color: "rgba(26,26,26,0.15)" }}>{athlete.name.split(" ").map(n => n[0]).join("")}</div>
+              )}
             </div>
-          </FadeIn>
-        </div>
-      </section>
-
-      <section className="max-w-7xl mx-auto px-6 md:px-8 py-8">
-        {/* Stats */}
-        <FadeIn>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div>
+              <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.5rem, 4vw, 2.5rem)", color: "#1A1A1A", marginBottom: 4 }}>{athlete.name}</h1>
+              {athlete.nationality && <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(26,26,26,0.4)", textTransform: "uppercase", letterSpacing: "0.1em" }}>{athlete.nationality}</div>}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 48, flexWrap: "wrap", marginBottom: 48 }}>
             {[
-              { label: 'Events', value: stats.events.toString() },
-              { label: 'Heats', value: stats.heats.toString() },
-              { label: 'Best Score', value: stats.bestScore.toFixed(2) },
-              { label: 'Avg Heat Total', value: stats.avgHeatTotal.toFixed(2) },
+              { val: String(history.length), label: "Events" },
+              { val: bestFinish ? `#${bestFinish}` : "--", label: "Best Finish" },
+              { val: avgScore > 0 ? avgScore.toFixed(2) : "--", label: "Avg Score" },
             ].map(s => (
-              <div key={s.label} className="bg-white rounded-xl p-5 shadow-sm text-center">
-                <div className="font-mono font-bold text-2xl" style={{ color: '#0A2540' }}>{s.value}</div>
-                <div className="text-xs uppercase tracking-wider mt-1" style={{ color: 'rgba(26,26,26,0.4)' }}>{s.label}</div>
+              <div key={s.label}>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 28, color: "#1A1A1A" }}>{s.val}</div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.15em", color: "rgba(26,26,26,0.35)", marginTop: 4 }}>{s.label}</div>
               </div>
             ))}
           </div>
-        </FadeIn>
-
-        {/* Charts */}
-        {lineData.length > 2 && (
-          <FadeIn>
-            <div className="grid md:grid-cols-2 gap-6 mb-12">
-              <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h3 className="font-heading font-semibold mb-4" style={{ color: '#0A2540' }}>Heat Totals Over Time</h3>
-                <ResponsiveContainer width="100%">
-                  <LineChart data={lineData}>
-                    <XAxis dataKey="heat" tick={{ fontSize: 10 }} stroke="#1A1A1A40" />
-                    <YAxis tick={{ fontSize: 10 }} stroke="#1A1A1A40" />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="total" stroke="#1478B5" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h3 className="font-heading font-semibold mb-4" style={{ color: '#0A2540' }}>Score Distribution</h3>
-                <ResponsiveContainer width="100%">
-                  <BarChart data={barData}>
-                    <XAxis dataKey="range" tick={{ fontSize: 10 }} stroke="#1A1A1A40" />
-                    <YAxis tick={{ fontSize: 10 }} stroke="#1A1A1A40" />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#2BA5A0" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </FadeIn>
-        )}
-
-        {/* Competition History */}
-        <FadeIn>
-          <h2 className="font-heading font-bold text-xl mb-6" style={{ color: '#0A2540' }}>Competition History</h2>
-        </FadeIn>
-        <StaggerContainer className="space-y-3">
-          {competitions.map((comp) => (
-            <StaggerItem key={`${comp.eventId}-${comp.divisionName}`}>
-              <Link href={`/events/${comp.eventId}`} className="block bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-heading font-semibold text-sm" style={{ color: '#0A2540' }}>{comp.eventName}</h3>
-                    <p className="text-xs mt-1" style={{ color: 'rgba(26,26,26,0.4)' }}>
-                      {new Date(comp.eventDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                      {' • '}{comp.divisionName}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-mono font-bold text-lg" style={{ color: comp.place <= 3 ? '#D4944A' : '#0A2540' }}>
-                      {comp.place === 1 ? '🥇' : comp.place === 2 ? '🥈' : comp.place === 3 ? '🥉' : `#${comp.place}`}
+        </div>
+      </section>
+      <section style={{ backgroundColor: "#F2EDE4", padding: "48px 24px 96px" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 20 }}>COMPETITION HISTORY</div>
+          {history.length > 0 ? (
+            <div style={{ backgroundColor: "#fff", borderRadius: 10, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+              {history.map((h, i) => (
+                <ScrollReveal key={`${h.eventId}-${h.division}-${i}`}>
+                  <Link href={`/events/${h.eventId}`} style={{ textDecoration: "none", display: "block" }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16, padding: "14px 24px", backgroundColor: i % 2 === 0 ? "#fff" : "#FAFAF8", borderBottom: "1px solid rgba(26,26,26,0.04)" }}>
+                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 14, color: h.place <= 3 ? "#1478B5" : "rgba(26,26,26,0.3)", width: 32, textAlign: "center" }}>#{h.place}</div>
+                      <div style={{ flex: 1, minWidth: 180 }}>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, color: "#1A1A1A" }}>{h.eventName}</div>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(26,26,26,0.35)", marginTop: 2 }}>{new Date(h.eventDate).toLocaleDateString("en-US", { month: "short", year: "numeric" })} &middot; {h.division}</div>
+                      </div>
+                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 14, color: "#2BA5A0" }}>{h.score.toFixed(2)}</div>
                     </div>
-                    <div className="font-mono text-xs" style={{ color: 'rgba(26,26,26,0.4)' }}>{comp.total?.toFixed(2)} pts</div>
-                  </div>
-                </div>
-              </Link>
-            </StaggerItem>
-          ))}
-        </StaggerContainer>
+                  </Link>
+                </ScrollReveal>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(26,26,26,0.4)" }}>No competition history available.</p>
+          )}
+        </div>
       </section>
     </div>
   )

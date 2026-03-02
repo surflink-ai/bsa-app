@@ -136,9 +136,12 @@ export async function getSpotForecast(spotId: string): Promise<SurflineForecast 
 
 // Get overview for all spots in a subregion (lighter call)
 export async function getRegionOverview(subregionId: string): Promise<{ spotId: string; name: string; conditions: string; waveMin: number; waveMax: number }[]> {
-  const token = getToken()
   try {
-    const res = await fetch(`${SL_BASE}/kbyg/regions/overview?subregionId=${subregionId}&accesstoken=${token}`, { next: { revalidate: 900 } })
+    const token = getToken()
+    const url = token
+      ? `${SL_BASE}/kbyg/regions/overview?subregionId=${subregionId}&accesstoken=${token}`
+      : `${SL_BASE}/kbyg/regions/overview?subregionId=${subregionId}`
+    const res = await fetch(url, { next: { revalidate: 900 } })
     const data = await res.json()
     return (data?.data?.spots || []).map((s: any) => ({
       spotId: s._id,

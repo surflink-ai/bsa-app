@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { BARBADOS_SPOTS, getRegionOverview, getSpotForecast, SUBREGIONS } from "@/lib/surfline"
 
-export const revalidate = 900 // 15 min ISR
+export const dynamic = "force-dynamic" // Always fetch fresh data
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)

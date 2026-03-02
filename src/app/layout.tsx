@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { Navigation } from "./components/Navigation"
 import { Footer } from "./components/Footer"
+import { NotificationBanner } from "./components/NotificationBanner"
 
 export const metadata: Metadata = {
   title: "Barbados Surfing Association",
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Navigation />
         <main style={{ paddingBottom: 80 }} className="md:pb-0">{children}</main>
         <Footer />
+        <NotificationBanner />
       </body>
     </html>
   )

@@ -141,16 +141,22 @@ export async function getRegionOverview(subregionId: string): Promise<{ spotId: 
     const url = token
       ? `${SL_BASE}/kbyg/regions/overview?subregionId=${subregionId}&accesstoken=${token}`
       : `${SL_BASE}/kbyg/regions/overview?subregionId=${subregionId}`
-    const res = await fetch(url, { next: { revalidate: 900 } })
+    const res = await fetch(url, { cache: "no-store" })
+    if (!res.ok) {
+      console.error(`Surfline overview ${subregionId}: HTTP ${res.status}`)
+      return []
+    }
     const data = await res.json()
-    return (data?.data?.spots || []).map((s: any) => ({
+    const spots = data?.data?.spots || []
+    console.log(`Surfline overview ${subregionId}: ${spots.length} spots`)
+    return spots.map((s: any) => ({
       spotId: s._id,
       name: s.name,
       conditions: s.conditions?.value || "FLAT",
-      waveMin: s.waveHeight?.min || 0,
-      waveMax: s.waveHeight?.max || 0,
+      waveMin: Math.round(s.waveHeight?.min * 3.28084) || 0,
+      waveMax: Math.round(s.waveHeight?.max * 3.28084) || 0,
     }))
-  } catch { return [] }
+  } catch (err) { console.error(`Surfline overview error:`, err); return [] }
 }
 
 export const SUBREGIONS = {

@@ -10,6 +10,7 @@ import { LiveCam } from "./components/LiveCam"
 import { LiveScoring } from "./components/LiveScoring"
 import { SurfConditions } from "./components/SurfConditions"
 import { SponsorsSection } from "./components/SponsorsSection"
+import { SocialFeed } from "./components/SocialFeed"
 
 interface Props {
   org: BSAOrg & { events: BSAEvent[]; series: { id: string; name: string }[] }
@@ -270,6 +271,12 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
             {[{ icon: <TrophyIcon size={28} />, title: "Compete", desc: "Enter BSA-sanctioned championship events and compete for national titles across all divisions.", link: "/events", linkText: "View Events" }, { icon: <UsersIcon size={28} />, title: "Membership", desc: "Register as a BSA member and gain access to competition entry, coaching, and national team selection.", link: "https://liveheats.com/BarbadosSurfingAssociation", linkText: "Register" }, { icon: <CompassIcon size={28} />, title: "Sponsor", desc: "Partner with the BSA to support the growth of competitive surfing in Barbados and the Caribbean.", link: "mailto:barbadossurfingassociation@gmail.com", linkText: "Get in Touch" }].map(item => (<ScrollReveal key={item.title}><div style={{ backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 12, padding: 32, height: "100%", display: "flex", flexDirection: "column" }}><div style={{ color: "#2BA5A0", marginBottom: 20 }}>{item.icon}</div><h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 20, color: "#fff", marginBottom: 12 }}>{item.title}</h3><p style={{ fontSize: 14, lineHeight: 1.75, color: "rgba(255,255,255,0.45)", marginBottom: 20, flex: 1 }}>{item.desc}</p><Link href={item.link} style={{ fontSize: 13, fontWeight: 600, color: "#2BA5A0", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>{item.linkText} <ArrowRightIcon size={14} /></Link></div></ScrollReveal>))}
           </div>
         </div>
+      </section>
+
+      {/* SOCIAL FEED — white */}
+      <WaveDivider color="#FAFAF8" bg="#0A2540" />
+      <section style={{ backgroundColor: "#FAFAF8", padding: "80px 24px" }}>
+        <ScrollReveal><SocialFeed /></ScrollReveal>
       </section>
     </div>
   )

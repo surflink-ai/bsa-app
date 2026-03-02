@@ -9,6 +9,7 @@ import { ChevronDownIcon, ArrowRightIcon, TrophyIcon, UsersIcon, CompassIcon } f
 import { SurfConditionsBar } from "./components/SurfConditionsBar"
 import { SponsorsSection } from "./components/SponsorsSection"
 import { SocialFeed } from "./components/SocialFeed"
+import { getLatestArticles, getCategoryLabel } from "@/lib/news"
 
 interface Props {
   org: BSAOrg & { events: BSAEvent[]; series: { id: string; name: string }[] }
@@ -261,6 +262,29 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
       {/* SOCIAL FEED — white */}
       <WaveDivider color="#FAFAF8" bg="#0A2540" />
       <section style={{ backgroundColor: "#FAFAF8", padding: "80px 24px" }}>
+        {/* Latest News */}
+        <ScrollReveal>
+          <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 16 }}>LATEST NEWS</div>
+            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem, 4vw, 3rem)", color: "#0A2540", lineHeight: 1.15, marginBottom: 32 }}>What&apos;s Happening</h2>
+            <div className="grid-responsive-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
+              {getLatestArticles(3).map(article => (
+                <Link key={article.slug} href={`/news/${article.slug}`} style={{ textDecoration: "none" }}>
+                  <div style={{ backgroundColor: "#fff", borderRadius: 12, padding: 24, boxShadow: "0 1px 3px rgba(0,0,0,0.04)", height: "100%", transition: "transform 0.2s", cursor: "pointer" }}>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: "#2BA5A0", marginBottom: 8 }}>{getCategoryLabel(article.category)}</div>
+                    <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 18, color: "#0A2540", marginBottom: 8, lineHeight: 1.3 }}>{article.title}</h3>
+                    <p style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, color: "rgba(26,26,26,0.55)", lineHeight: 1.5, marginBottom: 12 }}>{article.excerpt}</p>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(26,26,26,0.35)" }}>{new Date(article.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <div style={{ textAlign: "center", marginTop: 24 }}>
+              <Link href="/news" style={{ fontSize: 14, fontWeight: 600, color: "#1478B5", textDecoration: "none" }}>View All News →</Link>
+            </div>
+          </div>
+        </ScrollReveal>
+
         <ScrollReveal><SocialFeed /></ScrollReveal>
       </section>
     </div>

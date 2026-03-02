@@ -7,6 +7,7 @@ import { CountdownTimer } from "./components/CountdownTimer"
 import { WaveDivider } from "./components/WaveDivider"
 import { ChevronDownIcon, ArrowRightIcon, TrophyIcon, UsersIcon, CompassIcon } from "./components/Icons"
 import { LiveCam } from "./components/LiveCam"
+import { LiveScoring } from "./components/LiveScoring"
 
 interface Props {
   org: BSAOrg & { events: BSAEvent[]; series: { id: string; name: string }[] }
@@ -119,8 +120,14 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
         <ScrollReveal><LiveCam /></ScrollReveal>
       </section>
 
-      {/* STATS — white */}
+      {/* LIVE SCORING — white (only shows when comp is running) */}
       <WaveDivider color="#FAFAF8" bg="#0A2540" />
+      <section style={{ backgroundColor: "#FAFAF8", padding: "80px 24px" }}>
+        <LiveScoring />
+      </section>
+
+      {/* STATS — white */}
+      <WaveDivider color="#FAFAF8" bg="#FAFAF8" />
       <section style={{ backgroundColor: "#FAFAF8", padding: "80px 24px" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 32, textAlign: "center" }} className="stagger grid-responsive-4">

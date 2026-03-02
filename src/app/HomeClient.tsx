@@ -6,6 +6,7 @@ import { CountUp } from "./components/CountUp"
 import { CountdownTimer } from "./components/CountdownTimer"
 import { WaveDivider } from "./components/WaveDivider"
 import { ChevronDownIcon, ArrowRightIcon, TrophyIcon, UsersIcon, CompassIcon } from "./components/Icons"
+import { LiveCam } from "./components/LiveCam"
 
 interface Props {
   org: BSAOrg & { events: BSAEvent[]; series: { id: string; name: string }[] }
@@ -111,6 +112,11 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
           <p className="anim-fade-3" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: "0.2em", textTransform: "uppercase", marginTop: 24 }}>EST. 1995 &middot; ISA Member Federation</p>
         </div>
         <div className="anim-fade-4 anim-float" style={{ position: "absolute", bottom: 32, color: "rgba(255,255,255,0.25)" }}><ChevronDownIcon size={24} /></div>
+      </section>
+
+      {/* LIVE CAM — navy */}
+      <section style={{ backgroundColor: "#0A2540", padding: "80px 24px 60px" }}>
+        <ScrollReveal><LiveCam /></ScrollReveal>
       </section>
 
       {/* STATS — white */}

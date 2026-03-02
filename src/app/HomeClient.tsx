@@ -81,15 +81,15 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
     return (
       <div>
         <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 16, color: "#0A2540", textAlign: "center", marginBottom: 32 }}>{divName}</h3>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: "clamp(12px, 3vw, 32px)" }}>
+        <div className="podium-row" style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: "clamp(12px, 3vw, 32px)" }}>
           {order.map((p, i) => (
-            <div key={p.name} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "clamp(80px, 18vw, 130px)" }}>
-              <div style={{ width: sizes[i].img, height: sizes[i].img, borderRadius: "50%", backgroundColor: "#F2EDE4", overflow: "hidden", marginBottom: 10, border: sizes[i].ring }}>
+            <div key={p.name} className="podium-item" style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "clamp(80px, 18vw, 130px)" }}>
+              <div className={i === 1 ? "podium-img-lg" : "podium-img-sm"} style={{ width: sizes[i].img, height: sizes[i].img, borderRadius: "50%", backgroundColor: "#F2EDE4", overflow: "hidden", marginBottom: 10, border: sizes[i].ring }}>
                 {p.image ? <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(10,37,64,0.2)", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: sizes[i].img * 0.3 }}>{p.name.split(" ").map((n: string) => n[0]).join("")}</div>}
               </div>
               <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 13, color: "#0A2540", textAlign: "center", lineHeight: 1.3, marginBottom: 4 }}>{p.name}</div>
               <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 12, color: "#2BA5A0" }}>{p.score.toFixed(2)}</div>
-              <div style={{ width: "100%", height: sizes[i].bar, marginTop: 10, borderRadius: "8px 8px 0 0", backgroundColor: i === 1 ? "#1478B5" : i === 0 ? "#2BA5A0" : "rgba(10,37,64,0.06)", display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 10 }}>
+              <div className={i === 1 ? "podium-bar-2" : i === 0 ? "podium-bar-1" : "podium-bar-3"} style={{ width: "100%", height: sizes[i].bar, marginTop: 10, borderRadius: "8px 8px 0 0", backgroundColor: i === 1 ? "#1478B5" : i === 0 ? "#2BA5A0" : "rgba(10,37,64,0.06)", display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 10 }}>
                 <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 22, color: i < 2 ? "#fff" : "rgba(10,37,64,0.35)" }}>{p.place}</span>
               </div>
             </div>
@@ -117,7 +117,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
       <WaveDivider color="#FAFAF8" bg="#0A2540" />
       <section style={{ backgroundColor: "#FAFAF8", padding: "80px 24px" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 32, textAlign: "center" }} className="stagger">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 32, textAlign: "center" }} className="stagger grid-responsive-4">
             {[{ end: 250, suffix: "+", label: "Athletes" }, { end: totalEvents, suffix: "", label: "Sanctioned Events" }, { end: org.series.length || 6, suffix: "", label: "SOTY Seasons" }, { end: ALL_SPOTS.length, suffix: "", label: "Competition Breaks" }].map((stat, i) => (
               <ScrollReveal key={stat.label} delay={i * 100}>
                 <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(2rem, 4vw, 3rem)", color: "#0A2540" }}><CountUp end={stat.end} suffix={stat.suffix} /></div>
@@ -159,7 +159,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
             <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem, 4vw, 3rem)", color: "#0A2540", lineHeight: 1.15, marginBottom: 24, maxWidth: 680 }}>Developing world-class surfing talent in the heart of the Caribbean</h2>
             <p style={{ fontSize: "1rem", lineHeight: 1.9, color: "rgba(26,26,26,0.55)", maxWidth: 640, marginBottom: 64 }}>Founded in 1995, the Barbados Surfing Association is the recognised national governing body for the sport of surfing in Barbados and an affiliated member of the International Surfing Association. We organise national championship events, develop competitive surfers from grassroots to elite level, and represent Barbados at international competitions including the ISA World Surfing Games and Pan American Games.</p>
           </ScrollReveal>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 32 }} className="stagger">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 32 }} className="stagger grid-responsive-3">
             {[{ title: "COMPETE", desc: "Sanctioned championship events throughout the year, from groms to open divisions, providing a competitive pathway for all Barbadian surfers." }, { title: "DEVELOP", desc: "Coaching programmes, surf camps, and athlete development initiatives to nurture the next generation of Caribbean surfing talent." }, { title: "REPRESENT", desc: "Sending national teams to ISA World Championships, Pan American Games, and Caribbean Surfing Championships on the world stage." }].map(item => (
               <ScrollReveal key={item.title}><div style={{ borderTop: "2px solid #2BA5A0", paddingTop: 24 }}><h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 16, color: "#0A2540", marginBottom: 12, letterSpacing: "0.08em" }}>{item.title}</h3><p style={{ fontSize: 14, lineHeight: 1.8, color: "rgba(26,26,26,0.5)" }}>{item.desc}</p></div></ScrollReveal>
             ))}
@@ -175,7 +175,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 16 }}>LEADERSHIP</div>
             <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem, 4vw, 2.5rem)", color: "#fff", marginBottom: 48 }}>Board of Directors</h2>
           </ScrollReveal>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 32, textAlign: "center" }} className="stagger">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 32, textAlign: "center" }} className="stagger grid-responsive-4">
             {BOARD.map((m, i) => (
               <ScrollReveal key={i} delay={i * 80}>
                 <div style={{ width: 80, height: 80, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
@@ -199,7 +199,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
               <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem, 4vw, 3rem)", color: "#0A2540", lineHeight: 1.15, marginBottom: 8 }}>{latestResults.eventName}</h2>
               <p style={{ fontSize: 14, color: "rgba(26,26,26,0.4)", marginBottom: 48 }}>{new Date(latestResults.eventDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
             </ScrollReveal>
-            <div style={{ display: "grid", gridTemplateColumns: displayDivisions.length > 1 ? "repeat(2, 1fr)" : "1fr", gap: 48, marginBottom: 48 }}>
+            <div className="grid-responsive-2" style={{ display: "grid", gridTemplateColumns: displayDivisions.length > 1 ? "repeat(2, 1fr)" : "1fr", gap: 48, marginBottom: 48 }}>
               {displayDivisions.map(d => (
                 <ScrollReveal key={d.divName}><PodiumBlock data={d.podium} divName={d.divName} /></ScrollReveal>
               ))}
@@ -215,7 +215,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
         <section style={{ backgroundColor: "#0A2540", padding: "80px 24px" }}>
           <div style={{ maxWidth: 1280, margin: "0 auto" }}>
             <ScrollReveal><div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 16 }}>REPRESENTING BARBADOS</div><h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem, 4vw, 3rem)", color: "#fff", lineHeight: 1.15, marginBottom: 48 }}>Our Athletes</h2></ScrollReveal>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24 }} className="stagger">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24 }} className="stagger grid-responsive-4">
               {featuredAthletes.slice(0, 8).map(a => (<ScrollReveal key={a.id}><Link href={`/athletes/${a.id}`} style={{ textDecoration: "none", display: "block" }}><div style={{ backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 12, overflow: "hidden", height: "100%" }}><div style={{ aspectRatio: "1", backgroundColor: "rgba(255,255,255,0.04)", overflow: "hidden" }}>{a.image ? <img src={a.image} alt={a.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.1)", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 48 }}>{a.name.split(" ").map((n: string) => n[0]).join("")}</div>}</div><div style={{ padding: "14px 16px" }}><div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 14, color: "#fff" }}>{a.name}</div><div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", marginTop: 4, textTransform: "uppercase" }}>Barbados</div></div></div></Link></ScrollReveal>))}
             </div>
             <div style={{ textAlign: "center", marginTop: 32 }}><Link href="/athletes" style={{ fontSize: 14, fontWeight: 600, color: "#2BA5A0", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>View All Athletes <ArrowRightIcon size={14} /></Link></div>
@@ -228,7 +228,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
       <section style={{ backgroundColor: "#FAFAF8", padding: "80px 24px" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <ScrollReveal><div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 16 }}>OUR WAVES</div><h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem, 4vw, 3rem)", color: "#0A2540", lineHeight: 1.15, marginBottom: 48 }}>Competition Breaks</h2></ScrollReveal>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }} className="stagger">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }} className="stagger grid-responsive-spots">
             {ALL_SPOTS.map(spot => (<ScrollReveal key={spot.name}><div style={{...cardStyle}}><h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 17, color: "#0A2540", marginBottom: 6 }}>{spot.name}</h3><div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#2BA5A0", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 14 }}>{spot.coast}</div><p style={{ fontSize: 14, lineHeight: 1.75, color: "rgba(26,26,26,0.55)", flex: 1 }}>{spot.desc}</p></div></ScrollReveal>))}
           </div>
         </div>
@@ -239,7 +239,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
       <section style={{ backgroundColor: "#0A2540", padding: "80px 24px" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <ScrollReveal><div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 16 }}>JOIN US</div><h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem, 4vw, 3rem)", color: "#fff", lineHeight: 1.15, marginBottom: 48 }}>Get Involved</h2></ScrollReveal>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }} className="stagger">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }} className="stagger grid-responsive-3">
             {[{ icon: <TrophyIcon size={28} />, title: "Compete", desc: "Enter BSA-sanctioned championship events and compete for national titles across all divisions.", link: "/events", linkText: "View Events" }, { icon: <UsersIcon size={28} />, title: "Membership", desc: "Register as a BSA member and gain access to competition entry, coaching, and national team selection.", link: "https://liveheats.com/BarbadosSurfingAssociation", linkText: "Register" }, { icon: <CompassIcon size={28} />, title: "Sponsor", desc: "Partner with the BSA to support the growth of competitive surfing in Barbados and the Caribbean.", link: "mailto:barbadossurfingassociation@gmail.com", linkText: "Get in Touch" }].map(item => (<ScrollReveal key={item.title}><div style={{ backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 12, padding: 32, height: "100%", display: "flex", flexDirection: "column" }}><div style={{ color: "#2BA5A0", marginBottom: 20 }}>{item.icon}</div><h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 20, color: "#fff", marginBottom: 12 }}>{item.title}</h3><p style={{ fontSize: 14, lineHeight: 1.75, color: "rgba(255,255,255,0.45)", marginBottom: 20, flex: 1 }}>{item.desc}</p><Link href={item.link} style={{ fontSize: 13, fontWeight: 600, color: "#2BA5A0", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>{item.linkText} <ArrowRightIcon size={14} /></Link></div></ScrollReveal>))}
           </div>
         </div>

@@ -1,13 +1,23 @@
 "use client"
 import { useState, useEffect } from "react"
 
-interface SpotData {
-  spotId: string
+// Only these 4 spots, in this order
+const FEATURED_SPOTS = [
+  { id: "5842041f4e65fad6a7708b48", name: "Soup Bowl" },
+  { id: "5842041f4e65fad6a7708c81", name: "Brandon's" },
+  { id: "584204204e65fad6a77099c0", name: "Freights" },
+  { id: "584204204e65fad6a77099c3", name: "Tropicana" },
+]
+
+interface SpotForecast {
   name: string
-  conditions: string
   waveMin: number
   waveMax: number
-  coast: string
+  conditions: string
+  windSpeed: number
+  windDir: string
+  swellHeight: number
+  swellPeriod: number
 }
 
 const conditionColors: Record<string, string> = {
@@ -18,46 +28,83 @@ const conditionColors: Record<string, string> = {
   POOR_TO_FAIR: "#eab308",
   POOR: "#f97316",
   VERY_POOR: "#ef4444",
-  FLAT: "rgba(255,255,255,0.2)",
+  FLAT: "rgba(255,255,255,0.15)",
+}
+
+const conditionLabels: Record<string, string> = {
+  EPIC: "Epic",
+  GOOD: "Good",
+  FAIR: "Fair",
+  FAIR_TO_GOOD: "Fair-Good",
+  POOR_TO_FAIR: "Poor-Fair",
+  POOR: "Poor",
+  VERY_POOR: "Very Poor",
+  FLAT: "Flat",
+}
+
+function windDirLabel(deg: number): string {
+  const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
+  return dirs[Math.round(deg / 22.5) % 16]
 }
 
 export function SurfConditionsBar() {
-  const [spots, setSpots] = useState<SpotData[]>([])
+  const [spots, setSpots] = useState<SpotForecast[]>([])
 
   useEffect(() => {
     let mounted = true
 
-    async function fetchData() {
+    async function fetchAll() {
       try {
-        const res = await fetch("/api/conditions")
-        if (!res.ok) return
-        const data = await res.json()
-        const all: SpotData[] = [
-          ...(data.east || []),
-          ...(data.south || []),
-          ...(data.west || []),
-        ].filter((s: SpotData) => s.waveMax > 0)
-        all.sort((a, b) => b.waveMax - a.waveMax)
-        if (mounted) setSpots(all.slice(0, 8))
+        const results = await Promise.all(
+          FEATURED_SPOTS.map(async (spot) => {
+            const res = await fetch(`/api/conditions?spot=${spot.id}`)
+            if (!res.ok) return null
+            const d = await res.json()
+            return {
+              name: spot.name,
+              waveMin: d.wave?.min || 0,
+              waveMax: d.wave?.max || 0,
+              conditions: d.rating?.key || "FLAT",
+              windSpeed: Math.round(d.wind?.speed || 0),
+              windDir: d.wind?.directionType || "",
+              swellHeight: d.wave?.min || 0,
+              swellPeriod: 0,
+            } as SpotForecast
+          })
+        )
+        if (mounted) setSpots(results.filter(Boolean) as SpotForecast[])
       } catch { /* silent */ }
     }
 
-    fetchData()
-    const interval = setInterval(fetchData, 900000)
+    fetchAll()
+    const interval = setInterval(fetchAll, 900000)
     return () => { mounted = false; clearInterval(interval) }
   }, [])
 
   if (spots.length === 0) return null
 
   return (
-    <div style={{ backgroundColor: "rgba(10,37,64,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "10px 24px", overflow: "hidden" }}>
-      <div className="no-scrollbar" style={{ maxWidth: 1280, margin: "0 auto", display: "flex", justifyContent: "center", gap: "clamp(16px, 3vw, 40px)", overflowX: "auto" }}>
+    <div style={{ backgroundColor: "rgba(10,37,64,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "12px 24px", overflow: "hidden" }}>
+      <div className="no-scrollbar" style={{ maxWidth: 1280, margin: "0 auto", display: "flex", justifyContent: "center", gap: "clamp(20px, 4vw, 48px)", overflowX: "auto" }}>
         {spots.map(spot => (
-          <div key={spot.spotId} style={{ display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap", flexShrink: 0 }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: conditionColors[spot.conditions] || "rgba(255,255,255,0.2)", display: "inline-block" }} />
-            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>{spot.name}</span>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.45)" }}>
+          <div key={spot.name} style={{ display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap", flexShrink: 0 }}>
+            {/* Condition dot */}
+            <span style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: conditionColors[spot.conditions] || "rgba(255,255,255,0.15)", display: "inline-block", flexShrink: 0 }} />
+            {/* Spot name */}
+            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
+              {spot.name}
+            </span>
+            {/* Wave height */}
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 600, color: "#fff" }}>
               {spot.waveMin}-{spot.waveMax}ft
+            </span>
+            {/* Condition label */}
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: conditionColors[spot.conditions] || "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              {conditionLabels[spot.conditions] || spot.conditions}
+            </span>
+            {/* Wind */}
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.35)" }}>
+              {spot.windSpeed}kts {spot.windDir}
             </span>
           </div>
         ))}

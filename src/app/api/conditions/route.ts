@@ -58,12 +58,15 @@ export async function GET(req: Request) {
           const res = await fetch(`${SL_BASE}/kbyg/regions/overview?subregionId=${subregionId}`)
           if (!res.ok) return { coast, spots: [] }
           const data = await res.json()
+          // Check units — Surfline returns M from some regions, FT from US IPs
+          const units = data?.associated?.units?.waveHeight || "FT"
+          const toFeet = units === "M" ? 3.28084 : 1
           const spots = (data?.data?.spots || []).map((s: any) => ({
             spotId: s._id,
             name: s.name,
             conditions: s.conditions?.value || "FLAT",
-            waveMin: Math.round((s.waveHeight?.min || 0) * 3.28084),
-            waveMax: Math.round((s.waveHeight?.max || 0) * 3.28084),
+            waveMin: Math.round((s.waveHeight?.min || 0) * toFeet),
+            waveMax: Math.round((s.waveHeight?.max || 0) * toFeet),
             coast: coast.charAt(0).toUpperCase() + coast.slice(1),
           }))
           spots.sort((a: any, b: any) => b.waveMax - a.waveMax)

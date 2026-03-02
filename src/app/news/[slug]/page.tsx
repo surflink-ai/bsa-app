@@ -17,7 +17,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         </div>
         <h1 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 'clamp(1.75rem,4vw,2.5rem)', color: '#0A2540', marginBottom: '0.5rem', lineHeight: 1.2 }}>{article.title}</h1>
         <p style={{ fontSize: '0.85rem', color: 'rgba(26,26,26,0.4)', marginBottom: '2rem' }}>By {article.author}</p>
-        {article.image && <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: '2rem' }}><img src={article.image} alt={article.title} style={{ width: '100%', height: 'auto' }} /></div>}
+        {("image" in article && (article as any).image) && <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: '2rem' }}><img src={("image" in article && (article as any).image)} alt={article.title} style={{ width: '100%', height: 'auto' }} /></div>}
         <div style={{ fontSize: '1rem', lineHeight: 1.9, color: 'rgba(26,26,26,0.65)' }} dangerouslySetInnerHTML={{ __html: article.content }} />
       </div>
     </div>

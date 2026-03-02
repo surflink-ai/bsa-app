@@ -44,9 +44,9 @@ export function NewsListClient({ articles }: { articles: Article[] }) {
             {filtered.map((article, i) => (
               <ScrollReveal key={article.slug} delay={i * 80}>
                 <Link href={`/news/${article.slug}`} style={{ display: 'block', textDecoration: 'none', backgroundColor: '#fff', borderRadius: '1rem', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', height: '100%' }}>
-                  {article.image && (
+                  {("image" in article && (article as any).image) && (
                     <div style={{ aspectRatio: '16/9', overflow: 'hidden' }}>
-                      <img src={article.image} alt={article.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={("image" in article && (article as any).image)} alt={article.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   )}
                   <div style={{ padding: 'clamp(1rem,2vw,1.5rem)' }}>

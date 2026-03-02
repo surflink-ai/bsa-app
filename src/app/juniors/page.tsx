@@ -56,8 +56,8 @@ export default function JuniorsPage() {
       </section>
 
       {/* PATHWAY */}
-      <WaveDivider color="#FAFAF8" bg="#0A2540" />
-      <section style={{ backgroundColor: "#FAFAF8", padding: "80px 24px" }}>
+      <WaveDivider color="#FFFFFF" bg="#0A2540" />
+      <section style={{ backgroundColor: "#FFFFFF", padding: "80px 24px" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <ScrollReveal>
             <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 16 }}>THE PATHWAY</div>
@@ -79,7 +79,7 @@ export default function JuniorsPage() {
       </section>
 
       {/* PROGRAMMES */}
-      <WaveDivider color="#0A2540" bg="#FAFAF8" />
+      <WaveDivider color="#0A2540" bg="#FFFFFF" />
       <section style={{ backgroundColor: "#0A2540", padding: "80px 24px" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <ScrollReveal>
@@ -107,8 +107,8 @@ export default function JuniorsPage() {
       </section>
 
       {/* CTA */}
-      <WaveDivider color="#FAFAF8" bg="#0A2540" />
-      <section style={{ backgroundColor: "#FAFAF8", padding: "80px 24px" }}>
+      <WaveDivider color="#FFFFFF" bg="#0A2540" />
+      <section style={{ backgroundColor: "#FFFFFF", padding: "80px 24px" }}>
         <div style={{ maxWidth: 640, margin: "0 auto", textAlign: "center" }}>
           <ScrollReveal>
             <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem,4vw,2.5rem)", color: "#0A2540", marginBottom: 16 }}>Ready to Start?</h2>

@@ -30,7 +30,7 @@ export function HistoryClient({ championsByYear, years }: { championsByYear: Rec
                 <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: '1.25rem', color: '#0A2540', marginBottom: '1.5rem' }}>{selectedYear} Champions</h2>
                 <div style={{ backgroundColor: '#fff', borderRadius: '1rem', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
                   {championsByYear[selectedYear].map((c, i) => (
-                    <div key={`${c.division}-${c.name}`} style={{ display: 'flex', alignItems: 'center', padding: '1rem 1.25rem', gap: '1rem', borderBottom: i < championsByYear[selectedYear].length - 1 ? '1px solid rgba(26,26,26,0.04)' : 'none', backgroundColor: i % 2 === 0 ? '#fff' : '#FAFAF8' }}>
+                    <div key={`${c.division}-${c.name}`} style={{ display: 'flex', alignItems: 'center', padding: '1rem 1.25rem', gap: '1rem', borderBottom: i < championsByYear[selectedYear].length - 1 ? '1px solid rgba(26,26,26,0.04)' : 'none', backgroundColor: i % 2 === 0 ? '#fff' : '#FFFFFF' }}>
                       <div style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: '#F2EDE4', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {c.image ? <img src={c.image} alt={c.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: '1rem', color: 'rgba(10,37,64,0.15)', fontWeight: 600 }}>🏆</span>}
                       </div>

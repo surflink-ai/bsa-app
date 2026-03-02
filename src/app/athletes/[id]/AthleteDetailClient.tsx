@@ -12,7 +12,7 @@ export function AthleteDetailClient({ athlete, history }: Props) {
   const avgScore = history.length > 0 ? history.reduce((s, h) => s + h.score, 0) / history.length : 0
   return (
     <div style={{ paddingTop: 64 }}>
-      <section style={{ backgroundColor: "#FAFAF8", padding: "64px 24px" }}>
+      <section style={{ backgroundColor: "#FFFFFF", padding: "64px 24px" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <Link href="/athletes" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(26,26,26,0.4)", textDecoration: "none", marginBottom: 32, display: "inline-block" }}>&larr; All Athletes</Link>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 32, alignItems: "center", marginBottom: 48 }}>
@@ -48,7 +48,7 @@ export function AthleteDetailClient({ athlete, history }: Props) {
               {history.map((h, i) => (
                 <ScrollReveal key={`${h.eventId}-${h.division}-${i}`}>
                   <Link href={`/events/${h.eventId}`} style={{ textDecoration: "none", display: "block" }}>
-                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16, padding: "14px 24px", backgroundColor: i % 2 === 0 ? "#fff" : "#FAFAF8", borderBottom: "1px solid rgba(26,26,26,0.04)" }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16, padding: "14px 24px", backgroundColor: i % 2 === 0 ? "#fff" : "#FFFFFF", borderBottom: "1px solid rgba(26,26,26,0.04)" }}>
                       <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 14, color: h.place <= 3 ? "#1478B5" : "rgba(26,26,26,0.3)", width: 32, textAlign: "center" }}>#{h.place}</div>
                       <div style={{ flex: 1, minWidth: 180 }}>
                         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, color: "#1A1A1A" }}>{h.eventName}</div>

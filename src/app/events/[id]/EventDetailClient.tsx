@@ -2,10 +2,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ScrollReveal } from '../../components/ScrollReveal'
+import { PhotoGallery } from '../../components/PhotoGallery'
 import { ChevronDownIcon } from '../../components/Icons'
 import type { EventDivisionFull } from '@/lib/liveheats'
 
-export function EventDetailClient({ event }: { event: { id: string; name: string; date: string; status: string; eventDivisions: EventDivisionFull[] } }) {
+interface Photo { src: string; alt?: string; credit?: string }
+
+export function EventDetailClient({ event, photos }: { event: { id: string; name: string; date: string; status: string; eventDivisions: EventDivisionFull[] }; photos?: Photo[] }) {
   const [tab, setTab] = useState(0)
   const [open, setOpen] = useState<string | null>(null)
   const div = event.eventDivisions[tab]
@@ -45,6 +48,7 @@ export function EventDetailClient({ event }: { event: { id: string; name: string
             ))}
           </div>
         </ScrollReveal>}
+        {photos && photos.length > 0 && <ScrollReveal><div style={{ marginTop: '2.5rem' }}><PhotoGallery photos={photos} /></div></ScrollReveal>}
       </div>
     </div>
   )

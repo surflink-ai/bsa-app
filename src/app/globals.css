@@ -16,6 +16,7 @@ body { font-family: var(--font-body); -webkit-font-smoothing: antialiased; overf
   .grid-responsive-3 { grid-template-columns: 1fr !important; }
   .grid-responsive-2 { grid-template-columns: 1fr !important; }
   .grid-responsive-spots { grid-template-columns: 1fr !important; }
+  .gallery-grid { grid-template-columns: repeat(2, 1fr) !important; }
   .podium-row { gap: 12px !important; }
   .podium-item { width: 90px !important; }
   .podium-img-sm { width: 56px !important; height: 56px !important; }

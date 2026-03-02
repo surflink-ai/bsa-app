@@ -1,5 +1,6 @@
 import { getArticle, getCategoryLabel } from '@/lib/news'
 import Link from 'next/link'
+import { WaveDivider } from '../../components/WaveDivider'
 export const revalidate = 300
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -8,18 +9,26 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   if (!article) return <div style={{ paddingTop: '8rem', textAlign: 'center', color: 'rgba(26,26,26,0.4)' }}>Article not found.</div>
 
   return (
-    <div className="pb-20 md:pb-0" style={{ paddingTop: '5rem' }}>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(2rem,4vw,4rem) 1.5rem' }}>
-        <Link href="/news" style={{ fontSize: '0.8rem', color: 'rgba(26,26,26,0.4)', textDecoration: 'none', marginBottom: '1.5rem', display: 'inline-block' }}>&larr; Back to News</Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-          <span style={{ fontSize: '0.65rem', fontWeight: 600, padding: '0.2rem 0.6rem', borderRadius: '999px', backgroundColor: 'rgba(43,165,160,0.1)', color: '#2BA5A0', textTransform: 'uppercase' }}>{getCategoryLabel(article.category)}</span>
-          <span style={{ fontSize: '0.8rem', color: 'rgba(26,26,26,0.4)' }}>{new Date(article.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+    <div className="pb-20 md:pb-0">
+      {/* Hero */}
+      <section style={{ backgroundColor: '#0A2540', padding: '120px 24px 64px' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto' }}>
+          <Link href="/news" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: 'rgba(255,255,255,0.3)', textDecoration: 'none', marginBottom: 20, display: 'inline-block', letterSpacing: '0.08em' }}>← NEWS</Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 20, backgroundColor: 'rgba(43,165,160,0.2)', color: '#2BA5A0', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{getCategoryLabel(article.category)}</span>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{new Date(article.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
+          </div>
+          <h1 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 'clamp(1.5rem,4vw,2.5rem)', color: '#fff', lineHeight: 1.2 }}>{article.title}</h1>
         </div>
-        <h1 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 'clamp(1.75rem,4vw,2.5rem)', color: '#0A2540', marginBottom: '0.5rem', lineHeight: 1.2 }}>{article.title}</h1>
-        <p style={{ fontSize: '0.85rem', color: 'rgba(26,26,26,0.4)', marginBottom: '2rem' }}>By {article.author}</p>
-        {("image" in article && (article as any).image) && <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: '2rem' }}><img src={("image" in article && (article as any).image)} alt={article.title} style={{ width: '100%', height: 'auto' }} /></div>}
-        <div style={{ fontSize: '1rem', lineHeight: 1.9, color: 'rgba(26,26,26,0.65)' }} dangerouslySetInnerHTML={{ __html: article.content }} />
-      </div>
+      </section>
+      <WaveDivider color="#FFFFFF" bg="#0A2540" />
+
+      <section style={{ backgroundColor: '#FFFFFF', padding: '32px 24px 80px' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto' }}>
+          <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: 'rgba(26,26,26,0.3)', marginBottom: 32 }}>By {article.author}</p>
+          <div className="article-content" style={{ fontSize: 16, lineHeight: 1.9, color: 'rgba(26,26,26,0.65)', fontFamily: "'Space Grotesk',sans-serif" }} dangerouslySetInnerHTML={{ __html: article.content }} />
+        </div>
+      </section>
     </div>
   )
 }

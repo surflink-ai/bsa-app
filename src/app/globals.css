@@ -60,3 +60,32 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+/* Article content styling */
+.article-content h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: #0A2540;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.article-content p {
+  margin-bottom: 1.25rem;
+}
+.article-content ul {
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+.article-content li {
+  margin-bottom: 0.5rem;
+}
+.article-content a {
+  color: #1478B5;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.article-content strong {
+  color: #0A2540;
+  font-weight: 600;
+}

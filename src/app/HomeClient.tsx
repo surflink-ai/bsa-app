@@ -43,12 +43,12 @@ const COMMITTEE = [
 ]
 
 const COMPETITION_BREAKS = [
-  { name: "Soup Bowl", coast: "East Coast", desc: "World-class reef break. Powerful barrels that have hosted WSL Challenger Series events and every SOTY Nationals." },
-  { name: "South Point", coast: "South Coast", desc: "Premier point break with long, peeling walls on south swells. One of the island's most consistent competition spots." },
-  { name: "Freights Bay", coast: "South Coast", desc: "Fast, barrelling reef break on bigger swells. A favourite among Barbados' most experienced surfers." },
-  { name: "Drill Hall", coast: "South Coast", desc: "Accessible reef break ideal for competition. Home to multiple SOTY events and junior development programmes." },
-  { name: "Parlour", coast: "East Coast", desc: "Technical point break rewarding precision and power. Consistent waves throughout the winter season." },
-  { name: "Long Beach", coast: "South Coast", desc: "Versatile beach break with multiple peaks. Works on all tides and great for progression." },
+  { name: "Soup Bowl", coast: "East Coast", desc: "Powerful right-hand coral reef break at Bathsheba. Handles swells from 3–16ft+ with heavy barrel sections on NE swells. Best with SW/S winds. Home of the Independence Pro and annual Nationals." },
+  { name: "South Point", coast: "South Coast", desc: "Left-hand coral reef break below the South Point Lighthouse. Needs S/SW swell to fire, works best on mid to high tide. Long walls with hollow rights on the inside." },
+  { name: "Freights Bay", coast: "South Coast", desc: "Fast hollow left-hand point break over sand and rock, south of Oistins. Three takeoff sections along the cliff — needs solid S/SW swell (5ft+) to break. Best with N winds." },
+  { name: "Drill Hall", coast: "South Coast", desc: "Reef break near the Garrison with rights and lefts. Sheltered from the prevailing trade winds, making it one of the most competition-friendly spots on the south coast." },
+  { name: "Parlour", coast: "East Coast", desc: "Reef break just south of Bathsheba, receiving year-round Atlantic trade wind swell. Shorter, punchy waves with a rocky bottom — consistent but best on smaller days." },
+  { name: "Long Beach", coast: "South Coast", desc: "Sandy beach break on the south-east coast with multiple shifting peaks. Works on most tides and handles a range of swell sizes. Popular for all levels." },
 ]
 
 export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: Props) {

@@ -5,9 +5,12 @@
 // No API key needed — uses Instagram's public embed script
 
 const INSTAGRAM_POSTS: string[] = [
-  // Add Instagram post URLs here:
-  // "https://www.instagram.com/p/ABC123/",
-  // "https://www.instagram.com/p/DEF456/",
+  "https://www.instagram.com/barbadossurfingassociation/p/DVQgRcmDqHE/",
+  "https://www.instagram.com/barbadossurfingassociation/p/DVMHalIjqw2/",
+  "https://www.instagram.com/barbadossurfingassociation/p/DUohmGSDiRo/",
+  "https://www.instagram.com/barbadossurfingassociation/p/DUek9eYDuhD/",
+  "https://www.instagram.com/barbadossurfingassociation/p/DUD00OfDgjU/",
+  "https://www.instagram.com/barbadossurfingassociation/p/DUBm2wpDj1S/",
 ]
 
 // Fallback: manual social links when no posts are configured

@@ -89,3 +89,12 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   color: #0A2540;
   font-weight: 600;
 }
+
+/* Dashboard responsive grids */
+@media (max-width: 768px) {
+  .grid-responsive-5 { grid-template-columns: repeat(3, 1fr) !important; }
+  .grid-responsive-event { grid-template-columns: 48px 1fr auto !important; }
+}
+@media (max-width: 480px) {
+  .grid-responsive-5 { grid-template-columns: repeat(2, 1fr) !important; }
+}

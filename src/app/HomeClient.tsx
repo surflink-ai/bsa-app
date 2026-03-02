@@ -6,9 +6,7 @@ import { CountUp } from "./components/CountUp"
 import { CountdownTimer } from "./components/CountdownTimer"
 import { WaveDivider } from "./components/WaveDivider"
 import { ChevronDownIcon, ArrowRightIcon, TrophyIcon, UsersIcon, CompassIcon } from "./components/Icons"
-import { LiveCam } from "./components/LiveCam"
-import { LiveScoring } from "./components/LiveScoring"
-import { SurfConditions } from "./components/SurfConditions"
+import { SurfConditionsBar } from "./components/SurfConditionsBar"
 import { SponsorsSection } from "./components/SponsorsSection"
 import { SocialFeed } from "./components/SocialFeed"
 
@@ -63,9 +61,10 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
     }
   }
 
-  // Show top 2 divisions (e.g. Open Mens + Open Womens)
-  const primaryDivisions = allDivisionResults.filter(d => d.divName.toLowerCase().includes("open")).slice(0, 2)
-  const displayDivisions = primaryDivisions.length > 0 ? primaryDivisions : allDivisionResults.slice(0, 2)
+  // Show ONLY Open Mens and Open Womens
+  const openMens = allDivisionResults.find(d => d.divName.toLowerCase().includes("open") && d.divName.toLowerCase().includes("men") && !d.divName.toLowerCase().includes("women"))
+  const openWomens = allDivisionResults.find(d => d.divName.toLowerCase().includes("open") && d.divName.toLowerCase().includes("women"))
+  const displayDivisions = [openMens, openWomens].filter((d): d is NonNullable<typeof d> => !!d)
 
   const featuredAthletes: { id: string; name: string; image: string | null }[] = []
   if (latestResults) {
@@ -118,19 +117,11 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
         <div className="anim-fade-4 anim-float" style={{ position: "absolute", bottom: 32, color: "rgba(255,255,255,0.25)" }}><ChevronDownIcon size={24} /></div>
       </section>
 
-      {/* LIVE CAM — navy */}
-      <section style={{ backgroundColor: "#0A2540", padding: "80px 24px 60px" }}>
-        <ScrollReveal><LiveCam /></ScrollReveal>
-      </section>
-
-      {/* LIVE SCORING — white (only shows when comp is running) */}
-      <WaveDivider color="#FAFAF8" bg="#0A2540" />
-      <section style={{ backgroundColor: "#FAFAF8", padding: "80px 24px" }}>
-        <LiveScoring />
-      </section>
+      {/* SURF CONDITIONS BAR */}
+      <SurfConditionsBar />
 
       {/* STATS — white */}
-      <WaveDivider color="#FAFAF8" bg="#FAFAF8" />
+      <WaveDivider color="#FAFAF8" bg="#0A2540" />
       <section style={{ backgroundColor: "#FAFAF8", padding: "80px 24px" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 32, textAlign: "center" }} className="stagger grid-responsive-4">
@@ -250,14 +241,8 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
         </div>
       </section>
 
-      {/* SURF CONDITIONS — navy */}
-      <WaveDivider color="#0A2540" bg="#FAFAF8" />
-      <section style={{ backgroundColor: "#0A2540", padding: "80px 24px" }}>
-        <ScrollReveal><SurfConditions /></ScrollReveal>
-      </section>
-
       {/* SPONSORS — white */}
-      <WaveDivider color="#FAFAF8" bg="#0A2540" />
+      <WaveDivider color="#FAFAF8" bg="#FAFAF8" />
       <section style={{ backgroundColor: "#FAFAF8", padding: "80px 24px" }}>
         <ScrollReveal><SponsorsSection /></ScrollReveal>
       </section>

@@ -12,8 +12,8 @@ const INSTAGRAM_POSTS: string[] = [
 
 // Fallback: manual social links when no posts are configured
 const SOCIAL_LINKS = [
-  { platform: "Instagram", handle: "@barbadossurfing", url: "https://www.instagram.com/barbadossurfing/", icon: "📸" },
-  { platform: "Facebook", handle: "Barbados Surfing Association", url: "https://www.facebook.com/BarbadosSurfingAssociation/", icon: "👤" },
+  { platform: "Instagram", handle: "@barbadossurfingassociation", url: "https://www.instagram.com/barbadossurfingassociation/", icon: "📸" },
+  { platform: "Facebook", handle: "BSA Surf", url: "https://www.facebook.com/bsasurf/", icon: "👤" },
 ]
 
 export function SocialFeed() {
@@ -55,7 +55,7 @@ export function SocialFeed() {
         ))}
       </div>
       <div style={{ textAlign: "center", marginTop: 24 }}>
-        <a href="https://www.instagram.com/barbadossurfing/" target="_blank" rel="noopener noreferrer" style={{ fontSize: 14, fontWeight: 600, color: "#1478B5", textDecoration: "none" }}>Follow @barbadossurfing →</a>
+        <a href="https://www.instagram.com/barbadossurfingassociation/" target="_blank" rel="noopener noreferrer" style={{ fontSize: 14, fontWeight: 600, color: "#1478B5", textDecoration: "none" }}>Follow @barbadossurfingassociation →</a>
       </div>
     </div>
   )

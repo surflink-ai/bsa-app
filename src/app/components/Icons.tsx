@@ -33,3 +33,6 @@ export function HomeIcon({ size = 24 }: { size?: number }) {
 export function BarChartIcon({ size = 24 }: { size?: number }) {
   return <svg {...s} width={size} height={size}><line x1="6" y1="20" x2="6" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="18" y1="20" x2="18" y2="14" /></svg>
 }
+export function NewsIcon({ size = 24 }: { size?: number }) {
+  return <svg {...s} width={size} height={size}><path d="M4 4h16a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z" /><line x1="7" y1="8" x2="17" y2="8" /><line x1="7" y1="12" x2="13" y2="12" /><line x1="7" y1="16" x2="15" y2="16" /></svg>
+}

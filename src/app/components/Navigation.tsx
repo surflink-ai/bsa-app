@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: "/events", label: "Events" },
   { href: "/athletes", label: "Athletes" },
   { href: "/rankings", label: "Rankings" },
+  { href: "/news", label: "News" },
 ]
 
 export function Navigation() {

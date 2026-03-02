@@ -9,6 +9,7 @@ import { ChevronDownIcon, ArrowRightIcon, TrophyIcon, UsersIcon, CompassIcon } f
 import { LiveCam } from "./components/LiveCam"
 import { LiveScoring } from "./components/LiveScoring"
 import { SurfConditions } from "./components/SurfConditions"
+import { SponsorsSection } from "./components/SponsorsSection"
 
 interface Props {
   org: BSAOrg & { events: BSAEvent[]; series: { id: string; name: string }[] }
@@ -254,8 +255,14 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
         <ScrollReveal><SurfConditions /></ScrollReveal>
       </section>
 
+      {/* SPONSORS — white */}
+      <WaveDivider color="#FAFAF8" bg="#0A2540" />
+      <section style={{ backgroundColor: "#FAFAF8", padding: "80px 24px" }}>
+        <ScrollReveal><SponsorsSection /></ScrollReveal>
+      </section>
+
       {/* GET INVOLVED — navy */}
-      <WaveDivider color="#0A2540" bg="#0A2540" />
+      <WaveDivider color="#0A2540" bg="#FAFAF8" />
       <section style={{ backgroundColor: "#0A2540", padding: "80px 24px" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <ScrollReveal><div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 16 }}>JOIN US</div><h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem, 4vw, 3rem)", color: "#fff", lineHeight: 1.15, marginBottom: 48 }}>Get Involved</h2></ScrollReveal>

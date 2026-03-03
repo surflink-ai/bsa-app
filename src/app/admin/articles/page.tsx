@@ -21,7 +21,6 @@ export default async function AdminArticlesPage() {
         <Link href="/admin/articles/new" style={{
           display: 'inline-flex',
           alignItems: 'center',
-          gap: 6,
           padding: '10px 20px',
           background: '#0A2540',
           color: '#fff',
@@ -31,7 +30,6 @@ export default async function AdminArticlesPage() {
           fontFamily: "'Space Grotesk', sans-serif",
           textDecoration: 'none',
           letterSpacing: '0.01em',
-          transition: 'opacity 0.15s',
         }}>
           New Article
         </Link>
@@ -48,14 +46,14 @@ export default async function AdminArticlesPage() {
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(10,37,64,0.08)' }}>
                 {['Title', 'Category', 'Status', 'Date', ''].map(h => (
-                  <th key={h} style={{
+                  <th key={h || 'actions'} style={{
                     textAlign: h === '' ? 'right' : 'left',
                     padding: '12px 20px',
                     fontFamily: "'JetBrains Mono', monospace",
                     fontSize: 10,
                     fontWeight: 500,
                     letterSpacing: '0.1em',
-                    textTransform: 'uppercase' as const,
+                    textTransform: 'uppercase',
                     color: '#94A3B8',
                     background: 'rgba(10,37,64,0.02)',
                   }}>
@@ -84,10 +82,10 @@ export default async function AdminArticlesPage() {
                       fontFamily: "'JetBrains Mono', monospace",
                       fontSize: 10,
                       letterSpacing: '0.06em',
-                      textTransform: 'uppercase' as const,
+                      textTransform: 'uppercase',
                       color: article.published ? '#16A34A' : '#D97706',
                     }}>
-                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: article.published ? '#16A34A' : '#D97706' }} />
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: article.published ? '#16A34A' : '#D97706', display: 'inline-block' }} />
                       {article.published ? 'Published' : 'Draft'}
                     </span>
                   </td>

@@ -15,67 +15,80 @@ export default function AdminLoginPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-
     const supabase = createClient()
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
-
-    if (authError) {
-      setError(authError.message)
-      setLoading(false)
-      return
-    }
-
+    if (authError) { setError(authError.message); setLoading(false); return }
     router.push('/admin')
     router.refresh()
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center"
-      style={{ backgroundColor: '#0A2540', fontFamily: "'DM Sans', sans-serif" }}
-    >
-      <div className="w-full max-w-[360px] px-4">
-        {/* Wordmark */}
-        <div className="text-center mb-10">
-          <h1
-            className="text-[18px] font-semibold text-white tracking-[0.12em] uppercase"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-          >
-            Barbados Surfing Association
-          </h1>
-          <div className="w-8 h-[1px] bg-white/10 mx-auto mt-4" />
+    <div style={{
+      minHeight: '100vh',
+      background: '#0A2540',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24,
+    }}>
+      <div style={{ width: '100%', maxWidth: 400 }}>
+        {/* Brand */}
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <div style={{
+            fontFamily: "'Space Grotesk', sans-serif",
+            fontSize: 13,
+            fontWeight: 600,
+            letterSpacing: '0.25em',
+            color: '#2BA5A0',
+            textTransform: 'uppercase' as const,
+            marginBottom: 8,
+          }}>
+            Admin
+          </div>
+          <div style={{
+            fontFamily: "'Space Grotesk', sans-serif",
+            fontSize: 28,
+            fontWeight: 700,
+            color: '#fff',
+            lineHeight: 1.2,
+          }}>
+            Barbados Surfing<br />Association
+          </div>
         </div>
 
-        {/* Login card */}
-        <div
-          style={{
-            backgroundColor: '#fff',
+        {/* Form */}
+        <form onSubmit={handleLogin}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 6,
+            padding: '36px 32px',
             border: '1px solid rgba(10,37,64,0.06)',
-            borderRadius: '6px',
-            padding: '32px 28px',
-          }}
-        >
-          {error && (
-            <div
-              className="mb-5 text-[13px]"
-              style={{
-                color: '#DC2626',
-                padding: '10px 12px',
-                backgroundColor: '#FEF2F2',
+          }}>
+            {error && (
+              <div style={{
+                background: '#FEF2F2',
                 border: '1px solid #FECACA',
-                borderRadius: '4px',
-              }}
-            >
-              {error}
-            </div>
-          )}
+                color: '#DC2626',
+                borderRadius: 4,
+                padding: '10px 14px',
+                fontSize: 13,
+                marginBottom: 20,
+              }}>
+                {error}
+              </div>
+            )}
 
-          <form onSubmit={handleLogin}>
-            <div className="mb-4">
-              <label
-                className="block text-[10px] uppercase tracking-[0.15em] mb-2"
-                style={{ fontFamily: "'JetBrains Mono', monospace", color: 'rgba(10,37,64,0.4)' }}
-              >
+            <div style={{ marginBottom: 20 }}>
+              <label style={{
+                display: 'block',
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 10,
+                fontWeight: 500,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase' as const,
+                color: '#94A3B8',
+                marginBottom: 8,
+              }}>
                 Email
               </label>
               <input
@@ -83,24 +96,34 @@ export default function AdminLoginPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                className="w-full text-[14px] outline-none transition-colors"
                 style={{
+                  width: '100%',
+                  padding: '12px 14px',
                   border: '1px solid rgba(10,37,64,0.12)',
-                  borderRadius: '4px',
-                  padding: '10px 12px',
-                  color: '#0A2540',
+                  borderRadius: 4,
+                  fontSize: 14,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  fontFamily: "'DM Sans', sans-serif",
+                  transition: 'border-color 0.15s',
                 }}
-                onFocus={e => (e.target.style.borderColor = '#2BA5A0')}
-                onBlur={e => (e.target.style.borderColor = 'rgba(10,37,64,0.12)')}
-                placeholder="admin@bsa.surf"
+                onFocus={e => e.currentTarget.style.borderColor = '#2BA5A0'}
+                onBlur={e => e.currentTarget.style.borderColor = 'rgba(10,37,64,0.12)'}
+                placeholder="you@example.com"
               />
             </div>
 
-            <div className="mb-6">
-              <label
-                className="block text-[10px] uppercase tracking-[0.15em] mb-2"
-                style={{ fontFamily: "'JetBrains Mono', monospace", color: 'rgba(10,37,64,0.4)' }}
-              >
+            <div style={{ marginBottom: 28 }}>
+              <label style={{
+                display: 'block',
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 10,
+                fontWeight: 500,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase' as const,
+                color: '#94A3B8',
+                marginBottom: 8,
+              }}>
                 Password
               </label>
               <input
@@ -108,32 +131,55 @@ export default function AdminLoginPage() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                className="w-full text-[14px] outline-none transition-colors"
                 style={{
+                  width: '100%',
+                  padding: '12px 14px',
                   border: '1px solid rgba(10,37,64,0.12)',
-                  borderRadius: '4px',
-                  padding: '10px 12px',
-                  color: '#0A2540',
+                  borderRadius: 4,
+                  fontSize: 14,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  fontFamily: "'DM Sans', sans-serif",
+                  transition: 'border-color 0.15s',
                 }}
-                onFocus={e => (e.target.style.borderColor = '#2BA5A0')}
-                onBlur={e => (e.target.style.borderColor = 'rgba(10,37,64,0.12)')}
+                onFocus={e => e.currentTarget.style.borderColor = '#2BA5A0'}
+                onBlur={e => e.currentTarget.style.borderColor = 'rgba(10,37,64,0.12)'}
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full text-[13px] font-medium text-white transition-opacity disabled:opacity-50"
               style={{
-                backgroundColor: '#0A2540',
-                borderRadius: '4px',
-                padding: '11px 0',
-                letterSpacing: '0.03em',
+                width: '100%',
+                padding: '12px 0',
+                background: '#0A2540',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 4,
+                fontSize: 14,
+                fontWeight: 600,
+                fontFamily: "'Space Grotesk', sans-serif",
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.5 : 1,
+                transition: 'opacity 0.15s',
+                letterSpacing: '0.02em',
               }}
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
-          </form>
+          </div>
+        </form>
+
+        <div style={{
+          textAlign: 'center',
+          marginTop: 24,
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 10,
+          color: 'rgba(255,255,255,0.2)',
+          letterSpacing: '0.06em',
+        }}>
+          bsa.surf
         </div>
       </div>
     </div>

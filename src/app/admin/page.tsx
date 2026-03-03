@@ -7,19 +7,19 @@ export default async function AdminDashboard() {
   const supabase = await createClient()
 
   const [articlesRes, sponsorsRes, championsRes, pollsRes, streamRes] = await Promise.all([
-    supabase.from('articles').select('id, title, published, created_at', { count: 'exact' }),
+    supabase.from('articles').select('id, title, published, category, published_at, created_at').order('created_at', { ascending: false }).limit(8),
     supabase.from('sponsors').select('id', { count: 'exact', head: true }).eq('active', true),
     supabase.from('champions').select('id', { count: 'exact', head: true }),
     supabase.from('fan_polls').select('id', { count: 'exact', head: true }).eq('active', true),
     supabase.from('stream_config').select('active').limit(1).single(),
   ])
 
-  const articleCount = articlesRes.count || 0
+  const articleCount = articlesRes.data?.length || 0
   const sponsorCount = sponsorsRes.count || 0
   const championCount = championsRes.count || 0
   const activePollCount = pollsRes.count || 0
   const streamActive = streamRes.data?.active || false
-  const recentArticles = (articlesRes.data || []).slice(0, 5)
+  const recentArticles = articlesRes.data || []
 
   const stats = [
     { label: 'Articles', value: articleCount },
@@ -30,210 +30,207 @@ export default async function AdminDashboard() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="mb-8">
-        <h1
-          className="text-[22px] font-semibold text-[#0A2540]"
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-        >
+      {/* Page Header */}
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 24, fontWeight: 700, color: '#0A2540', margin: 0 }}>
           Dashboard
         </h1>
-        <p className="text-[13px] text-[#0A2540]/40 mt-1">
+        <p style={{ fontSize: 13, color: '#94A3B8', marginTop: 6 }}>
           Welcome back, {admin.full_name || admin.email}
         </p>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-0 mb-0">
+      {/* Stats Row */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: 0,
+        background: '#fff',
+        borderRadius: 6,
+        border: '1px solid rgba(10,37,64,0.06)',
+        marginBottom: 32,
+      }}>
         {stats.map((stat, i) => (
-          <div
-            key={stat.label}
-            className="py-5"
-            style={{
-              borderRight: i < stats.length - 1 ? '1px solid rgba(10,37,64,0.06)' : 'none',
-              paddingLeft: i > 0 ? '24px' : '0',
-              paddingRight: '24px',
-            }}
-          >
-            <p
-              className="text-[32px] font-semibold text-[#0A2540] leading-none"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-            >
+          <div key={stat.label} style={{
+            padding: '24px 28px',
+            borderRight: i < stats.length - 1 ? '1px solid rgba(10,37,64,0.06)' : 'none',
+          }}>
+            <div style={{
+              fontFamily: "'Space Grotesk', sans-serif",
+              fontSize: 32,
+              fontWeight: 700,
+              color: '#0A2540',
+              lineHeight: 1,
+            }}>
               {stat.value}
-            </p>
-            <p
-              className="text-[10px] uppercase tracking-[0.15em] text-[#0A2540]/30 mt-2"
-              style={{ fontFamily: "'JetBrains Mono', monospace" }}
-            >
+            </div>
+            <div style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 10,
+              fontWeight: 500,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase' as const,
+              color: '#94A3B8',
+              marginTop: 8,
+            }}>
               {stat.label}
-            </p>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="h-px bg-[#0A2540]/[0.06] my-6" />
-
-      {/* Stream status + Quick actions */}
-      <div className="grid md:grid-cols-2 gap-8 mb-0">
-        <div>
-          <h2
-            className="text-[10px] uppercase tracking-[0.15em] text-[#0A2540]/30 mb-4"
-            style={{ fontFamily: "'JetBrains Mono', monospace" }}
-          >
-            Live Stream
-          </h2>
-          <div className="flex items-center gap-3">
-            <span
-              className="inline-block w-2 h-2 rounded-full flex-shrink-0"
-              style={{
-                backgroundColor: streamActive ? '#EF4444' : '#D1D5DB',
-                boxShadow: streamActive ? '0 0 6px rgba(239,68,68,0.4)' : 'none',
-              }}
-            />
-            <span
-              className="text-[14px] font-medium"
-              style={{
-                fontFamily: "'Space Grotesk', sans-serif",
-                color: streamActive ? '#EF4444' : '#9CA3AF',
-              }}
-            >
-              {streamActive ? 'LIVE' : 'Off'}
+      {/* Two Column Layout */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, marginBottom: 32 }}>
+        {/* Recent Articles */}
+        <div style={{ background: '#fff', borderRadius: 6, border: '1px solid rgba(10,37,64,0.06)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 24px', borderBottom: '1px solid rgba(10,37,64,0.06)' }}>
+            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 600, color: '#0A2540' }}>
+              Recent Articles
             </span>
-            <Link
-              href="/admin/stream"
-              className="text-[12px] text-[#0A2540]/30 hover:text-[#0A2540]/60 ml-2 transition-colors"
-              style={{ fontFamily: "'JetBrains Mono', monospace" }}
-            >
-              Manage
+            <Link href="/admin/articles" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#2BA5A0', textDecoration: 'none' }}>
+              View all
             </Link>
           </div>
-        </div>
-
-        <div>
-          <h2
-            className="text-[10px] uppercase tracking-[0.15em] text-[#0A2540]/30 mb-4"
-            style={{ fontFamily: "'JetBrains Mono', monospace" }}
-          >
-            Quick Actions
-          </h2>
-          <div className="flex gap-2">
-            <Link
-              href="/admin/articles/new"
-              className="text-[12px] font-medium text-white px-4 py-2 transition-opacity hover:opacity-90"
-              style={{ backgroundColor: '#0A2540', borderRadius: '4px' }}
-            >
-              New Article
-            </Link>
-            <Link
-              href="/admin/notifications"
-              className="text-[12px] font-medium px-4 py-2 transition-colors hover:bg-[#0A2540]/[0.04]"
-              style={{
-                border: '1px solid rgba(10,37,64,0.12)',
-                borderRadius: '4px',
-                color: '#0A2540',
-              }}
-            >
-              Send Notification
-            </Link>
-            <Link
-              href="/admin/polls"
-              className="text-[12px] font-medium px-4 py-2 transition-colors hover:bg-[#0A2540]/[0.04]"
-              style={{
-                border: '1px solid rgba(10,37,64,0.12)',
-                borderRadius: '4px',
-                color: '#0A2540',
-              }}
-            >
-              Create Poll
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      <div className="h-px bg-[#0A2540]/[0.06] my-6" />
-
-      {/* Recent Articles */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2
-            className="text-[10px] uppercase tracking-[0.15em] text-[#0A2540]/30"
-            style={{ fontFamily: "'JetBrains Mono', monospace" }}
-          >
-            Recent Articles
-          </h2>
-          <Link
-            href="/admin/articles"
-            className="text-[11px] text-[#0A2540]/30 hover:text-[#0A2540]/60 transition-colors"
-            style={{ fontFamily: "'JetBrains Mono', monospace" }}
-          >
-            View all
-          </Link>
-        </div>
-
-        {recentArticles.length === 0 ? (
-          <p className="text-[13px] text-[#0A2540]/30">No articles yet.</p>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr>
-                <th
-                  className="text-left text-[9px] uppercase tracking-[0.2em] text-[#0A2540]/20 pb-2 font-medium"
-                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                >
-                  Title
-                </th>
-                <th
-                  className="text-left text-[9px] uppercase tracking-[0.2em] text-[#0A2540]/20 pb-2 font-medium hidden md:table-cell"
-                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                >
-                  Date
-                </th>
-                <th
-                  className="text-right text-[9px] uppercase tracking-[0.2em] text-[#0A2540]/20 pb-2 font-medium"
-                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                >
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+          {recentArticles.length === 0 ? (
+            <div style={{ padding: '40px 24px', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
+              No articles yet
+            </div>
+          ) : (
+            <div>
               {recentArticles.map((a, i) => (
-                <tr
+                <Link
                   key={a.id}
+                  href={`/admin/articles/${a.id}/edit`}
                   style={{
-                    backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(10,37,64,0.015)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '14px 24px',
+                    borderBottom: i < recentArticles.length - 1 ? '1px solid rgba(10,37,64,0.04)' : 'none',
+                    textDecoration: 'none',
+                    transition: 'background 0.1s',
+                    background: i % 2 === 1 ? 'rgba(10,37,64,0.015)' : 'transparent',
                   }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(10,37,64,0.03)'}
+                  onMouseLeave={e => e.currentTarget.style.background = i % 2 === 1 ? 'rgba(10,37,64,0.015)' : 'transparent'}
                 >
-                  <td className="py-2.5 pr-4">
-                    <p className="text-[13px] text-[#0A2540]/80">{a.title}</p>
-                  </td>
-                  <td className="py-2.5 hidden md:table-cell">
-                    <p className="text-[12px] text-[#0A2540]/30" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                      {new Date(a.created_at).toLocaleDateString()}
-                    </p>
-                  </td>
-                  <td className="py-2.5 text-right">
-                    <span className="inline-flex items-center gap-1.5">
-                      <span
-                        className="w-1.5 h-1.5 rounded-full"
-                        style={{ backgroundColor: a.published ? '#22C55E' : '#D1D5DB' }}
-                      />
-                      <span
-                        className="text-[10px] uppercase tracking-[0.1em]"
-                        style={{
-                          fontFamily: "'JetBrains Mono', monospace",
-                          color: a.published ? '#22C55E' : '#9CA3AF',
-                        }}
-                      >
-                        {a.published ? 'Published' : 'Draft'}
-                      </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#0A2540', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {a.title}
+                    </div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#94A3B8', marginTop: 3, letterSpacing: '0.04em' }}>
+                      {a.category?.replace(/-/g, ' ')}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 16, flexShrink: 0 }}>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#94A3B8' }}>
+                      {new Date(a.published_at || a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </span>
-                  </td>
-                </tr>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: 10,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase' as const,
+                      color: a.published ? '#16A34A' : '#D97706',
+                    }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: a.published ? '#16A34A' : '#D97706' }} />
+                      {a.published ? 'Live' : 'Draft'}
+                    </span>
+                  </div>
+                </Link>
               ))}
-            </tbody>
-          </table>
-        )}
+            </div>
+          )}
+        </div>
+
+        {/* Right Column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* Stream Status */}
+          <div style={{ background: '#fff', borderRadius: 6, border: '1px solid rgba(10,37,64,0.06)', padding: '24px' }}>
+            <div style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 10,
+              fontWeight: 500,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase' as const,
+              color: '#94A3B8',
+              marginBottom: 14,
+            }}>
+              Live Stream
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <span style={{
+                width: 10,
+                height: 10,
+                borderRadius: '50%',
+                background: streamActive ? '#DC2626' : '#CBD5E1',
+                boxShadow: streamActive ? '0 0 0 3px rgba(220,38,38,0.15)' : 'none',
+              }} />
+              <span style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontSize: 16,
+                fontWeight: 600,
+                color: streamActive ? '#DC2626' : '#94A3B8',
+              }}>
+                {streamActive ? 'Broadcasting' : 'Offline'}
+              </span>
+            </div>
+            <Link href="/admin/stream" style={{
+              display: 'inline-block',
+              fontSize: 12,
+              fontWeight: 500,
+              color: '#2BA5A0',
+              textDecoration: 'none',
+            }}>
+              Manage stream
+            </Link>
+          </div>
+
+          {/* Quick Actions */}
+          <div style={{ background: '#fff', borderRadius: 6, border: '1px solid rgba(10,37,64,0.06)', padding: '24px' }}>
+            <div style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 10,
+              fontWeight: 500,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase' as const,
+              color: '#94A3B8',
+              marginBottom: 16,
+            }}>
+              Quick Actions
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[
+                { label: 'New Article', href: '/admin/articles/new', bg: '#0A2540' },
+                { label: 'Send Notification', href: '/admin/notifications', bg: '#1478B5' },
+                { label: 'Create Poll', href: '/admin/polls', bg: '#2BA5A0' },
+              ].map(action => (
+                <Link key={action.label} href={action.href} style={{
+                  display: 'block',
+                  padding: '11px 16px',
+                  background: action.bg,
+                  color: '#fff',
+                  borderRadius: 4,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  fontFamily: "'Space Grotesk', sans-serif",
+                  textDecoration: 'none',
+                  textAlign: 'center',
+                  transition: 'opacity 0.15s',
+                  letterSpacing: '0.01em',
+                }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+                  onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                >
+                  {action.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

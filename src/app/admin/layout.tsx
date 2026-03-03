@@ -9,10 +9,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif", backgroundColor: '#F7F8FA', minHeight: '100vh' }}>
       {admin ? (
-        <div className="flex min-h-screen">
+        <div style={{ display: 'flex', minHeight: '100vh' }}>
           <Sidebar userName={admin.full_name || admin.email} userRole={admin.role || 'admin'} />
-          <main className="flex-1 md:ml-[220px]">
-            <div className="max-w-[1200px] mx-auto px-5 py-6 md:px-8 md:py-8">
+          <main style={{ flex: 1, marginLeft: 260 }} className="md:ml-[260px] ml-0">
+            <div style={{ padding: '32px 40px', maxWidth: 1280, margin: '0 auto' }}>
               {children}
             </div>
           </main>

@@ -109,6 +109,22 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   --admin-sidebar: 260px;
 }
 
+/* Admin layout - ensure content clears fixed sidebar */
+.admin-main {
+  margin-left: 260px !important;
+  padding: 36px 44px;
+  max-width: 1200px;
+  min-width: 0;
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .admin-main {
+    margin-left: 0 !important;
+    padding: 24px 20px;
+  }
+}
+
 /* Dashboard responsive grids */
 @media (max-width: 768px) {
   .grid-responsive-5 { grid-template-columns: repeat(3, 1fr) !important; }

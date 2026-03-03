@@ -15,10 +15,8 @@ export function AdminShell({ admin, children }: { admin: AdminUser | null; child
       <div style={{ fontFamily: "'DM Sans', sans-serif", backgroundColor: 'var(--admin-bg)', minHeight: '100vh' }}>
         <div style={{ display: 'flex', minHeight: '100vh' }}>
           <Sidebar userName={admin.full_name || admin.email} userRole={admin.role || 'admin'} />
-          <main style={{ flex: 1, minWidth: 0, marginLeft: 260 }}>
-            <div style={{ padding: '36px 44px', maxWidth: 1200 }}>
-              {children}
-            </div>
+          <main className="admin-main">
+            {children}
           </main>
         </div>
       </div>

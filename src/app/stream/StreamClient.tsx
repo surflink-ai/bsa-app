@@ -43,9 +43,23 @@ interface VODVideo {
   hlsUrl: string
 }
 
-export function StreamClient({ initialStatus, streamConfig }: {
+interface AdminVideo {
+  id: string
+  title: string
+  url: string
+  source: string
+  thumbnail_url: string | null
+}
+
+function extractYouTubeId(url: string): string | null {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+  return m?.[1] || null
+}
+
+export function StreamClient({ initialStatus, streamConfig, vodVideos = [] }: {
   initialStatus: StreamStatus
   streamConfig: StreamConfig
+  vodVideos?: AdminVideo[]
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const hlsRef = useRef<Hls | null>(null)
@@ -53,6 +67,7 @@ export function StreamClient({ initialStatus, streamConfig }: {
   const [heat, setHeat] = useState<HeatData | null>(null)
   const [videos, setVideos] = useState<VODVideo[]>([])
   const [currentVod, setCurrentVod] = useState<string | null>(null)
+  const [currentYouTube, setCurrentYouTube] = useState<string | null>(null)
   const [showOverlay, setShowOverlay] = useState(true)
   const [playerError, setPlayerError] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -244,8 +259,20 @@ export function StreamClient({ initialStatus, streamConfig }: {
             </div>
           )}
 
+          {/* YouTube embed overlay */}
+          {!status.live && currentYouTube && (
+            <div style={{ position: 'absolute', inset: 0, zIndex: 5 }}>
+              <iframe
+                src={`https://www.youtube.com/embed/${currentYouTube}?autoplay=1&rel=0&modestbranding=1`}
+                style={{ width: '100%', height: '100%', border: 'none' }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          )}
+
           {/* Offline state */}
-          {!status.live && !currentVod && (
+          {!status.live && !currentVod && !currentYouTube && (
             <div style={{
               position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
               alignItems: 'center', justifyContent: 'center', background: 'rgba(10,37,64,0.95)',
@@ -357,17 +384,57 @@ export function StreamClient({ initialStatus, streamConfig }: {
         </div>
       )}
 
-      {/* VOD Library (when not live) */}
-      {!status.live && videos.length > 0 && (
+      {/* Video Library (when not live) */}
+      {!status.live && (vodVideos.length > 0 || videos.length > 0) && (
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 24px 0' }}>
           <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', marginBottom: 16 }}>
-            Replays
+            Videos
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+            {/* Admin-added videos (YouTube + CF) */}
+            {vodVideos.map(v => {
+              const ytId = extractYouTubeId(v.url)
+              const thumb = v.thumbnail_url || (ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : null)
+              const isSelected = ytId ? currentYouTube === ytId : currentVod === v.url
+              return (
+                <button
+                  key={v.id}
+                  onClick={() => {
+                    if (ytId) { setCurrentYouTube(ytId); setCurrentVod(null) }
+                    else { setCurrentVod(v.url); setCurrentYouTube(null) }
+                  }}
+                  style={{
+                    background: isSelected ? 'rgba(43,165,160,0.1)' : 'rgba(255,255,255,0.03)',
+                    border: isSelected ? '1px solid rgba(43,165,160,0.3)' : '1px solid rgba(255,255,255,0.06)',
+                    borderRadius: 8, overflow: 'hidden', cursor: 'pointer', textAlign: 'left',
+                    padding: 0, transition: 'border-color 0.15s',
+                  }}
+                >
+                  <div style={{ aspectRatio: '16/9', background: '#111', overflow: 'hidden', position: 'relative' }}>
+                    {thumb && <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }} onError={e => (e.currentTarget.style.display = 'none')} />}
+                    {ytId && (
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(220,38,38,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div style={{ width: 0, height: 0, borderLeft: '16px solid #fff', borderTop: '10px solid transparent', borderBottom: '10px solid transparent', marginLeft: 4 }} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ padding: '12px 14px' }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.title}</div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      {v.source}
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
+
+            {/* Cloudflare Stream recordings */}
             {videos.map(v => (
               <button
                 key={v.uid}
-                onClick={() => setCurrentVod(v.hlsUrl)}
+                onClick={() => { setCurrentVod(v.hlsUrl); setCurrentYouTube(null) }}
                 style={{
                   background: currentVod === v.hlsUrl ? 'rgba(43,165,160,0.1)' : 'rgba(255,255,255,0.03)',
                   border: currentVod === v.hlsUrl ? '1px solid rgba(43,165,160,0.3)' : '1px solid rgba(255,255,255,0.06)',

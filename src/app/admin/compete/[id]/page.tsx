@@ -166,8 +166,24 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     router.push('/admin/compete')
   }
 
+  const [advanceMsg, setAdvanceMsg] = useState<string | null>(null)
+
   const updateHeatStatus = async (heatId: string, status: string) => {
     await sb.from('comp_heats').update({ status }).eq('id', heatId)
+
+    // Auto-advance when completing a heat
+    if (status === 'complete') {
+      try {
+        const res = await fetch('/api/compete/advance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ heat_id: heatId }),
+        })
+        const data = await res.json()
+        if (data.message) { setAdvanceMsg(data.message); setTimeout(() => setAdvanceMsg(null), 5000) }
+      } catch {}
+    }
+
     load()
   }
 
@@ -190,10 +206,18 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 32 }}>
         <StatusDot status={statusMap[event.status] || 'muted'} label={event.status} />
         <div style={{ flex: 1 }} />
+        <Button variant="secondary" href={`/admin/compete/${id}/print`}>Print Heat Sheets</Button>
         {event.status === 'draft' && <Button variant="primary" onClick={() => updateEventStatus('active')}>Activate Event</Button>}
         {event.status === 'active' && <Button variant="secondary" onClick={() => updateEventStatus('complete')}>Mark Complete</Button>}
         <Button variant="danger" onClick={deleteEvent}>Delete</Button>
       </div>
+
+      {/* Advance notification */}
+      {advanceMsg && (
+        <div style={{ padding: '12px 16px', borderRadius: 'var(--admin-radius)', background: 'rgba(43,165,160,0.08)', border: '1px solid rgba(43,165,160,0.2)', marginBottom: 20, fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: 'var(--admin-teal)' }}>
+          {advanceMsg}
+        </div>
+      )}
 
       {/* Divisions */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>

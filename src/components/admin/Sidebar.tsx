@@ -10,6 +10,7 @@ const NAV: { section?: string; label: string; href: string }[] = [
   { label: 'Dashboard', href: '/admin' },
   { section: 'Content', label: 'Articles', href: '/admin/articles' },
   { section: 'Content', label: 'Photos', href: '/admin/photos' },
+  { section: 'Events', label: 'Competitions', href: '/admin/compete' },
   { section: 'Events', label: 'Live Stream', href: '/admin/stream' },
   { section: 'Events', label: 'Polls', href: '/admin/polls' },
   { section: 'People', label: 'Champions', href: '/admin/champions' },

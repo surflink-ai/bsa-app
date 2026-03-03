@@ -4,30 +4,26 @@ interface DashboardCardProps {
   title: string
   value: string | number
   subtitle?: string
-  icon?: string
-  color?: string
 }
 
-export function DashboardCard({ title, value, subtitle, icon, color = '#2BA5A0' }: DashboardCardProps) {
+export function DashboardCard({ title, value, subtitle }: DashboardCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1"
-             style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-            {title}
-          </p>
-          <p className="text-3xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif", color }}>
-            {value}
-          </p>
-          {subtitle && (
-            <p className="text-sm text-gray-400 mt-1" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-              {subtitle}
-            </p>
-          )}
-        </div>
-        {icon && <span className="text-2xl">{icon}</span>}
-      </div>
+    <div className="py-4">
+      <p
+        className="text-[32px] font-semibold text-[#0A2540] leading-none"
+        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+      >
+        {value}
+      </p>
+      <p
+        className="text-[10px] uppercase tracking-[0.15em] text-[#0A2540]/30 mt-2"
+        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+      >
+        {title}
+      </p>
+      {subtitle && (
+        <p className="text-[11px] text-[#0A2540]/25 mt-0.5">{subtitle}</p>
+      )}
     </div>
   )
 }

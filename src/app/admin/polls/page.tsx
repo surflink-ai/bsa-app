@@ -33,7 +33,6 @@ export default function AdminPollsPage() {
     setPolls(data || [])
     setLoading(false)
 
-    // Fetch vote counts for each poll
     if (data) {
       for (const poll of data) {
         const { data: votes } = await supabase.from('fan_votes').select('option_label').eq('poll_id', poll.id)
@@ -86,74 +85,80 @@ export default function AdminPollsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Fan Polls</h1>
-          <p className="text-sm text-gray-400 mt-1">{polls.length} polls</p>
+          <h1 className="text-[22px] font-semibold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Fan Polls</h1>
+          <p className="text-[12px] text-[#0A2540]/30 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{polls.length} polls</p>
         </div>
         <button onClick={() => setShowForm(true)}
-          className="bg-[#2BA5A0] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#2BA5A0]/90 transition-colors">
-          + Create Poll
+          className="text-[12px] font-medium text-white px-4 py-2 transition-opacity hover:opacity-90"
+          style={{ backgroundColor: '#0A2540', borderRadius: '4px' }}>
+          Create Poll
         </button>
       </div>
 
       {showForm && (
-        <div className="mb-8">
+        <div className="mb-6">
           <PollCreator onSubmit={handleCreate} onCancel={() => setShowForm(false)} loading={saving} />
         </div>
       )}
 
       {loading ? (
-        <p className="text-gray-400 text-sm">Loading...</p>
+        <p className="text-[13px] text-[#0A2540]/30">Loading...</p>
       ) : polls.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 p-12 text-center shadow-sm">
-          <p className="text-gray-400 text-sm">No polls yet. Create your first one!</p>
-        </div>
+        <p className="text-[13px] text-[#0A2540]/30 py-12 text-center">No polls yet. Create your first one.</p>
       ) : (
-        <div className="space-y-4">
-          {polls.map(poll => {
+        <div className="space-y-0">
+          {polls.map((poll, idx) => {
             const total = getTotalVotes(poll.id)
             const counts = voteCounts[poll.id] || []
 
             return (
-              <div key={poll.id} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="font-semibold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{poll.title}</h3>
-                    {poll.description && <p className="text-sm text-gray-400 mt-1">{poll.description}</p>}
-                    <p className="text-[10px] text-gray-300 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                      {total} vote{total !== 1 ? 's' : ''} · Created {new Date(poll.created_at).toLocaleDateString()}
-                    </p>
+              <div key={poll.id}>
+                {idx > 0 && <div className="h-px bg-[#0A2540]/[0.04] my-5" />}
+                <div>
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="text-[15px] font-medium text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{poll.title}</h3>
+                      {poll.description && <p className="text-[12px] text-[#0A2540]/35 mt-1">{poll.description}</p>}
+                      <p className="text-[10px] text-[#0A2540]/20 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                        {total} vote{total !== 1 ? 's' : ''} &middot; {new Date(poll.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+                      <button onClick={() => handleToggle(poll)}
+                        className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.1em] transition-colors cursor-pointer"
+                        style={{ fontFamily: "'JetBrains Mono', monospace", color: poll.active ? '#22C55E' : '#9CA3AF' }}>
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: poll.active ? '#22C55E' : '#D1D5DB' }} />
+                        {poll.active ? 'Active' : 'Closed'}
+                      </button>
+                      <button onClick={() => handleDelete(poll.id)}
+                        className="text-[12px] text-[#DC2626]/50 hover:text-[#DC2626] transition-colors">
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => handleToggle(poll)}
-                      className={`text-[10px] uppercase tracking-wider px-3 py-1 rounded-full ${
-                        poll.active ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-400'
-                      }`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                      {poll.active ? 'Active' : 'Closed'}
-                    </button>
-                    <button onClick={() => handleDelete(poll.id)} className="text-red-400 hover:text-red-600 text-xs font-medium transition-colors">Delete</button>
+
+                  {/* Results */}
+                  <div className="space-y-2 max-w-[500px]">
+                    {(poll.options as { id: string; label: string }[]).map(opt => {
+                      const count = counts.find(c => c.option_label === opt.label)?.count || 0
+                      const pct = total > 0 ? (count / total) * 100 : 0
+
+                      return (
+                        <div key={opt.id} className="flex items-center gap-3">
+                          <span className="text-[12px] text-[#0A2540]/50 w-[140px] flex-shrink-0 truncate">{opt.label}</span>
+                          <div className="flex-1 h-[6px] rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(10,37,64,0.04)' }}>
+                            <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, backgroundColor: '#2BA5A0' }} />
+                          </div>
+                          <span className="text-[10px] text-[#0A2540]/25 w-[60px] text-right flex-shrink-0"
+                                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                            {count} ({pct.toFixed(0)}%)
+                          </span>
+                        </div>
+                      )
+                    })}
                   </div>
-                </div>
-
-                {/* Results bar chart */}
-                <div className="space-y-2">
-                  {(poll.options as { id: string; label: string }[]).map(opt => {
-                    const count = counts.find(c => c.option_label === opt.label)?.count || 0
-                    const pct = total > 0 ? (count / total) * 100 : 0
-
-                    return (
-                      <div key={opt.id}>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-gray-600">{opt.label}</span>
-                          <span className="text-gray-400">{count} ({pct.toFixed(0)}%)</span>
-                        </div>
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-[#2BA5A0] rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
-                        </div>
-                      </div>
-                    )
-                  })}
                 </div>
               </div>
             )

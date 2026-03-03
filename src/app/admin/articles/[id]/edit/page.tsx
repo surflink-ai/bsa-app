@@ -9,6 +9,26 @@ function generateSlug(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 }
 
+const inputStyle = {
+  border: '1px solid rgba(10,37,64,0.12)',
+  borderRadius: '4px',
+  padding: '9px 12px',
+  fontSize: '13px',
+  color: '#0A2540',
+  width: '100%',
+  outline: 'none',
+}
+
+const labelStyle = {
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: '10px',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.15em',
+  color: 'rgba(10,37,64,0.35)',
+  display: 'block',
+  marginBottom: '6px',
+}
+
 interface ArticleData {
   id: string
   title: string
@@ -100,48 +120,70 @@ export default function EditArticlePage() {
     router.refresh()
   }
 
-  if (fetching) return <div className="text-gray-400 text-sm p-8">Loading...</div>
-  if (!article) return <div className="text-red-500 text-sm p-8">{error || 'Article not found'}</div>
+  const focusHandler = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    e.target.style.borderColor = '#2BA5A0'
+  }
+  const blurHandler = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    e.target.style.borderColor = 'rgba(10,37,64,0.12)'
+  }
+
+  if (fetching) return <div className="text-[13px] text-[#0A2540]/30 py-8">Loading...</div>
+  if (!article) return <div className="text-[13px] text-[#DC2626] py-8">{error || 'Article not found'}</div>
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Edit Article</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1
+          className="text-[22px] font-semibold text-[#0A2540]"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          Edit Article
+        </h1>
         <button onClick={handleDelete} disabled={deleting}
-          className="text-red-400 hover:text-red-600 text-sm font-medium transition-colors">
+          className="text-[12px] text-[#DC2626]/50 hover:text-[#DC2626] transition-colors">
           {deleting ? 'Deleting...' : 'Delete Article'}
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg p-3 text-sm mb-4">{error}</div>
+        <div className="mb-5 text-[13px]" style={{ color: '#DC2626', padding: '10px 12px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px' }}>
+          {error}
+        </div>
       )}
 
-      <div className="space-y-4 max-w-4xl">
+      <div className="max-w-[800px] space-y-5">
         <div>
-          <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Title</label>
-          <input type="text" value={title} onChange={e => setTitle(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-lg font-semibold focus:outline-none focus:border-[#2BA5A0]"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }} />
+          <label style={labelStyle}>Title</label>
+          <input
+            type="text" value={title} onChange={e => setTitle(e.target.value)}
+            style={{ ...inputStyle, fontSize: '16px', fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600 }}
+            onFocus={focusHandler} onBlur={blurHandler}
+          />
         </div>
 
         <div>
-          <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Slug</label>
-          <input type="text" value={slug} onChange={e => setSlug(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#2BA5A0]" />
+          <label style={labelStyle}>Slug</label>
+          <input
+            type="text" value={slug} onChange={e => setSlug(e.target.value)}
+            style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace", fontSize: '12px' }}
+            onFocus={focusHandler} onBlur={blurHandler}
+          />
         </div>
 
         <div>
-          <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Excerpt</label>
-          <textarea value={excerpt} onChange={e => setExcerpt(e.target.value)} rows={2}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]" />
+          <label style={labelStyle}>Excerpt</label>
+          <textarea
+            value={excerpt} onChange={e => setExcerpt(e.target.value)} rows={2}
+            style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties}
+            onFocus={focusHandler} onBlur={blurHandler}
+          />
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Category</label>
+            <label style={labelStyle}>Category</label>
             <select value={category} onChange={e => setCategory(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]">
+              style={inputStyle} onFocus={focusHandler} onBlur={blurHandler}>
               <option value="news">News</option>
               <option value="event-recap">Event Recap</option>
               <option value="athlete-spotlight">Athlete Spotlight</option>
@@ -150,33 +192,35 @@ export default function EditArticlePage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Author</label>
+            <label style={labelStyle}>Author</label>
             <input type="text" value={authorName} onChange={e => setAuthorName(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]" />
+              style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Featured Image URL</label>
+            <label style={labelStyle}>Featured Image URL</label>
             <input type="url" value={featuredImage} onChange={e => setFeaturedImage(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]" />
+              style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Content</label>
+          <label style={labelStyle}>Content</label>
           <ArticleEditor initialContent={content} onChange={setContent} />
         </div>
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex items-center gap-3 pt-2">
           <button onClick={() => handleSave(true)} disabled={loading}
-            className="bg-[#2BA5A0] text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-[#2BA5A0]/90 disabled:opacity-50 transition-colors">
+            className="text-[13px] font-medium text-white px-5 py-2.5 transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: '#0A2540', borderRadius: '4px' }}>
             {loading ? 'Saving...' : article.published ? 'Update' : 'Publish'}
           </button>
           <button onClick={() => handleSave(false)} disabled={loading}
-            className="bg-gray-100 text-gray-600 px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-200 disabled:opacity-50 transition-colors">
+            className="text-[13px] font-medium px-5 py-2.5 transition-colors hover:bg-[#0A2540]/[0.04] disabled:opacity-50"
+            style={{ border: '1px solid rgba(10,37,64,0.12)', borderRadius: '4px', color: '#0A2540' }}>
             Save as Draft
           </button>
           <button onClick={() => router.push('/admin/articles')}
-            className="text-gray-400 hover:text-gray-600 px-4 py-2.5 text-sm transition-colors">
+            className="text-[13px] text-[#0A2540]/30 hover:text-[#0A2540]/60 px-3 py-2.5 transition-colors">
             Cancel
           </button>
         </div>

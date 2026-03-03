@@ -45,13 +45,13 @@ export default function AdminStreamPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Live Stream</h1>
-        <p className="text-sm text-gray-400 mt-1">Control the live stream banner on the homepage</p>
+      <div className="mb-6">
+        <h1 className="text-[22px] font-semibold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Live Stream</h1>
+        <p className="text-[12px] text-[#0A2540]/30 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Control the live stream banner on the homepage</p>
       </div>
 
       {loading ? (
-        <p className="text-gray-400 text-sm">Loading...</p>
+        <p className="text-[13px] text-[#0A2540]/30">Loading...</p>
       ) : config ? (
         <StreamToggle
           initialActive={config.active}
@@ -63,7 +63,7 @@ export default function AdminStreamPage() {
           loading={saving}
         />
       ) : (
-        <p className="text-gray-400 text-sm">No stream configuration found. Please run the database migrations.</p>
+        <p className="text-[13px] text-[#0A2540]/30">No stream configuration found. Please run the database migrations.</p>
       )}
     </div>
   )

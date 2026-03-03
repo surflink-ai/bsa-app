@@ -62,23 +62,24 @@ export default function AdminSponsorsPage() {
     fetchSponsors()
   }
 
-  const tierColors: Record<string, string> = { platinum: '#8B5CF6', gold: '#eab308', silver: '#94a3b8', bronze: '#b45309', supporter: '#2BA5A0' }
+  const tierColors: Record<string, string> = { platinum: '#7C3AED', gold: '#CA8A04', silver: '#64748B', bronze: '#92400E', supporter: '#2BA5A0' }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Sponsors</h1>
-          <p className="text-sm text-gray-400 mt-1">{sponsors.length} sponsors</p>
+          <h1 className="text-[22px] font-semibold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Sponsors</h1>
+          <p className="text-[12px] text-[#0A2540]/30 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{sponsors.length} sponsors</p>
         </div>
         <button onClick={() => { setShowForm(true); setEditingSponsor(null) }}
-          className="bg-[#2BA5A0] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#2BA5A0]/90 transition-colors">
-          + Add Sponsor
+          className="text-[12px] font-medium text-white px-4 py-2 transition-opacity hover:opacity-90"
+          style={{ backgroundColor: '#0A2540', borderRadius: '4px' }}>
+          Add Sponsor
         </button>
       </div>
 
       {(showForm || editingSponsor) && (
-        <div className="mb-8">
+        <div className="mb-6">
           <SponsorForm
             initial={editingSponsor ? { ...editingSponsor, logo_url: editingSponsor.logo_url ?? undefined, website_url: editingSponsor.website_url ?? undefined } : undefined}
             onSubmit={editingSponsor ? handleUpdate : handleCreate}
@@ -89,56 +90,54 @@ export default function AdminSponsorsPage() {
       )}
 
       {loading ? (
-        <p className="text-gray-400 text-sm">Loading...</p>
+        <p className="text-[13px] text-[#0A2540]/30">Loading...</p>
       ) : sponsors.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 p-12 text-center shadow-sm">
-          <p className="text-gray-400 text-sm">No sponsors yet.</p>
-        </div>
+        <p className="text-[13px] text-[#0A2540]/30 py-12 text-center">No sponsors yet.</p>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Sponsor</th>
-                <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400 hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Tier</th>
-                <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400 hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Status</th>
-                <th className="text-right px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {sponsors.map(s => (
-                <tr key={s.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      {s.logo_url && <img src={s.logo_url} alt="" className="w-8 h-8 object-contain rounded" />}
-                      <div>
-                        <p className="font-medium text-gray-700">{s.name}</p>
-                        {s.website_url && <p className="text-xs text-gray-400 truncate max-w-[200px]">{s.website_url}</p>}
-                      </div>
+        <table className="w-full">
+          <thead>
+            <tr style={{ borderBottom: '1px solid rgba(10,37,64,0.06)' }}>
+              <th className="text-left pb-2.5 font-medium" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>Sponsor</th>
+              <th className="text-left pb-2.5 font-medium hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>Tier</th>
+              <th className="text-left pb-2.5 font-medium hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>Status</th>
+              <th className="text-right pb-2.5 font-medium" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)', width: '100px' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sponsors.map((s, i) => (
+              <tr key={s.id} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(10,37,64,0.015)' }}>
+                <td className="py-2.5 pr-4">
+                  <div className="flex items-center gap-3">
+                    {s.logo_url && <img src={s.logo_url} alt="" className="w-6 h-6 object-contain flex-shrink-0" />}
+                    <div>
+                      <p className="text-[13px] font-medium text-[#0A2540]/70">{s.name}</p>
+                      {s.website_url && <p className="text-[10px] text-[#0A2540]/20 truncate max-w-[200px]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{s.website_url}</p>}
                     </div>
-                  </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
-                    <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: `${tierColors[s.tier]}15`, color: tierColors[s.tier] }}>
-                      {s.tier}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
-                    <button onClick={() => handleToggleActive(s)}
-                      className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full cursor-pointer ${
-                        s.active ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-400'
-                      }`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  </div>
+                </td>
+                <td className="py-2.5 pr-4 hidden md:table-cell">
+                  <span className="text-[10px] uppercase tracking-[0.1em] font-medium"
+                    style={{ fontFamily: "'JetBrains Mono', monospace", color: tierColors[s.tier] || '#999' }}>
+                    {s.tier}
+                  </span>
+                </td>
+                <td className="py-2.5 pr-4 hidden md:table-cell">
+                  <button onClick={() => handleToggleActive(s)} className="inline-flex items-center gap-1.5 cursor-pointer">
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.active ? '#22C55E' : '#D1D5DB' }} />
+                    <span className="text-[10px] uppercase tracking-[0.1em]" style={{ fontFamily: "'JetBrains Mono', monospace", color: s.active ? '#22C55E' : '#9CA3AF' }}>
                       {s.active ? 'Active' : 'Inactive'}
-                    </button>
-                  </td>
-                  <td className="px-4 py-3 text-right space-x-2">
-                    <button onClick={() => setEditingSponsor(s)} className="text-[#1478B5] hover:text-[#0A2540] text-xs font-medium transition-colors">Edit</button>
-                    <button onClick={() => handleDelete(s.id)} className="text-red-400 hover:text-red-600 text-xs font-medium transition-colors">Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    </span>
+                  </button>
+                </td>
+                <td className="py-2.5 text-right">
+                  <button onClick={() => setEditingSponsor(s)} className="text-[12px] text-[#1478B5] hover:text-[#0A2540] transition-colors">Edit</button>
+                  <span className="text-[#0A2540]/10 mx-1.5">|</span>
+                  <button onClick={() => handleDelete(s.id)} className="text-[12px] text-[#DC2626]/50 hover:text-[#DC2626] transition-colors">Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   )

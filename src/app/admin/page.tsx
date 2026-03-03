@@ -1,5 +1,4 @@
 import { requireAdmin } from '@/lib/supabase/admin'
-import { DashboardCard } from '@/components/admin/DashboardCard'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
@@ -7,7 +6,6 @@ export default async function AdminDashboard() {
   const admin = await requireAdmin()
   const supabase = await createClient()
 
-  // Fetch counts
   const [articlesRes, sponsorsRes, championsRes, pollsRes, streamRes] = await Promise.all([
     supabase.from('articles').select('id, title, published, created_at', { count: 'exact' }),
     supabase.from('sponsors').select('id', { count: 'exact', head: true }).eq('active', true),
@@ -23,84 +21,218 @@ export default async function AdminDashboard() {
   const streamActive = streamRes.data?.active || false
   const recentArticles = (articlesRes.data || []).slice(0, 5)
 
+  const stats = [
+    { label: 'Articles', value: articleCount },
+    { label: 'Active Sponsors', value: sponsorCount },
+    { label: 'Champions', value: championCount },
+    { label: 'Active Polls', value: activePollCount },
+  ]
+
   return (
     <div>
+      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+        <h1
+          className="text-[22px] font-semibold text-[#0A2540]"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
           Dashboard
         </h1>
-        <p className="text-sm text-gray-400 mt-1">Welcome back, {admin.full_name || admin.email}</p>
+        <p className="text-[13px] text-[#0A2540]/40 mt-1">
+          Welcome back, {admin.full_name || admin.email}
+        </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <DashboardCard title="Articles" value={articleCount} icon="📝" />
-        <DashboardCard title="Sponsors" value={sponsorCount} subtitle="Active" icon="🤝" />
-        <DashboardCard title="Champions" value={championCount} icon="🏆" />
-        <DashboardCard title="Active Polls" value={activePollCount} icon="📊" />
+      {/* Stats row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-0 mb-0">
+        {stats.map((stat, i) => (
+          <div
+            key={stat.label}
+            className="py-5"
+            style={{
+              borderRight: i < stats.length - 1 ? '1px solid rgba(10,37,64,0.06)' : 'none',
+              paddingLeft: i > 0 ? '24px' : '0',
+              paddingRight: '24px',
+            }}
+          >
+            <p
+              className="text-[32px] font-semibold text-[#0A2540] leading-none"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              {stat.value}
+            </p>
+            <p
+              className="text-[10px] uppercase tracking-[0.15em] text-[#0A2540]/30 mt-2"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              {stat.label}
+            </p>
+          </div>
+        ))}
       </div>
 
-      {/* Stream Status + Quick Actions */}
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+      <div className="h-px bg-[#0A2540]/[0.06] my-6" />
+
+      {/* Stream status + Quick actions */}
+      <div className="grid md:grid-cols-2 gap-8 mb-0">
+        <div>
+          <h2
+            className="text-[10px] uppercase tracking-[0.15em] text-[#0A2540]/30 mb-4"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
             Live Stream
           </h2>
           <div className="flex items-center gap-3">
-            <span className={`w-3 h-3 rounded-full ${streamActive ? 'bg-red-500 animate-pulse' : 'bg-gray-300'}`} />
-            <span className="text-lg font-semibold" style={{ fontFamily: "'Space Grotesk', sans-serif", color: streamActive ? '#ef4444' : '#9ca3af' }}>
+            <span
+              className="inline-block w-2 h-2 rounded-full flex-shrink-0"
+              style={{
+                backgroundColor: streamActive ? '#EF4444' : '#D1D5DB',
+                boxShadow: streamActive ? '0 0 6px rgba(239,68,68,0.4)' : 'none',
+              }}
+            />
+            <span
+              className="text-[14px] font-medium"
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                color: streamActive ? '#EF4444' : '#9CA3AF',
+              }}
+            >
               {streamActive ? 'LIVE' : 'Off'}
             </span>
+            <Link
+              href="/admin/stream"
+              className="text-[12px] text-[#0A2540]/30 hover:text-[#0A2540]/60 ml-2 transition-colors"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              Manage
+            </Link>
           </div>
-          <Link href="/admin/stream" className="inline-block mt-3 text-sm text-[#2BA5A0] hover:underline">
-            Manage Stream →
-          </Link>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+        <div>
+          <h2
+            className="text-[10px] uppercase tracking-[0.15em] text-[#0A2540]/30 mb-4"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
             Quick Actions
           </h2>
-          <div className="flex flex-wrap gap-2">
-            <Link href="/admin/articles/new"
-              className="bg-[#2BA5A0] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#2BA5A0]/90 transition-colors">
+          <div className="flex gap-2">
+            <Link
+              href="/admin/articles/new"
+              className="text-[12px] font-medium text-white px-4 py-2 transition-opacity hover:opacity-90"
+              style={{ backgroundColor: '#0A2540', borderRadius: '4px' }}
+            >
               New Article
             </Link>
-            <Link href="/admin/notifications"
-              className="bg-[#0A2540] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#0A2540]/90 transition-colors">
+            <Link
+              href="/admin/notifications"
+              className="text-[12px] font-medium px-4 py-2 transition-colors hover:bg-[#0A2540]/[0.04]"
+              style={{
+                border: '1px solid rgba(10,37,64,0.12)',
+                borderRadius: '4px',
+                color: '#0A2540',
+              }}
+            >
               Send Notification
             </Link>
-            <Link href="/admin/polls"
-              className="bg-[#1478B5] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1478B5]/90 transition-colors">
+            <Link
+              href="/admin/polls"
+              className="text-[12px] font-medium px-4 py-2 transition-colors hover:bg-[#0A2540]/[0.04]"
+              style={{
+                border: '1px solid rgba(10,37,64,0.12)',
+                borderRadius: '4px',
+                color: '#0A2540',
+              }}
+            >
               Create Poll
             </Link>
           </div>
         </div>
       </div>
 
+      <div className="h-px bg-[#0A2540]/[0.06] my-6" />
+
       {/* Recent Articles */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-          Recent Articles
-        </h2>
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2
+            className="text-[10px] uppercase tracking-[0.15em] text-[#0A2540]/30"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            Recent Articles
+          </h2>
+          <Link
+            href="/admin/articles"
+            className="text-[11px] text-[#0A2540]/30 hover:text-[#0A2540]/60 transition-colors"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            View all
+          </Link>
+        </div>
+
         {recentArticles.length === 0 ? (
-          <p className="text-gray-400 text-sm">No articles yet.</p>
+          <p className="text-[13px] text-[#0A2540]/30">No articles yet.</p>
         ) : (
-          <div className="space-y-3">
-            {recentArticles.map((a) => (
-              <div key={a.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">{a.title}</p>
-                  <p className="text-xs text-gray-400">{new Date(a.created_at).toLocaleDateString()}</p>
-                </div>
-                <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                  a.published ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'
-                }`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                  {a.published ? 'Published' : 'Draft'}
-                </span>
-              </div>
-            ))}
-          </div>
+          <table className="w-full">
+            <thead>
+              <tr>
+                <th
+                  className="text-left text-[9px] uppercase tracking-[0.2em] text-[#0A2540]/20 pb-2 font-medium"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  Title
+                </th>
+                <th
+                  className="text-left text-[9px] uppercase tracking-[0.2em] text-[#0A2540]/20 pb-2 font-medium hidden md:table-cell"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  Date
+                </th>
+                <th
+                  className="text-right text-[9px] uppercase tracking-[0.2em] text-[#0A2540]/20 pb-2 font-medium"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentArticles.map((a, i) => (
+                <tr
+                  key={a.id}
+                  style={{
+                    backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(10,37,64,0.015)',
+                  }}
+                >
+                  <td className="py-2.5 pr-4">
+                    <p className="text-[13px] text-[#0A2540]/80">{a.title}</p>
+                  </td>
+                  <td className="py-2.5 hidden md:table-cell">
+                    <p className="text-[12px] text-[#0A2540]/30" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                      {new Date(a.created_at).toLocaleDateString()}
+                    </p>
+                  </td>
+                  <td className="py-2.5 text-right">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span
+                        className="w-1.5 h-1.5 rounded-full"
+                        style={{ backgroundColor: a.published ? '#22C55E' : '#D1D5DB' }}
+                      />
+                      <span
+                        className="text-[10px] uppercase tracking-[0.1em]"
+                        style={{
+                          fontFamily: "'JetBrains Mono', monospace",
+                          color: a.published ? '#22C55E' : '#9CA3AF',
+                        }}
+                      >
+                        {a.published ? 'Published' : 'Draft'}
+                      </span>
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </div>

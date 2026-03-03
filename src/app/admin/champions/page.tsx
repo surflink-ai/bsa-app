@@ -11,6 +11,26 @@ interface Champion {
   image_url: string | null
 }
 
+const inputStyle = {
+  border: '1px solid rgba(10,37,64,0.12)',
+  borderRadius: '4px',
+  padding: '9px 12px',
+  fontSize: '13px',
+  color: '#0A2540',
+  width: '100%',
+  outline: 'none',
+}
+
+const labelStyle = {
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: '10px',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.15em',
+  color: 'rgba(10,37,64,0.35)',
+  display: 'block',
+  marginBottom: '6px',
+}
+
 export default function AdminChampionsPage() {
   const [champions, setChampions] = useState<Champion[]>([])
   const [loading, setLoading] = useState(true)
@@ -33,9 +53,7 @@ export default function AdminChampionsPage() {
   useEffect(() => { fetchChampions() }, [])
 
   const years = [...new Set(champions.map(c => c.year))].sort((a, b) => b - a)
-
   const filteredChampions = filterYear ? champions.filter(c => c.year === filterYear) : champions
-
   const divisions = ['Open Mens', 'Open Womens', 'Pro Mens', 'Pro Womens', 'Pro Juniors', 'Under 18 Boys', 'Under 18 Girls', 'Under 16 Boys', 'Under 16 Girls', 'Under 14 Boys', 'Under 12', 'Grand Masters', 'Masters 40+', 'Masters 35+', 'Longboard Open']
 
   const resetForm = () => {
@@ -60,7 +78,6 @@ export default function AdminChampionsPage() {
     if (!division || !name.trim()) return
     setSaving(true)
     const supabase = createClient()
-
     if (editingId) {
       await supabase.from('champions').update({ year, division, name, image_url: imageUrl || null }).eq('id', editingId)
     } else {
@@ -78,107 +95,131 @@ export default function AdminChampionsPage() {
     setChampions(prev => prev.filter(c => c.id !== id))
   }
 
+  const focusHandler = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => { e.target.style.borderColor = '#2BA5A0' }
+  const blurHandler = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => { e.target.style.borderColor = 'rgba(10,37,64,0.12)' }
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Champions</h1>
-          <p className="text-sm text-gray-400 mt-1">{champions.length} records</p>
+          <h1 className="text-[22px] font-semibold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            Champions
+          </h1>
+          <p className="text-[12px] text-[#0A2540]/30 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            {champions.length} records
+          </p>
         </div>
         <button onClick={() => { setShowForm(true); setEditingId(null) }}
-          className="bg-[#2BA5A0] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#2BA5A0]/90 transition-colors">
-          + Add Champion
+          className="text-[12px] font-medium text-white px-4 py-2 transition-opacity hover:opacity-90"
+          style={{ backgroundColor: '#0A2540', borderRadius: '4px' }}>
+          Add Champion
         </button>
       </div>
 
       {/* Year filter */}
-      <div className="flex gap-2 mb-6 flex-wrap">
+      <div className="flex gap-1.5 mb-5 flex-wrap">
         <button onClick={() => setFilterYear(null)}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${!filterYear ? 'bg-[#0A2540] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+          className="text-[11px] px-3 py-1 transition-colors"
+          style={{
+            backgroundColor: !filterYear ? '#0A2540' : 'transparent',
+            color: !filterYear ? '#fff' : 'rgba(10,37,64,0.3)',
+            borderRadius: '3px',
+            border: !filterYear ? 'none' : '1px solid rgba(10,37,64,0.08)',
+          }}>
           All
         </button>
         {years.map(y => (
           <button key={y} onClick={() => setFilterYear(y)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filterYear === y ? 'bg-[#0A2540] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+            className="text-[11px] px-3 py-1 transition-colors"
+            style={{
+              backgroundColor: filterYear === y ? '#0A2540' : 'transparent',
+              color: filterYear === y ? '#fff' : 'rgba(10,37,64,0.3)',
+              borderRadius: '3px',
+              border: filterYear === y ? 'none' : '1px solid rgba(10,37,64,0.08)',
+            }}>
             {y}
           </button>
         ))}
       </div>
 
       {showForm && (
-        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm mb-8 space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="mb-6 p-5" style={{ border: '1px solid rgba(10,37,64,0.06)', borderRadius: '4px', backgroundColor: '#fff' }}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Year</label>
+              <label style={labelStyle}>Year</label>
               <input type="number" value={year} onChange={e => setYear(parseInt(e.target.value))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]" />
+                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Division</label>
+              <label style={labelStyle}>Division</label>
               <select value={division} onChange={e => setDivision(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]">
+                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler}>
                 <option value="">Select...</option>
                 {divisions.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Champion Name</label>
+              <label style={labelStyle}>Champion Name</label>
               <input type="text" value={name} onChange={e => setName(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]" />
+                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Image URL</label>
+              <label style={labelStyle}>Image URL</label>
               <input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]" />
+                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
             </div>
           </div>
           <div className="flex gap-3">
             <button onClick={handleSave} disabled={saving}
-              className="bg-[#2BA5A0] text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-[#2BA5A0]/90 disabled:opacity-50 transition-colors">
+              className="text-[13px] font-medium text-white px-5 py-2 transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: '#0A2540', borderRadius: '4px' }}>
               {saving ? 'Saving...' : editingId ? 'Update' : 'Add Champion'}
             </button>
-            <button onClick={resetForm} className="text-gray-400 hover:text-gray-600 px-4 py-2 text-sm transition-colors">Cancel</button>
+            <button onClick={resetForm} className="text-[13px] text-[#0A2540]/30 hover:text-[#0A2540]/60 px-3 py-2 transition-colors">
+              Cancel
+            </button>
           </div>
         </div>
       )}
 
       {loading ? (
-        <p className="text-gray-400 text-sm">Loading...</p>
+        <p className="text-[13px] text-[#0A2540]/30">Loading...</p>
       ) : filteredChampions.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 p-12 text-center shadow-sm">
-          <p className="text-gray-400 text-sm">No champion records found.</p>
-        </div>
+        <p className="text-[13px] text-[#0A2540]/30 py-12 text-center">No champion records found.</p>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Year</th>
-                <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Division</th>
-                <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Champion</th>
-                <th className="text-right px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filteredChampions.map(c => (
-                <tr key={c.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-3 font-semibold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{c.year}</td>
-                  <td className="px-4 py-3 text-gray-600">{c.division}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      {c.image_url && <img src={c.image_url} alt="" className="w-6 h-6 rounded-full object-cover" />}
-                      <span className="text-gray-700">{c.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-right space-x-2">
-                    <button onClick={() => handleEdit(c)} className="text-[#1478B5] hover:text-[#0A2540] text-xs font-medium transition-colors">Edit</button>
-                    <button onClick={() => handleDelete(c.id)} className="text-red-400 hover:text-red-600 text-xs font-medium transition-colors">Delete</button>
-                  </td>
-                </tr>
+        <table className="w-full">
+          <thead>
+            <tr style={{ borderBottom: '1px solid rgba(10,37,64,0.06)' }}>
+              {['Year', 'Division', 'Champion', 'Actions'].map((h, i) => (
+                <th key={h} className={`text-${i === 3 ? 'right' : 'left'} pb-2.5 font-medium`}
+                  style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>
+                  {h}
+                </th>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredChampions.map((c, i) => (
+              <tr key={c.id} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(10,37,64,0.015)' }}>
+                <td className="py-2.5 pr-4">
+                  <span className="text-[14px] font-semibold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{c.year}</span>
+                </td>
+                <td className="py-2.5 pr-4 text-[13px] text-[#0A2540]/50">{c.division}</td>
+                <td className="py-2.5 pr-4">
+                  <div className="flex items-center gap-2">
+                    {c.image_url && <img src={c.image_url} alt="" className="w-5 h-5 rounded-full object-cover" />}
+                    <span className="text-[13px] text-[#0A2540]/70">{c.name}</span>
+                  </div>
+                </td>
+                <td className="py-2.5 text-right">
+                  <button onClick={() => handleEdit(c)} className="text-[12px] text-[#1478B5] hover:text-[#0A2540] transition-colors">Edit</button>
+                  <span className="text-[#0A2540]/10 mx-1.5">|</span>
+                  <button onClick={() => handleDelete(c.id)} className="text-[12px] text-[#DC2626]/50 hover:text-[#DC2626] transition-colors">Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   )

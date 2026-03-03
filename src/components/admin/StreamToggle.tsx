@@ -12,6 +12,26 @@ interface StreamToggleProps {
   loading?: boolean
 }
 
+const inputStyle = {
+  border: '1px solid rgba(10,37,64,0.12)',
+  borderRadius: '4px',
+  padding: '9px 12px',
+  fontSize: '13px',
+  color: '#0A2540',
+  width: '100%',
+  outline: 'none',
+}
+
+const labelStyle = {
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: '10px',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.15em',
+  color: 'rgba(10,37,64,0.35)',
+  display: 'block',
+  marginBottom: '6px',
+}
+
 export function StreamToggle({ initialActive, streamUrl: initUrl, embedCode: initEmbed, title: initTitle, eventId: initEvent, onSave, loading }: StreamToggleProps) {
   const [active, setActive] = useState(initialActive)
   const [streamUrl, setStreamUrl] = useState(initUrl)
@@ -23,88 +43,95 @@ export function StreamToggle({ initialActive, streamUrl: initUrl, embedCode: ini
     onSave({ active, stream_url: streamUrl, embed_code: embedCode, title, event_id: eventId })
   }
 
+  const focusHandler = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => { e.target.style.borderColor = '#2BA5A0' }
+  const blurHandler = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => { e.target.style.borderColor = 'rgba(10,37,64,0.12)' }
+
   return (
-    <div className="space-y-6">
-      {/* Big toggle */}
-      <div className="bg-white rounded-xl border border-gray-100 p-8 shadow-sm text-center">
+    <div className="max-w-[600px] space-y-6">
+      {/* Stream status toggle */}
+      <div className="flex items-center justify-between py-4" style={{ borderBottom: '1px solid rgba(10,37,64,0.06)' }}>
+        <div className="flex items-center gap-3">
+          <span
+            className="w-3 h-3 rounded-full flex-shrink-0"
+            style={{
+              backgroundColor: active ? '#EF4444' : '#D1D5DB',
+              boxShadow: active ? '0 0 8px rgba(239,68,68,0.35)' : 'none',
+            }}
+          />
+          <div>
+            <p
+              className="text-[16px] font-semibold"
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                color: active ? '#EF4444' : '#9CA3AF',
+              }}
+            >
+              {active ? 'STREAM IS LIVE' : 'Stream Off'}
+            </p>
+          </div>
+        </div>
         <button
           type="button"
           onClick={() => setActive(!active)}
-          className={`w-32 h-32 rounded-full text-5xl font-bold transition-all duration-300 shadow-lg ${
-            active
-              ? 'bg-red-500 text-white shadow-red-500/30 animate-pulse'
-              : 'bg-gray-200 text-gray-400 hover:bg-gray-300'
-          }`}
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          className="text-[11px] font-medium px-4 py-1.5 transition-colors"
+          style={{
+            border: '1px solid rgba(10,37,64,0.12)',
+            borderRadius: '4px',
+            color: active ? '#DC2626' : '#0A2540',
+            fontFamily: "'JetBrains Mono', monospace",
+          }}
         >
-          {active ? '🔴' : '⬤'}
+          {active ? 'Turn Off' : 'Go Live'}
         </button>
-        <p className="mt-4 text-lg font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif", color: active ? '#ef4444' : '#9ca3af' }}>
-          {active ? 'STREAM IS LIVE' : 'Stream Off'}
-        </p>
       </div>
 
-      {/* Config */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm space-y-4">
+      {/* Config fields */}
+      <div className="space-y-4">
         <div>
-          <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Stream Title</label>
-          <input
-            type="text"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]"
-            placeholder="BSA SOTY #1 Live from Drill Hall"
-          />
+          <label style={labelStyle}>Stream Title</label>
+          <input type="text" value={title} onChange={e => setTitle(e.target.value)}
+            style={inputStyle} onFocus={focusHandler} onBlur={blurHandler}
+            placeholder="BSA SOTY #1 Live from Drill Hall" />
         </div>
 
         <div>
-          <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Stream URL (YouTube/Vimeo)</label>
-          <input
-            type="url"
-            value={streamUrl}
-            onChange={e => setStreamUrl(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]"
-            placeholder="https://youtube.com/watch?v=..."
-          />
+          <label style={labelStyle}>Stream URL (YouTube/Vimeo)</label>
+          <input type="url" value={streamUrl} onChange={e => setStreamUrl(e.target.value)}
+            style={inputStyle} onFocus={focusHandler} onBlur={blurHandler}
+            placeholder="https://youtube.com/watch?v=..." />
         </div>
 
         <div>
-          <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Embed Code (optional)</label>
-          <textarea
-            value={embedCode}
-            onChange={e => setEmbedCode(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#2BA5A0]"
-            rows={3}
-            placeholder="<iframe ...>"
-          />
+          <label style={labelStyle}>Embed Code (optional)</label>
+          <textarea value={embedCode} onChange={e => setEmbedCode(e.target.value)} rows={3}
+            style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', resize: 'vertical' } as React.CSSProperties}
+            onFocus={focusHandler} onBlur={blurHandler}
+            placeholder="<iframe ...>" />
         </div>
 
         <div>
-          <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Event ID (optional)</label>
-          <input
-            type="text"
-            value={eventId}
-            onChange={e => setEventId(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]"
-          />
+          <label style={labelStyle}>Event ID (optional)</label>
+          <input type="text" value={eventId} onChange={e => setEventId(e.target.value)}
+            style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
         </div>
 
         {/* Preview */}
         {(streamUrl || embedCode) && (
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Preview</p>
+          <div className="p-4" style={{ backgroundColor: 'rgba(10,37,64,0.015)', borderRadius: '4px' }}>
+            <p style={{ ...labelStyle, marginBottom: '8px' }}>Preview</p>
             {embedCode ? (
-              <div dangerouslySetInnerHTML={{ __html: embedCode }} className="aspect-video rounded-lg overflow-hidden" />
+              <div dangerouslySetInnerHTML={{ __html: embedCode }} className="aspect-video overflow-hidden" style={{ borderRadius: '4px' }} />
             ) : streamUrl ? (
-              <div className="aspect-video bg-gray-200 rounded-lg flex items-center justify-center">
-                <p className="text-sm text-gray-400">Stream: {streamUrl}</p>
+              <div className="aspect-video flex items-center justify-center" style={{ backgroundColor: 'rgba(10,37,64,0.04)', borderRadius: '4px' }}>
+                <p className="text-[12px] text-[#0A2540]/25" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{streamUrl}</p>
               </div>
             ) : null}
           </div>
         )}
 
         <button onClick={handleSave} disabled={loading}
-          className="bg-[#2BA5A0] text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-[#2BA5A0]/90 disabled:opacity-50 transition-colors">
+          className="text-[13px] font-medium text-white px-5 py-2.5 transition-opacity hover:opacity-90 disabled:opacity-50"
+          style={{ backgroundColor: '#0A2540', borderRadius: '4px' }}>
           {loading ? 'Saving...' : 'Save Stream Config'}
         </button>
       </div>

@@ -11,6 +11,15 @@ interface Profile {
   created_at: string
 }
 
+const inputStyle = {
+  border: '1px solid rgba(10,37,64,0.12)',
+  borderRadius: '4px',
+  padding: '5px 8px',
+  fontSize: '12px',
+  color: '#0A2540',
+  outline: 'none',
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
@@ -47,7 +56,7 @@ export default function AdminUsersPage() {
   }
 
   const roleColors: Record<string, string> = {
-    super_admin: '#8B5CF6',
+    super_admin: '#7C3AED',
     editor: '#2BA5A0',
     event_manager: '#1478B5',
   }
@@ -56,83 +65,86 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Admin Users</h1>
-        <p className="text-sm text-gray-400 mt-1">{users.length} admin users</p>
+      <div className="mb-6">
+        <h1 className="text-[22px] font-semibold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Admin Users</h1>
+        <p className="text-[12px] text-[#0A2540]/30 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{users.length} admin users</p>
       </div>
 
       {!isSuperAdmin && (
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg p-3 text-sm mb-6">
+        <div className="mb-5 text-[13px]" style={{ color: '#CA8A04', padding: '10px 12px', backgroundColor: '#FEFCE8', border: '1px solid #FDE68A', borderRadius: '4px' }}>
           Only Super Admins can manage user roles.
         </div>
       )}
 
       {loading ? (
-        <p className="text-gray-400 text-sm">Loading...</p>
+        <p className="text-[13px] text-[#0A2540]/30">Loading...</p>
       ) : users.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 p-12 text-center shadow-sm">
-          <p className="text-gray-400 text-sm">No admin users found.</p>
-        </div>
+        <p className="text-[13px] text-[#0A2540]/30 py-12 text-center">No admin users found.</p>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400" style={{ fontFamily: "'JetBrains Mono', monospace" }}>User</th>
-                <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400 hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Role</th>
-                <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400 hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Joined</th>
+        <table className="w-full">
+          <thead>
+            <tr style={{ borderBottom: '1px solid rgba(10,37,64,0.06)' }}>
+              <th className="text-left pb-2.5 font-medium" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>User</th>
+              <th className="text-left pb-2.5 font-medium hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>Role</th>
+              <th className="text-left pb-2.5 font-medium hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>Joined</th>
+              {isSuperAdmin && (
+                <th className="text-right pb-2.5 font-medium" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)', width: '140px' }}>Actions</th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((u, i) => (
+              <tr key={u.id} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(10,37,64,0.015)' }}>
+                <td className="py-2.5 pr-4">
+                  <div className="flex items-center gap-3">
+                    {u.avatar_url ? (
+                      <img src={u.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-medium text-[#0A2540]/30"
+                        style={{ backgroundColor: 'rgba(10,37,64,0.04)' }}>
+                        {(u.full_name || '?')[0].toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-[13px] text-[#0A2540]/70">{u.full_name || 'Unnamed'}</p>
+                      {u.id === currentUserId && (
+                        <span className="text-[10px] text-[#0A2540]/20" style={{ fontFamily: "'JetBrains Mono', monospace" }}>you</span>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="py-2.5 pr-4 hidden md:table-cell">
+                  <span className="text-[10px] uppercase tracking-[0.1em] font-medium"
+                    style={{ fontFamily: "'JetBrains Mono', monospace", color: roleColors[u.role] || '#999' }}>
+                    {u.role.replace('_', ' ')}
+                  </span>
+                </td>
+                <td className="py-2.5 pr-4 hidden md:table-cell">
+                  <span className="text-[11px] text-[#0A2540]/25" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    {new Date(u.created_at).toLocaleDateString()}
+                  </span>
+                </td>
                 {isSuperAdmin && (
-                  <th className="text-right px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Actions</th>
+                  <td className="py-2.5 text-right">
+                    {u.id !== currentUserId && (
+                      <select
+                        value={u.role}
+                        onChange={e => handleRoleChange(u.id, e.target.value)}
+                        style={inputStyle}
+                        onFocus={e => (e.target.style.borderColor = '#2BA5A0')}
+                        onBlur={e => (e.target.style.borderColor = 'rgba(10,37,64,0.12)')}
+                      >
+                        <option value="super_admin">Super Admin</option>
+                        <option value="editor">Editor</option>
+                        <option value="event_manager">Event Manager</option>
+                      </select>
+                    )}
+                  </td>
                 )}
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {users.map(u => (
-                <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      {u.avatar_url ? (
-                        <img src={u.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
-                          {(u.full_name || '?')[0].toUpperCase()}
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-medium text-gray-700">{u.full_name || 'Unnamed'}</p>
-                        {u.id === currentUserId && <span className="text-[10px] text-gray-400">(you)</span>}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
-                    <span className="text-xs font-medium px-2 py-0.5 rounded"
-                      style={{ backgroundColor: `${roleColors[u.role] || '#999'}15`, color: roleColors[u.role] || '#999' }}>
-                      {u.role.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">
-                    {new Date(u.created_at).toLocaleDateString()}
-                  </td>
-                  {isSuperAdmin && (
-                    <td className="px-4 py-3 text-right">
-                      {u.id !== currentUserId && (
-                        <select
-                          value={u.role}
-                          onChange={e => handleRoleChange(u.id, e.target.value)}
-                          className="text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-[#2BA5A0]"
-                        >
-                          <option value="super_admin">Super Admin</option>
-                          <option value="editor">Editor</option>
-                          <option value="event_manager">Event Manager</option>
-                        </select>
-                      )}
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   )

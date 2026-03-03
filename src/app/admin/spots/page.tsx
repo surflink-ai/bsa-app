@@ -20,6 +20,26 @@ interface SurfSpot {
   active: boolean
 }
 
+const inputStyle = {
+  border: '1px solid rgba(10,37,64,0.12)',
+  borderRadius: '4px',
+  padding: '9px 12px',
+  fontSize: '13px',
+  color: '#0A2540',
+  width: '100%',
+  outline: 'none',
+}
+
+const labelStyle = {
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: '10px',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.15em',
+  color: 'rgba(10,37,64,0.35)',
+  display: 'block',
+  marginBottom: '6px',
+}
+
 export default function AdminSpotsPage() {
   const [spots, setSpots] = useState<SurfSpot[]>([])
   const [loading, setLoading] = useState(true)
@@ -54,22 +74,18 @@ export default function AdminSpotsPage() {
   const filteredSpots = filterCoast ? spots.filter(s => s.coast === filterCoast) : spots
 
   const resetForm = () => {
-    setShowForm(false)
-    setEditingId(null)
-    setName(''); setSurflineId(''); setCoast('East'); setLat(''); setLon('')
-    setBestSwell(''); setBestSize(''); setOffshoreWind(''); setBreakType('')
-    setDescription(''); setAdminNote(''); setPriority(2); setActive(true)
+    setShowForm(false); setEditingId(null); setName(''); setSurflineId(''); setCoast('East')
+    setLat(''); setLon(''); setBestSwell(''); setBestSize(''); setOffshoreWind('')
+    setBreakType(''); setDescription(''); setAdminNote(''); setPriority(2); setActive(true)
   }
 
   const handleEdit = (s: SurfSpot) => {
-    setEditingId(s.id)
-    setName(s.name); setSurflineId(s.surfline_spot_id || ''); setCoast(s.coast)
+    setEditingId(s.id); setName(s.name); setSurflineId(s.surfline_spot_id || ''); setCoast(s.coast)
     setLat(s.lat?.toString() || ''); setLon(s.lon?.toString() || '')
     setBestSwell(s.best_swell || ''); setBestSize(s.best_size || '')
     setOffshoreWind(s.offshore_wind || ''); setBreakType(s.break_type || '')
     setDescription(s.description || ''); setAdminNote(s.admin_note || '')
-    setPriority(s.priority); setActive(s.active)
-    setShowForm(true)
+    setPriority(s.priority); setActive(s.active); setShowForm(true)
   }
 
   const handleSave = async () => {
@@ -84,15 +100,12 @@ export default function AdminSpotsPage() {
       description: description || null, admin_note: adminNote || null,
       priority, active,
     }
-
     if (editingId) {
       await supabase.from('surf_spots').update(data).eq('id', editingId)
     } else {
       await supabase.from('surf_spots').insert(data)
     }
-    setSaving(false)
-    resetForm()
-    fetchSpots()
+    setSaving(false); resetForm(); fetchSpots()
   }
 
   const handleDelete = async (id: string) => {
@@ -102,90 +115,99 @@ export default function AdminSpotsPage() {
     setSpots(prev => prev.filter(s => s.id !== id))
   }
 
-  const coastColors: Record<string, string> = { East: '#2BA5A0', South: '#1478B5', West: '#8B5CF6' }
+  const coastColors: Record<string, string> = { East: '#2BA5A0', South: '#1478B5', West: '#7C3AED' }
+
+  const focusHandler = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => { e.target.style.borderColor = '#2BA5A0' }
+  const blurHandler = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => { e.target.style.borderColor = 'rgba(10,37,64,0.12)' }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Surf Spots</h1>
-          <p className="text-sm text-gray-400 mt-1">{spots.length} spots</p>
+          <h1 className="text-[22px] font-semibold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Surf Spots</h1>
+          <p className="text-[12px] text-[#0A2540]/30 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{spots.length} spots</p>
         </div>
         <button onClick={() => { setShowForm(true); setEditingId(null) }}
-          className="bg-[#2BA5A0] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#2BA5A0]/90 transition-colors">
-          + Add Spot
+          className="text-[12px] font-medium text-white px-4 py-2 transition-opacity hover:opacity-90"
+          style={{ backgroundColor: '#0A2540', borderRadius: '4px' }}>
+          Add Spot
         </button>
       </div>
 
       {/* Coast filter */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-1.5 mb-5">
         {[null, 'East', 'South', 'West'].map(c => (
           <button key={c || 'all'} onClick={() => setFilterCoast(c)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              filterCoast === c ? 'bg-[#0A2540] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-            }`}>
+            className="text-[11px] px-3 py-1 transition-colors"
+            style={{
+              backgroundColor: filterCoast === c ? '#0A2540' : 'transparent',
+              color: filterCoast === c ? '#fff' : 'rgba(10,37,64,0.3)',
+              borderRadius: '3px',
+              border: filterCoast === c ? 'none' : '1px solid rgba(10,37,64,0.08)',
+            }}>
             {c || 'All'}
           </button>
         ))}
       </div>
 
       {showForm && (
-        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm mb-8 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mb-6 p-5" style={{ border: '1px solid rgba(10,37,64,0.06)', borderRadius: '4px', backgroundColor: '#fff' }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Name</label>
+              <label style={labelStyle}>Name</label>
               <input type="text" value={name} onChange={e => setName(e.target.value)} required
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]" />
+                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Coast</label>
+              <label style={labelStyle}>Coast</label>
               <select value={coast} onChange={e => setCoast(e.target.value as 'East' | 'South' | 'West')}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]">
+                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler}>
                 <option value="East">East</option>
                 <option value="South">South</option>
                 <option value="West">West</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Surfline ID</label>
+              <label style={labelStyle}>Surfline ID</label>
               <input type="text" value={surflineId} onChange={e => setSurflineId(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#2BA5A0]" />
+                style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace", fontSize: '12px' }}
+                onFocus={focusHandler} onBlur={blurHandler} />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Latitude</label>
+              <label style={labelStyle}>Latitude</label>
               <input type="text" value={lat} onChange={e => setLat(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]" />
+                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Longitude</label>
+              <label style={labelStyle}>Longitude</label>
               <input type="text" value={lon} onChange={e => setLon(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]" />
+                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Best Swell</label>
+              <label style={labelStyle}>Best Swell</label>
               <input type="text" value={bestSwell} onChange={e => setBestSwell(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]" placeholder="N-NE" />
+                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} placeholder="N-NE" />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Best Size</label>
+              <label style={labelStyle}>Best Size</label>
               <input type="text" value={bestSize} onChange={e => setBestSize(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]" placeholder="3-6ft" />
+                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} placeholder="3-6ft" />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Offshore Wind</label>
+              <label style={labelStyle}>Offshore Wind</label>
               <input type="text" value={offshoreWind} onChange={e => setOffshoreWind(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]" placeholder="W-SW" />
+                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} placeholder="W-SW" />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Break Type</label>
+              <label style={labelStyle}>Break Type</label>
               <select value={breakType} onChange={e => setBreakType(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]">
+                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler}>
                 <option value="">Select...</option>
                 <option value="reef">Reef</option>
                 <option value="point">Point</option>
@@ -193,78 +215,79 @@ export default function AdminSpotsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Priority</label>
+              <label style={labelStyle}>Priority</label>
               <input type="number" value={priority} onChange={e => setPriority(parseInt(e.target.value) || 2)} min={1} max={5}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]" />
+                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
             </div>
             <div className="flex items-end pb-2">
-              <label className="flex items-center gap-2 text-sm text-gray-600">
-                <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} className="rounded" />
+              <label className="flex items-center gap-2 text-[13px] text-[#0A2540]/60 cursor-pointer">
+                <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} style={{ accentColor: '#2BA5A0' }} />
                 Active
               </label>
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Description</label>
+          <div className="mb-4">
+            <label style={labelStyle}>Description</label>
             <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]" />
+              style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} onFocus={focusHandler} onBlur={blurHandler} />
           </div>
 
-          <div>
-            <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Admin Note (shown on conditions page)</label>
+          <div className="mb-4">
+            <label style={labelStyle}>Admin Note (shown on conditions page)</label>
             <textarea value={adminNote} onChange={e => setAdminNote(e.target.value)} rows={2}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2BA5A0]"
+              style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} onFocus={focusHandler} onBlur={blurHandler}
               placeholder="e.g. Rocks exposed at low tide — use caution" />
           </div>
 
           <div className="flex gap-3">
             <button onClick={handleSave} disabled={saving}
-              className="bg-[#2BA5A0] text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-[#2BA5A0]/90 disabled:opacity-50 transition-colors">
+              className="text-[13px] font-medium text-white px-5 py-2 transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: '#0A2540', borderRadius: '4px' }}>
               {saving ? 'Saving...' : editingId ? 'Update Spot' : 'Add Spot'}
             </button>
-            <button onClick={resetForm} className="text-gray-400 hover:text-gray-600 px-4 py-2 text-sm transition-colors">Cancel</button>
+            <button onClick={resetForm} className="text-[13px] text-[#0A2540]/30 hover:text-[#0A2540]/60 px-3 py-2 transition-colors">Cancel</button>
           </div>
         </div>
       )}
 
       {loading ? (
-        <p className="text-gray-400 text-sm">Loading...</p>
+        <p className="text-[13px] text-[#0A2540]/30">Loading...</p>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Spot</th>
-                <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400 hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Coast</th>
-                <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400 hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Type</th>
-                <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400 hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Note</th>
-                <th className="text-right px-4 py-3 text-[10px] uppercase tracking-wider text-gray-400" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Actions</th>
+        <table className="w-full">
+          <thead>
+            <tr style={{ borderBottom: '1px solid rgba(10,37,64,0.06)' }}>
+              <th className="text-left pb-2.5 font-medium" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>Spot</th>
+              <th className="text-left pb-2.5 font-medium hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>Coast</th>
+              <th className="text-left pb-2.5 font-medium hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>Type</th>
+              <th className="text-left pb-2.5 font-medium hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>Note</th>
+              <th className="text-right pb-2.5 font-medium" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)', width: '100px' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredSpots.map((s, i) => (
+              <tr key={s.id} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(10,37,64,0.015)' }}>
+                <td className="py-2.5 pr-4">
+                  <span className="text-[13px] text-[#0A2540]/70">{s.name}</span>
+                  {!s.active && <span className="text-[10px] text-[#0A2540]/20 ml-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>inactive</span>}
+                </td>
+                <td className="py-2.5 pr-4 hidden md:table-cell">
+                  <span className="text-[10px] uppercase tracking-[0.1em] font-medium"
+                    style={{ fontFamily: "'JetBrains Mono', monospace", color: coastColors[s.coast] || '#999' }}>
+                    {s.coast}
+                  </span>
+                </td>
+                <td className="py-2.5 pr-4 text-[12px] text-[#0A2540]/35 hidden md:table-cell">{s.break_type || '--'}</td>
+                <td className="py-2.5 pr-4 text-[11px] text-[#CA8A04] hidden md:table-cell truncate max-w-[200px]">{s.admin_note || '--'}</td>
+                <td className="py-2.5 text-right">
+                  <button onClick={() => handleEdit(s)} className="text-[12px] text-[#1478B5] hover:text-[#0A2540] transition-colors">Edit</button>
+                  <span className="text-[#0A2540]/10 mx-1.5">|</span>
+                  <button onClick={() => handleDelete(s.id)} className="text-[12px] text-[#DC2626]/50 hover:text-[#DC2626] transition-colors">Delete</button>
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filteredSpots.map(s => (
-                <tr key={s.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-gray-700">{s.name}</p>
-                    {!s.active && <span className="text-[10px] text-gray-400">(inactive)</span>}
-                  </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
-                    <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: `${coastColors[s.coast]}15`, color: coastColors[s.coast] }}>
-                      {s.coast}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{s.break_type || '—'}</td>
-                  <td className="px-4 py-3 text-xs text-yellow-600 hidden md:table-cell">{s.admin_note || '—'}</td>
-                  <td className="px-4 py-3 text-right space-x-2">
-                    <button onClick={() => handleEdit(s)} className="text-[#1478B5] hover:text-[#0A2540] text-xs font-medium transition-colors">Edit</button>
-                    <button onClick={() => handleDelete(s.id)} className="text-red-400 hover:text-red-600 text-xs font-medium transition-colors">Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   )

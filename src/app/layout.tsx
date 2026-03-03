@@ -3,6 +3,7 @@ import "./globals.css"
 import { Navigation } from "./components/Navigation"
 import { Footer } from "./components/Footer"
 import { NotificationBanner } from "./components/NotificationBanner"
+import { PublicShell } from "./components/PublicShell"
 
 export const metadata: Metadata = {
   title: "Barbados Surfing Association",
@@ -18,10 +19,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body style={{ backgroundColor: "#FFFFFF", color: "#1A1A1A" }}>
-        <Navigation />
+        <PublicShell>
+          <Navigation />
+        </PublicShell>
         <main style={{ paddingBottom: 80 }} className="md:pb-0">{children}</main>
-        <Footer />
-        <NotificationBanner />
+        <PublicShell>
+          <Footer />
+          <NotificationBanner />
+        </PublicShell>
       </body>
     </html>
   )

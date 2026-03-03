@@ -1,293 +1,68 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { PageHeader, DataTable, Modal, FormField, Button, StatusDot, MetaText, TextLink, ActionLinks, inputStyle } from '@/components/admin/ui'
 
-interface Coach {
-  id: string
-  name: string
-  bio: string | null
-  photo_url: string | null
-  specialties: string[]
-  contact_email: string | null
-  contact_phone: string | null
-  website_url: string | null
-  surflink_url: string | null
-  bsa_certified: boolean
-  active: boolean
-  sort_order: number
-}
+interface Coach { id: string; name: string; bio: string | null; photo_url: string | null; specialties: string[] | null; contact_email: string | null; website_url: string | null; surflink_url: string | null; bsa_certified: boolean; active: boolean; sort_order: number }
 
-const SPECIALTY_OPTIONS = ['beginner', 'intermediate', 'advanced', 'competition', 'kids', 'longboard', 'SUP', 'fitness']
-
-const inputStyle = {
-  border: '1px solid rgba(10,37,64,0.12)',
-  borderRadius: '4px',
-  padding: '9px 12px',
-  fontSize: '13px',
-  color: '#0A2540',
-  width: '100%',
-  outline: 'none',
-}
-
-const labelStyle = {
-  fontFamily: "'JetBrains Mono', monospace",
-  fontSize: '10px',
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.15em',
-  color: 'rgba(10,37,64,0.35)',
-  display: 'block',
-  marginBottom: '6px',
-}
-
-export default function AdminCoachesPage() {
-  const [coaches, setCoaches] = useState<Coach[]>([])
+export default function CoachesPage() {
+  const [rows, setRows] = useState<Coach[]>([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [modal, setModal] = useState(false)
+  const [editing, setEditing] = useState<Coach | null>(null)
+  const [form, setForm] = useState({ name: '', bio: '', photo_url: '', contact_email: '', website_url: '', surflink_url: '', bsa_certified: false, active: true, specialties: '' })
   const [saving, setSaving] = useState(false)
 
-  const [name, setName] = useState('')
-  const [bio, setBio] = useState('')
-  const [photoUrl, setPhotoUrl] = useState('')
-  const [specialties, setSpecialties] = useState<string[]>([])
-  const [contactEmail, setContactEmail] = useState('')
-  const [contactPhone, setContactPhone] = useState('')
-  const [websiteUrl, setWebsiteUrl] = useState('')
-  const [surflinkUrl, setSurflinkUrl] = useState('')
-  const [bsaCertified, setBsaCertified] = useState(false)
-  const [active, setActive] = useState(true)
-  const [sortOrder, setSortOrder] = useState(0)
+  const load = async () => { const { data } = await createClient().from('coaches').select('*').order('sort_order'); setRows(data || []); setLoading(false) }
+  useEffect(() => { load() }, [])
 
-  const fetchCoaches = async () => {
-    const supabase = createClient()
-    const { data } = await supabase.from('coaches').select('*').order('sort_order').order('name')
-    setCoaches(data || [])
-    setLoading(false)
-  }
+  const openNew = () => { setEditing(null); setForm({ name: '', bio: '', photo_url: '', contact_email: '', website_url: '', surflink_url: '', bsa_certified: false, active: true, specialties: '' }); setModal(true) }
+  const openEdit = (r: Coach) => { setEditing(r); setForm({ name: r.name, bio: r.bio || '', photo_url: r.photo_url || '', contact_email: r.contact_email || '', website_url: r.website_url || '', surflink_url: r.surflink_url || '', bsa_certified: r.bsa_certified, active: r.active, specialties: (r.specialties || []).join(', ') }); setModal(true) }
 
-  useEffect(() => { fetchCoaches() }, [])
-
-  const resetForm = () => {
-    setShowForm(false)
-    setEditingId(null)
-    setName(''); setBio(''); setPhotoUrl(''); setSpecialties([])
-    setContactEmail(''); setContactPhone(''); setWebsiteUrl(''); setSurflinkUrl('')
-    setBsaCertified(false); setActive(true); setSortOrder(0)
-  }
-
-  const handleEdit = (c: Coach) => {
-    setEditingId(c.id); setName(c.name); setBio(c.bio || ''); setPhotoUrl(c.photo_url || '')
-    setSpecialties(c.specialties || []); setContactEmail(c.contact_email || '')
-    setContactPhone(c.contact_phone || ''); setWebsiteUrl(c.website_url || '')
-    setSurflinkUrl(c.surflink_url || ''); setBsaCertified(c.bsa_certified)
-    setActive(c.active); setSortOrder(c.sort_order); setShowForm(true)
-  }
-
-  const handleSave = async () => {
-    if (!name.trim()) return
+  const save = async () => {
     setSaving(true)
-    const supabase = createClient()
-    const data = {
-      name, bio: bio || null, photo_url: photoUrl || null, specialties,
-      contact_email: contactEmail || null, contact_phone: contactPhone || null,
-      website_url: websiteUrl || null, surflink_url: surflinkUrl || null,
-      bsa_certified: bsaCertified, active, sort_order: sortOrder,
-    }
-    if (editingId) {
-      await supabase.from('coaches').update(data).eq('id', editingId)
-    } else {
-      await supabase.from('coaches').insert(data)
-    }
-    setSaving(false); resetForm(); fetchCoaches()
+    const data = { name: form.name, bio: form.bio || null, photo_url: form.photo_url || null, contact_email: form.contact_email || null, website_url: form.website_url || null, surflink_url: form.surflink_url || null, bsa_certified: form.bsa_certified, active: form.active, specialties: form.specialties.split(',').map(s => s.trim()).filter(Boolean) }
+    const sb = createClient()
+    if (editing) await sb.from('coaches').update(data).eq('id', editing.id)
+    else await sb.from('coaches').insert(data)
+    setSaving(false); setModal(false); load()
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this coach?')) return
-    const supabase = createClient()
-    await supabase.from('coaches').delete().eq('id', id)
-    setCoaches(prev => prev.filter(c => c.id !== id))
-  }
-
-  const toggleSpecialty = (s: string) => {
-    setSpecialties(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])
-  }
-
-  const focusHandler = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => { e.target.style.borderColor = '#2BA5A0' }
-  const blurHandler = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => { e.target.style.borderColor = 'rgba(10,37,64,0.12)' }
+  const del = async (id: string) => { if (!confirm('Delete?')) return; await createClient().from('coaches').delete().eq('id', id); load() }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-[22px] font-semibold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Coaches</h1>
-          <p className="text-[12px] text-[#0A2540]/30 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{coaches.length} coaches</p>
-        </div>
-        <button onClick={() => { setShowForm(true); setEditingId(null) }}
-          className="text-[12px] font-medium text-white px-4 py-2 transition-opacity hover:opacity-90"
-          style={{ backgroundColor: '#0A2540', borderRadius: '4px' }}>
-          Add Coach
-        </button>
-      </div>
-
-      {showForm && (
-        <div className="mb-6 p-5" style={{ border: '1px solid rgba(10,37,64,0.06)', borderRadius: '4px', backgroundColor: '#fff' }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label style={labelStyle}>Name</label>
-              <input type="text" value={name} onChange={e => setName(e.target.value)} required
-                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
-            </div>
-            <div>
-              <label style={labelStyle}>Photo URL</label>
-              <input type="url" value={photoUrl} onChange={e => setPhotoUrl(e.target.value)}
-                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <label style={labelStyle}>Bio</label>
-            <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3}
-              style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties}
-              onFocus={focusHandler} onBlur={blurHandler} />
-          </div>
-
-          <div className="mb-4">
-            <label style={{ ...labelStyle, marginBottom: '8px' }}>Specialties</label>
-            <div className="flex flex-wrap gap-1.5">
-              {SPECIALTY_OPTIONS.map(s => (
-                <button key={s} type="button" onClick={() => toggleSpecialty(s)}
-                  className="text-[11px] px-3 py-1 transition-colors"
-                  style={{
-                    backgroundColor: specialties.includes(s) ? '#0A2540' : 'transparent',
-                    color: specialties.includes(s) ? '#fff' : 'rgba(10,37,64,0.35)',
-                    borderRadius: '3px',
-                    border: specialties.includes(s) ? 'none' : '1px solid rgba(10,37,64,0.1)',
-                  }}>
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label style={labelStyle}>Email</label>
-              <input type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)}
-                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
-            </div>
-            <div>
-              <label style={labelStyle}>Phone</label>
-              <input type="tel" value={contactPhone} onChange={e => setContactPhone(e.target.value)}
-                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
-            </div>
-            <div>
-              <label style={labelStyle}>Website</label>
-              <input type="url" value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)}
-                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label style={labelStyle}>SurfLink URL</label>
-              <input type="url" value={surflinkUrl} onChange={e => setSurflinkUrl(e.target.value)}
-                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
-            </div>
-            <div>
-              <label style={labelStyle}>Sort Order</label>
-              <input type="number" value={sortOrder} onChange={e => setSortOrder(parseInt(e.target.value) || 0)}
-                style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-6 mb-4">
-            <label className="flex items-center gap-2 text-[13px] text-[#0A2540]/60 cursor-pointer">
-              <input type="checkbox" checked={bsaCertified} onChange={e => setBsaCertified(e.target.checked)}
-                style={{ accentColor: '#2BA5A0' }} />
-              BSA Certified
-            </label>
-            <label className="flex items-center gap-2 text-[13px] text-[#0A2540]/60 cursor-pointer">
-              <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)}
-                style={{ accentColor: '#2BA5A0' }} />
-              Active
-            </label>
-          </div>
-
-          <div className="flex gap-3">
-            <button onClick={handleSave} disabled={saving}
-              className="text-[13px] font-medium text-white px-5 py-2 transition-opacity hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: '#0A2540', borderRadius: '4px' }}>
-              {saving ? 'Saving...' : editingId ? 'Update Coach' : 'Add Coach'}
-            </button>
-            <button onClick={resetForm} className="text-[13px] text-[#0A2540]/30 hover:text-[#0A2540]/60 px-3 py-2 transition-colors">Cancel</button>
-          </div>
-        </div>
+      <PageHeader title="Coaches" subtitle={`${rows.length} coach${rows.length !== 1 ? 'es' : ''}`} action={{ label: 'Add Coach', onClick: openNew }} />
+      {loading ? <MetaText>Loading...</MetaText> : (
+        <DataTable columns={[
+          { key: 'name', label: 'Name', render: r => <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--admin-text)' }}>{r.name}</span> },
+          { key: 'specialties', label: 'Specialties', render: r => <MetaText>{(r.specialties || []).join(', ') || '-'}</MetaText> },
+          { key: 'certified', label: 'Certified', render: r => <StatusDot status={r.bsa_certified ? 'success' : 'muted'} label={r.bsa_certified ? 'Yes' : 'No'} /> },
+          { key: 'status', label: 'Status', render: r => <StatusDot status={r.active ? 'success' : 'muted'} label={r.active ? 'Active' : 'Inactive'} /> },
+          { key: 'actions', label: '', align: 'right', render: r => <ActionLinks><TextLink onClick={() => openEdit(r)}>Edit</TextLink><TextLink onClick={() => del(r.id)} color="var(--admin-danger)">Delete</TextLink></ActionLinks> },
+        ]} rows={rows} />
       )}
-
-      {loading ? (
-        <p className="text-[13px] text-[#0A2540]/30">Loading...</p>
-      ) : coaches.length === 0 ? (
-        <p className="text-[13px] text-[#0A2540]/30 py-12 text-center">No coaches yet.</p>
-      ) : (
-        <table className="w-full">
-          <thead>
-            <tr style={{ borderBottom: '1px solid rgba(10,37,64,0.06)' }}>
-              <th className="text-left pb-2.5 font-medium" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>Coach</th>
-              <th className="text-left pb-2.5 font-medium hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>Specialties</th>
-              <th className="text-left pb-2.5 font-medium hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>Status</th>
-              <th className="text-right pb-2.5 font-medium" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)', width: '100px' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {coaches.map((c, i) => (
-              <tr key={c.id} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(10,37,64,0.015)' }}>
-                <td className="py-2.5 pr-4">
-                  <div className="flex items-center gap-3">
-                    {c.photo_url ? (
-                      <img src={c.photo_url} alt={c.name} className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-medium text-[#0A2540]/30"
-                        style={{ backgroundColor: 'rgba(10,37,64,0.04)' }}>
-                        {c.name[0]}
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-[13px] font-medium text-[#0A2540]/80" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{c.name}</p>
-                      {c.bsa_certified && (
-                        <span className="text-[9px] uppercase tracking-[0.1em] text-[#2BA5A0]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                          BSA Certified
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </td>
-                <td className="py-2.5 pr-4 hidden md:table-cell">
-                  <div className="flex gap-1 flex-wrap">
-                    {c.specialties.map(s => (
-                      <span key={s} className="text-[10px] text-[#0A2540]/30">{s}</span>
-                    ))}
-                    {c.specialties.length === 0 && <span className="text-[10px] text-[#0A2540]/15">--</span>}
-                  </div>
-                </td>
-                <td className="py-2.5 pr-4 hidden md:table-cell">
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.active ? '#22C55E' : '#D1D5DB' }} />
-                    <span className="text-[10px] text-[#0A2540]/30" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                      {c.active ? 'Active' : 'Inactive'}
-                    </span>
-                  </span>
-                </td>
-                <td className="py-2.5 text-right">
-                  <button onClick={() => handleEdit(c)} className="text-[12px] text-[#1478B5] hover:text-[#0A2540] transition-colors">Edit</button>
-                  <span className="text-[#0A2540]/10 mx-1.5">|</span>
-                  <button onClick={() => handleDelete(c.id)} className="text-[12px] text-[#DC2626]/50 hover:text-[#DC2626] transition-colors">Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <Modal open={modal} onClose={() => setModal(false)} title={editing ? 'Edit Coach' : 'Add Coach'} width={560}>
+        <FormField label="Name"><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={inputStyle} /></FormField>
+        <FormField label="Bio"><textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} rows={3} style={{ ...inputStyle, resize: 'vertical' }} /></FormField>
+        <FormField label="Specialties (comma separated)"><input value={form.specialties} onChange={e => setForm({ ...form, specialties: e.target.value })} style={inputStyle} placeholder="beginner, competition, kids" /></FormField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <FormField label="Email"><input type="email" value={form.contact_email} onChange={e => setForm({ ...form, contact_email: e.target.value })} style={inputStyle} /></FormField>
+          <FormField label="Photo URL"><input type="url" value={form.photo_url} onChange={e => setForm({ ...form, photo_url: e.target.value })} style={inputStyle} /></FormField>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <FormField label="Website"><input type="url" value={form.website_url} onChange={e => setForm({ ...form, website_url: e.target.value })} style={inputStyle} /></FormField>
+          <FormField label="SurfLink URL"><input type="url" value={form.surflink_url} onChange={e => setForm({ ...form, surflink_url: e.target.value })} style={inputStyle} /></FormField>
+        </div>
+        <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}><input type="checkbox" checked={form.bsa_certified} onChange={e => setForm({ ...form, bsa_certified: e.target.checked })} /> BSA Certified</label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}><input type="checkbox" checked={form.active} onChange={e => setForm({ ...form, active: e.target.checked })} /> Active</label>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button onClick={save} disabled={saving || !form.name}>{saving ? 'Saving...' : editing ? 'Update' : 'Add'}</Button>
+          <Button variant="ghost" onClick={() => setModal(false)}>Cancel</Button>
+        </div>
+      </Modal>
     </div>
   )
 }

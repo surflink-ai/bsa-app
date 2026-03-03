@@ -90,6 +90,25 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   font-weight: 600;
 }
 
+/* ── Admin Design System ── */
+:root {
+  --admin-bg: #F8F9FB;
+  --admin-surface: #FFFFFF;
+  --admin-border: rgba(10,37,64,0.08);
+  --admin-border-subtle: rgba(10,37,64,0.04);
+  --admin-navy: #0A2540;
+  --admin-teal: #2BA5A0;
+  --admin-blue: #1478B5;
+  --admin-text: #0F172A;
+  --admin-text-secondary: #64748B;
+  --admin-text-muted: #94A3B8;
+  --admin-danger: #DC2626;
+  --admin-success: #16A34A;
+  --admin-warning: #D97706;
+  --admin-radius: 8px;
+  --admin-sidebar: 260px;
+}
+
 /* Dashboard responsive grids */
 @media (max-width: 768px) {
   .grid-responsive-5 { grid-template-columns: repeat(3, 1fr) !important; }

@@ -1,171 +1,62 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { PhotoUploader } from '@/components/admin/PhotoUploader'
+import { PageHeader, Card, Modal, FormField, Button, MetaText, TextLink, ActionLinks, inputStyle } from '@/components/admin/ui'
 
-interface Photo {
-  id: string
-  event_id: string
-  event_name: string | null
-  src: string
-  alt: string | null
-  credit: string | null
-  sort_order: number
-}
+interface Photo { id: string; event_id: string; event_name: string | null; src: string; alt: string | null; credit: string | null; sort_order: number }
 
-const inputStyle = {
-  border: '1px solid rgba(10,37,64,0.12)',
-  borderRadius: '4px',
-  padding: '9px 12px',
-  fontSize: '13px',
-  color: '#0A2540',
-  width: '100%',
-  outline: 'none',
-}
-
-const labelStyle = {
-  fontFamily: "'JetBrains Mono', monospace",
-  fontSize: '10px',
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.15em',
-  color: 'rgba(10,37,64,0.35)',
-  display: 'block',
-  marginBottom: '6px',
-}
-
-export default function AdminPhotosPage() {
-  const [photos, setPhotos] = useState<Photo[]>([])
-  const [eventId, setEventId] = useState('')
-  const [eventName, setEventName] = useState('')
-  const [credit, setCredit] = useState('')
+export default function PhotosPage() {
+  const [rows, setRows] = useState<Photo[]>([])
   const [loading, setLoading] = useState(true)
-  const [uploading, setUploading] = useState(false)
+  const [modal, setModal] = useState(false)
+  const [form, setForm] = useState({ event_id: '', event_name: '', src: '', alt: '', credit: '' })
+  const [saving, setSaving] = useState(false)
 
-  const fetchPhotos = async () => {
-    const supabase = createClient()
-    const { data } = await supabase.from('event_photos').select('*').order('created_at', { ascending: false })
-    setPhotos(data || [])
-    setLoading(false)
+  const load = async () => { const { data } = await createClient().from('event_photos').select('*').order('created_at', { ascending: false }); setRows(data || []); setLoading(false) }
+  useEffect(() => { load() }, [])
+
+  const save = async () => {
+    setSaving(true)
+    await createClient().from('event_photos').insert({ event_id: form.event_id, event_name: form.event_name || null, src: form.src, alt: form.alt || null, credit: form.credit || null })
+    setSaving(false); setModal(false); setForm({ event_id: '', event_name: '', src: '', alt: '', credit: '' }); load()
   }
 
-  useEffect(() => { fetchPhotos() }, [])
-
-  const handleUpload = async (files: File[]) => {
-    if (!eventId.trim()) {
-      alert('Please enter an Event ID first.')
-      return
-    }
-    setUploading(true)
-    const supabase = createClient()
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      const filePath = `event-photos/${eventId}/${Date.now()}-${file.name}`
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('photos')
-        .upload(filePath, file)
-
-      if (uploadError) {
-        await supabase.from('event_photos').insert({
-          event_id: eventId,
-          event_name: eventName || null,
-          src: URL.createObjectURL(file),
-          alt: file.name,
-          credit: credit || null,
-          sort_order: i,
-        })
-      } else {
-        const { data: { publicUrl } } = supabase.storage.from('photos').getPublicUrl(uploadData.path)
-        await supabase.from('event_photos').insert({
-          event_id: eventId,
-          event_name: eventName || null,
-          src: publicUrl,
-          alt: file.name,
-          credit: credit || null,
-          sort_order: i,
-        })
-      }
-    }
-
-    setUploading(false)
-    fetchPhotos()
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this photo?')) return
-    const supabase = createClient()
-    await supabase.from('event_photos').delete().eq('id', id)
-    setPhotos(prev => prev.filter(p => p.id !== id))
-  }
-
-  const focusHandler = (e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = '#2BA5A0' }
-  const blurHandler = (e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = 'rgba(10,37,64,0.12)' }
+  const del = async (id: string) => { if (!confirm('Delete?')) return; await createClient().from('event_photos').delete().eq('id', id); load() }
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-[22px] font-semibold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Photos</h1>
-        <p className="text-[12px] text-[#0A2540]/30 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{photos.length} photos</p>
-      </div>
-
-      {/* Upload section */}
-      <div className="mb-6 p-5" style={{ border: '1px solid rgba(10,37,64,0.06)', borderRadius: '4px', backgroundColor: '#fff' }}>
-        <h2 className="text-[10px] uppercase tracking-[0.15em] text-[#0A2540]/30 mb-4"
-            style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-          Upload Photos
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div>
-            <label style={labelStyle}>Event ID</label>
-            <input type="text" value={eventId} onChange={e => setEventId(e.target.value)}
-              style={inputStyle} onFocus={focusHandler} onBlur={blurHandler}
-              placeholder="LiveHeats event ID" />
-          </div>
-          <div>
-            <label style={labelStyle}>Event Name</label>
-            <input type="text" value={eventName} onChange={e => setEventName(e.target.value)}
-              style={inputStyle} onFocus={focusHandler} onBlur={blurHandler}
-              placeholder="SOTY #1 2026" />
-          </div>
-          <div>
-            <label style={labelStyle}>Photographer Credit</label>
-            <input type="text" value={credit} onChange={e => setCredit(e.target.value)}
-              style={inputStyle} onFocus={focusHandler} onBlur={blurHandler} />
-          </div>
-        </div>
-        <PhotoUploader onUpload={handleUpload} uploading={uploading} />
-      </div>
-
-      {/* Photo grid */}
-      {loading ? (
-        <p className="text-[13px] text-[#0A2540]/30">Loading...</p>
-      ) : photos.length === 0 ? (
-        <p className="text-[13px] text-[#0A2540]/30 py-12 text-center">No photos uploaded yet.</p>
+      <PageHeader title="Photos" subtitle={`${rows.length} photo${rows.length !== 1 ? 's' : ''}`} action={{ label: 'Add Photo', onClick: () => setModal(true) }} />
+      {loading ? <MetaText>Loading...</MetaText> : rows.length === 0 ? (
+        <Card><div style={{ padding: '40px', textAlign: 'center', color: 'var(--admin-text-muted)', fontSize: 13 }}>No photos yet</div></Card>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-          {photos.map(photo => (
-            <div key={photo.id} className="group relative" style={{ border: '1px solid rgba(10,37,64,0.06)', borderRadius: '4px', overflow: 'hidden', backgroundColor: '#fff' }}>
-              <img src={photo.src} alt={photo.alt || ''} className="w-full aspect-square object-cover" />
-              <div className="px-3 py-2">
-                <p className="text-[11px] text-[#0A2540]/40 truncate">{photo.event_name || photo.event_id}</p>
-                {photo.credit && (
-                  <p className="text-[10px] text-[#0A2540]/20 mt-0.5" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                    {photo.credit}
-                  </p>
-                )}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+          {rows.map(p => (
+            <Card key={p.id} padding={false} style={{ overflow: 'hidden' }}>
+              <div style={{ aspectRatio: '4/3', background: '#F1F5F9', overflow: 'hidden' }}>
+                <img src={p.src} alt={p.alt || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => (e.currentTarget.style.display = 'none')} />
               </div>
-              <button
-                onClick={() => handleDelete(photo.id)}
-                className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ backgroundColor: '#DC2626', borderRadius: '2px' }}
-              >
-                x
-              </button>
-            </div>
+              <div style={{ padding: '12px 16px' }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--admin-text)' }}>{p.event_name || p.event_id}</div>
+                {p.credit && <MetaText style={{ display: 'block', marginTop: 2, fontSize: 10 }}>{p.credit}</MetaText>}
+                <div style={{ marginTop: 8 }}><TextLink onClick={() => del(p.id)} color="var(--admin-danger)">Delete</TextLink></div>
+              </div>
+            </Card>
           ))}
         </div>
       )}
+      <Modal open={modal} onClose={() => setModal(false)} title="Add Photo">
+        <FormField label="Image URL"><input value={form.src} onChange={e => setForm({ ...form, src: e.target.value })} style={inputStyle} placeholder="https://..." /></FormField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <FormField label="Event ID"><input value={form.event_id} onChange={e => setForm({ ...form, event_id: e.target.value })} style={inputStyle} /></FormField>
+          <FormField label="Event Name"><input value={form.event_name} onChange={e => setForm({ ...form, event_name: e.target.value })} style={inputStyle} /></FormField>
+        </div>
+        <FormField label="Alt Text"><input value={form.alt} onChange={e => setForm({ ...form, alt: e.target.value })} style={inputStyle} /></FormField>
+        <FormField label="Credit"><input value={form.credit} onChange={e => setForm({ ...form, credit: e.target.value })} style={inputStyle} /></FormField>
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <Button onClick={save} disabled={saving || !form.src || !form.event_id}>{saving ? 'Saving...' : 'Add'}</Button>
+          <Button variant="ghost" onClick={() => setModal(false)}>Cancel</Button>
+        </div>
+      </Modal>
     </div>
   )
 }

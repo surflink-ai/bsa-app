@@ -1,170 +1,63 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { PollCreator } from '@/components/admin/PollCreator'
+import { PageHeader, DataTable, Modal, FormField, Button, StatusDot, MetaText, TextLink, ActionLinks, inputStyle } from '@/components/admin/ui'
 
-interface Poll {
-  id: string
-  title: string
-  description: string | null
-  options: { id: string; label: string }[]
-  event_id: string | null
-  active: boolean
-  closes_at: string | null
-  created_at: string
-}
+interface Poll { id: string; title: string; description: string | null; options: { label: string; id: string }[]; event_id: string | null; active: boolean; closes_at: string | null; created_at: string }
 
-interface VoteCount {
-  option_label: string
-  count: number
-}
-
-export default function AdminPollsPage() {
-  const [polls, setPolls] = useState<Poll[]>([])
-  const [voteCounts, setVoteCounts] = useState<Record<string, VoteCount[]>>({})
+export default function PollsPage() {
+  const [rows, setRows] = useState<Poll[]>([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
+  const [modal, setModal] = useState(false)
+  const [form, setForm] = useState({ title: '', description: '', event_id: '', options: ['', ''], closes_at: '' })
   const [saving, setSaving] = useState(false)
 
-  const fetchPolls = async () => {
-    const supabase = createClient()
-    const { data } = await supabase.from('fan_polls').select('*').order('created_at', { ascending: false })
-    setPolls(data || [])
-    setLoading(false)
+  const load = async () => { const { data } = await createClient().from('fan_polls').select('*').order('created_at', { ascending: false }); setRows(data || []); setLoading(false) }
+  useEffect(() => { load() }, [])
 
-    if (data) {
-      for (const poll of data) {
-        const { data: votes } = await supabase.from('fan_votes').select('option_label').eq('poll_id', poll.id)
-        const counts: Record<string, number> = {}
-        for (const v of votes || []) {
-          counts[v.option_label] = (counts[v.option_label] || 0) + 1
-        }
-        setVoteCounts(prev => ({
-          ...prev,
-          [poll.id]: Object.entries(counts).map(([option_label, count]) => ({ option_label, count })),
-        }))
-      }
-    }
-  }
-
-  useEffect(() => { fetchPolls() }, [])
-
-  const handleCreate = async (data: { title: string; description: string; options: { id: string; label: string }[]; event_id: string; closes_at: string }) => {
+  const save = async () => {
     setSaving(true)
-    const supabase = createClient()
-    await supabase.from('fan_polls').insert({
-      title: data.title,
-      description: data.description || null,
-      options: data.options,
-      event_id: data.event_id || null,
-      closes_at: data.closes_at ? new Date(data.closes_at).toISOString() : null,
-      active: true,
-    })
-    setShowForm(false)
-    setSaving(false)
-    fetchPolls()
+    const opts = form.options.filter(Boolean).map((label, i) => ({ label, id: `opt_${i}` }))
+    await createClient().from('fan_polls').insert({ title: form.title, description: form.description || null, event_id: form.event_id || null, options: opts, active: true, closes_at: form.closes_at || null })
+    setSaving(false); setModal(false); setForm({ title: '', description: '', event_id: '', options: ['', ''], closes_at: '' }); load()
   }
 
-  const handleToggle = async (poll: Poll) => {
-    const supabase = createClient()
-    await supabase.from('fan_polls').update({ active: !poll.active }).eq('id', poll.id)
-    fetchPolls()
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this poll and all its votes?')) return
-    const supabase = createClient()
-    await supabase.from('fan_polls').delete().eq('id', id)
-    setPolls(prev => prev.filter(p => p.id !== id))
-  }
-
-  const getTotalVotes = (pollId: string): number => {
-    return (voteCounts[pollId] || []).reduce((sum, vc) => sum + vc.count, 0)
-  }
+  const toggle = async (id: string, active: boolean) => { await createClient().from('fan_polls').update({ active: !active }).eq('id', id); load() }
+  const del = async (id: string) => { if (!confirm('Delete?')) return; await createClient().from('fan_polls').delete().eq('id', id); load() }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-[22px] font-semibold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Fan Polls</h1>
-          <p className="text-[12px] text-[#0A2540]/30 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{polls.length} polls</p>
-        </div>
-        <button onClick={() => setShowForm(true)}
-          className="text-[12px] font-medium text-white px-4 py-2 transition-opacity hover:opacity-90"
-          style={{ backgroundColor: '#0A2540', borderRadius: '4px' }}>
-          Create Poll
-        </button>
-      </div>
-
-      {showForm && (
-        <div className="mb-6">
-          <PollCreator onSubmit={handleCreate} onCancel={() => setShowForm(false)} loading={saving} />
-        </div>
+      <PageHeader title="Polls" subtitle={`${rows.length} poll${rows.length !== 1 ? 's' : ''}`} action={{ label: 'Create Poll', onClick: () => setModal(true) }} />
+      {loading ? <MetaText>Loading...</MetaText> : (
+        <DataTable columns={[
+          { key: 'title', label: 'Title', render: r => <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--admin-text)' }}>{r.title}</span> },
+          { key: 'options', label: 'Options', render: r => <MetaText>{r.options?.length || 0} options</MetaText> },
+          { key: 'status', label: 'Status', render: r => <StatusDot status={r.active ? 'success' : 'muted'} label={r.active ? 'Active' : 'Closed'} /> },
+          { key: 'date', label: 'Created', render: r => <MetaText>{new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</MetaText> },
+          { key: 'actions', label: '', align: 'right', render: r => <ActionLinks><TextLink onClick={() => toggle(r.id, r.active)}>{r.active ? 'Close' : 'Reopen'}</TextLink><TextLink onClick={() => del(r.id)} color="var(--admin-danger)">Delete</TextLink></ActionLinks> },
+        ]} rows={rows} />
       )}
-
-      {loading ? (
-        <p className="text-[13px] text-[#0A2540]/30">Loading...</p>
-      ) : polls.length === 0 ? (
-        <p className="text-[13px] text-[#0A2540]/30 py-12 text-center">No polls yet. Create your first one.</p>
-      ) : (
-        <div className="space-y-0">
-          {polls.map((poll, idx) => {
-            const total = getTotalVotes(poll.id)
-            const counts = voteCounts[poll.id] || []
-
-            return (
-              <div key={poll.id}>
-                {idx > 0 && <div className="h-px bg-[#0A2540]/[0.04] my-5" />}
-                <div>
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="text-[15px] font-medium text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{poll.title}</h3>
-                      {poll.description && <p className="text-[12px] text-[#0A2540]/35 mt-1">{poll.description}</p>}
-                      <p className="text-[10px] text-[#0A2540]/20 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                        {total} vote{total !== 1 ? 's' : ''} &middot; {new Date(poll.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                      <button onClick={() => handleToggle(poll)}
-                        className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.1em] transition-colors cursor-pointer"
-                        style={{ fontFamily: "'JetBrains Mono', monospace", color: poll.active ? '#22C55E' : '#9CA3AF' }}>
-                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: poll.active ? '#22C55E' : '#D1D5DB' }} />
-                        {poll.active ? 'Active' : 'Closed'}
-                      </button>
-                      <button onClick={() => handleDelete(poll.id)}
-                        className="text-[12px] text-[#DC2626]/50 hover:text-[#DC2626] transition-colors">
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Results */}
-                  <div className="space-y-2 max-w-[500px]">
-                    {(poll.options as { id: string; label: string }[]).map(opt => {
-                      const count = counts.find(c => c.option_label === opt.label)?.count || 0
-                      const pct = total > 0 ? (count / total) * 100 : 0
-
-                      return (
-                        <div key={opt.id} className="flex items-center gap-3">
-                          <span className="text-[12px] text-[#0A2540]/50 w-[140px] flex-shrink-0 truncate">{opt.label}</span>
-                          <div className="flex-1 h-[6px] rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(10,37,64,0.04)' }}>
-                            <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, backgroundColor: '#2BA5A0' }} />
-                          </div>
-                          <span className="text-[10px] text-[#0A2540]/25 w-[60px] text-right flex-shrink-0"
-                                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                            {count} ({pct.toFixed(0)}%)
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
+      <Modal open={modal} onClose={() => setModal(false)} title="Create Poll">
+        <FormField label="Question"><input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} style={inputStyle} placeholder="Best wave of the day?" /></FormField>
+        <FormField label="Description"><input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={inputStyle} /></FormField>
+        <FormField label="Options">
+          {form.options.map((opt, i) => (
+            <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              <input value={opt} onChange={e => { const o = [...form.options]; o[i] = e.target.value; setForm({ ...form, options: o }) }} style={inputStyle} placeholder={`Option ${i + 1}`} />
+              {form.options.length > 2 && <button onClick={() => setForm({ ...form, options: form.options.filter((_, j) => j !== i) })} style={{ background: 'none', border: 'none', color: 'var(--admin-danger)', cursor: 'pointer', fontSize: 16, padding: '0 8px' }}>&times;</button>}
+            </div>
+          ))}
+          <button onClick={() => setForm({ ...form, options: [...form.options, ''] })} style={{ fontSize: 12, color: 'var(--admin-teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}>+ Add option</button>
+        </FormField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <FormField label="Event ID (optional)"><input value={form.event_id} onChange={e => setForm({ ...form, event_id: e.target.value })} style={inputStyle} /></FormField>
+          <FormField label="Closes At"><input type="datetime-local" value={form.closes_at} onChange={e => setForm({ ...form, closes_at: e.target.value })} style={inputStyle} /></FormField>
         </div>
-      )}
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <Button onClick={save} disabled={saving || !form.title || form.options.filter(Boolean).length < 2}>{saving ? 'Creating...' : 'Create Poll'}</Button>
+          <Button variant="ghost" onClick={() => setModal(false)}>Cancel</Button>
+        </div>
+      </Modal>
     </div>
   )
 }

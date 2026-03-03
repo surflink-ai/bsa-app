@@ -1,108 +1,60 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { NotificationComposer } from '@/components/admin/NotificationComposer'
+import { PageHeader, Card, DataTable, FormField, Button, MetaText, SectionLabel, inputStyle, selectStyle } from '@/components/admin/ui'
 
-interface Notification {
-  id: string
-  title: string
-  body: string
-  type: string
-  sent_at: string
-  recipient_count: number
-}
+interface Notification { id: string; title: string; body: string; type: string; sent_at: string }
 
-const TEMPLATES = [
-  { label: 'Heat Starting', title: 'Heat Starting Now', body: 'The next heat is about to begin. Tune in live!', type: 'heat' },
-  { label: 'Finals Live', title: 'Finals Are LIVE', body: 'The finals are underway. Don\'t miss the action!', type: 'event' },
-  { label: 'Results Posted', title: 'Results Are In', body: 'Final results have been posted. Check them out!', type: 'event' },
-]
-
-export default function AdminNotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
+export default function NotificationsPage() {
+  const [rows, setRows] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
+  const [title, setTitle] = useState('')
+  const [body, setBody] = useState('')
+  const [type, setType] = useState('announcement')
   const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
 
-  const fetchNotifications = async () => {
-    const supabase = createClient()
-    const { data } = await supabase.from('notifications').select('*').order('sent_at', { ascending: false }).limit(50)
-    setNotifications(data || [])
-    setLoading(false)
-  }
+  const load = async () => { const { data } = await createClient().from('notifications').select('*').order('sent_at', { ascending: false }).limit(20); setRows(data || []); setLoading(false) }
+  useEffect(() => { load() }, [])
 
-  useEffect(() => { fetchNotifications() }, [])
-
-  const handleSend = async (data: { title: string; body: string; type: string }) => {
+  const send = async () => {
     setSending(true)
-    const supabase = createClient()
-    await supabase.from('notifications').insert({
-      title: data.title,
-      body: data.body,
-      type: data.type,
-      recipient_count: 0,
-    })
-    setSending(false)
-    fetchNotifications()
-    alert('Notification logged successfully!')
-  }
-
-  const typeColors: Record<string, string> = {
-    event: '#2BA5A0',
-    heat: '#1478B5',
-    conditions: '#CA8A04',
-    announcement: '#0A2540',
-    custom: '#7C3AED',
+    await createClient().from('notifications').insert({ title, body, type })
+    setSending(false); setSent(true); setTitle(''); setBody(''); setTimeout(() => setSent(false), 3000); load()
   }
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-[22px] font-semibold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Notifications</h1>
-        <p className="text-[12px] text-[#0A2540]/30 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Send push notifications to subscribers</p>
-      </div>
+      <PageHeader title="Notifications" subtitle="Send push notifications to subscribers" />
 
-      <div className="grid md:grid-cols-2 gap-8">
-        <div>
-          <h2 className="text-[10px] uppercase tracking-[0.15em] text-[#0A2540]/30 mb-4"
-              style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-            Compose
-          </h2>
-          <NotificationComposer onSend={handleSend} loading={sending} templates={TEMPLATES} />
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <Card>
+          <SectionLabel>Compose</SectionLabel>
+          <FormField label="Title"><input value={title} onChange={e => setTitle(e.target.value)} style={inputStyle} placeholder="Notification title..." /></FormField>
+          <FormField label="Message"><textarea value={body} onChange={e => setBody(e.target.value)} rows={4} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Notification body..." /></FormField>
+          <FormField label="Type">
+            <select value={type} onChange={e => setType(e.target.value)} style={selectStyle}>
+              <option value="announcement">Announcement</option>
+              <option value="event">Event</option>
+              <option value="heat">Heat Alert</option>
+              <option value="conditions">Conditions</option>
+              <option value="custom">Custom</option>
+            </select>
+          </FormField>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <Button onClick={send} disabled={sending || !title || !body}>{sending ? 'Sending...' : 'Send Notification'}</Button>
+            {sent && <span style={{ fontSize: 12, color: 'var(--admin-success)', fontWeight: 500 }}>Sent</span>}
+          </div>
+        </Card>
 
         <div>
-          <h2 className="text-[10px] uppercase tracking-[0.15em] text-[#0A2540]/30 mb-4"
-              style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-            History
-          </h2>
-          {loading ? (
-            <p className="text-[13px] text-[#0A2540]/30">Loading...</p>
-          ) : notifications.length === 0 ? (
-            <p className="text-[13px] text-[#0A2540]/30 py-8 text-center">No notifications sent yet.</p>
-          ) : (
-            <div>
-              {notifications.map((n, i) => (
-                <div key={n.id}>
-                  {i > 0 && <div className="h-px bg-[#0A2540]/[0.04] my-3" />}
-                  <div className="py-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-medium text-[#0A2540]/70" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{n.title}</p>
-                        <p className="text-[12px] text-[#0A2540]/30 mt-0.5 truncate">{n.body}</p>
-                      </div>
-                      <span className="text-[9px] uppercase tracking-[0.1em] flex-shrink-0 mt-0.5"
-                        style={{ fontFamily: "'JetBrains Mono', monospace", color: typeColors[n.type] || '#999' }}>
-                        {n.type}
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-[#0A2540]/15 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                      {new Date(n.sent_at).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <SectionLabel>Recent Notifications</SectionLabel>
+          {loading ? <MetaText>Loading...</MetaText> : (
+            <DataTable columns={[
+              { key: 'title', label: 'Title', render: r => <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--admin-text)' }}>{r.title}</span> },
+              { key: 'type', label: 'Type', render: r => <span style={{ fontSize: 12, color: 'var(--admin-text-secondary)', textTransform: 'capitalize' }}>{r.type}</span> },
+              { key: 'date', label: 'Sent', render: r => <MetaText>{new Date(r.sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</MetaText> },
+            ]} rows={rows} />
           )}
         </div>
       </div>

@@ -2,143 +2,73 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { SponsorForm } from '@/components/admin/SponsorForm'
+import { PageHeader, DataTable, Modal, FormField, Button, StatusDot, MetaText, TextLink, ActionLinks, inputStyle, selectStyle } from '@/components/admin/ui'
 
-interface Sponsor {
-  id: string
-  name: string
-  logo_url: string | null
-  website_url: string | null
-  tier: 'platinum' | 'gold' | 'silver' | 'bronze' | 'supporter'
-  sort_order: number
-  active: boolean
-}
+interface Sponsor { id: string; name: string; logo_url: string | null; website_url: string | null; tier: string; sort_order: number; active: boolean }
 
-export default function AdminSponsorsPage() {
-  const [sponsors, setSponsors] = useState<Sponsor[]>([])
+const TIERS = ['platinum', 'gold', 'silver', 'bronze', 'supporter']
+
+export default function SponsorsPage() {
+  const [rows, setRows] = useState<Sponsor[]>([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [editingSponsor, setEditingSponsor] = useState<Sponsor | null>(null)
+  const [modal, setModal] = useState(false)
+  const [editing, setEditing] = useState<Sponsor | null>(null)
+  const [form, setForm] = useState({ name: '', logo_url: '', website_url: '', tier: 'silver', active: true, sort_order: 0 })
   const [saving, setSaving] = useState(false)
 
-  const fetchSponsors = async () => {
-    const supabase = createClient()
-    const { data } = await supabase.from('sponsors').select('*').order('tier').order('sort_order')
-    setSponsors(data || [])
-    setLoading(false)
+  const load = async () => {
+    const sb = createClient()
+    const { data } = await sb.from('sponsors').select('*').order('tier').order('sort_order')
+    setRows(data || []); setLoading(false)
+  }
+  useEffect(() => { load() }, [])
+
+  const openNew = () => { setEditing(null); setForm({ name: '', logo_url: '', website_url: '', tier: 'silver', active: true, sort_order: 0 }); setModal(true) }
+  const openEdit = (r: Sponsor) => { setEditing(r); setForm({ name: r.name, logo_url: r.logo_url || '', website_url: r.website_url || '', tier: r.tier, active: r.active, sort_order: r.sort_order }); setModal(true) }
+
+  const save = async () => {
+    setSaving(true); const sb = createClient()
+    const data = { name: form.name, logo_url: form.logo_url || null, website_url: form.website_url || null, tier: form.tier, active: form.active, sort_order: form.sort_order }
+    if (editing) await sb.from('sponsors').update(data).eq('id', editing.id)
+    else await sb.from('sponsors').insert(data)
+    setSaving(false); setModal(false); load()
   }
 
-  useEffect(() => { fetchSponsors() }, [])
-
-  const handleCreate = async (data: Omit<Sponsor, 'id'>) => {
-    setSaving(true)
-    const supabase = createClient()
-    await supabase.from('sponsors').insert(data)
-    setShowForm(false)
-    setSaving(false)
-    fetchSponsors()
-  }
-
-  const handleUpdate = async (data: Omit<Sponsor, 'id'>) => {
-    if (!editingSponsor) return
-    setSaving(true)
-    const supabase = createClient()
-    await supabase.from('sponsors').update(data).eq('id', editingSponsor.id)
-    setEditingSponsor(null)
-    setSaving(false)
-    fetchSponsors()
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this sponsor?')) return
-    const supabase = createClient()
-    await supabase.from('sponsors').delete().eq('id', id)
-    setSponsors(prev => prev.filter(s => s.id !== id))
-  }
-
-  const handleToggleActive = async (sponsor: Sponsor) => {
-    const supabase = createClient()
-    await supabase.from('sponsors').update({ active: !sponsor.active }).eq('id', sponsor.id)
-    fetchSponsors()
-  }
-
-  const tierColors: Record<string, string> = { platinum: '#7C3AED', gold: '#CA8A04', silver: '#64748B', bronze: '#92400E', supporter: '#2BA5A0' }
+  const del = async (id: string) => { if (!confirm('Delete this sponsor?')) return; await createClient().from('sponsors').delete().eq('id', id); load() }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-[22px] font-semibold text-[#0A2540]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Sponsors</h1>
-          <p className="text-[12px] text-[#0A2540]/30 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{sponsors.length} sponsors</p>
-        </div>
-        <button onClick={() => { setShowForm(true); setEditingSponsor(null) }}
-          className="text-[12px] font-medium text-white px-4 py-2 transition-opacity hover:opacity-90"
-          style={{ backgroundColor: '#0A2540', borderRadius: '4px' }}>
-          Add Sponsor
-        </button>
-      </div>
-
-      {(showForm || editingSponsor) && (
-        <div className="mb-6">
-          <SponsorForm
-            initial={editingSponsor ? { ...editingSponsor, logo_url: editingSponsor.logo_url ?? undefined, website_url: editingSponsor.website_url ?? undefined } : undefined}
-            onSubmit={editingSponsor ? handleUpdate : handleCreate}
-            onCancel={() => { setShowForm(false); setEditingSponsor(null) }}
-            loading={saving}
-          />
-        </div>
+      <PageHeader title="Sponsors" subtitle={`${rows.length} sponsor${rows.length !== 1 ? 's' : ''}`} action={{ label: 'Add Sponsor', onClick: openNew }} />
+      {loading ? <MetaText>Loading...</MetaText> : (
+        <DataTable columns={[
+          { key: 'name', label: 'Name', render: r => <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--admin-text)' }}>{r.name}</span> },
+          { key: 'tier', label: 'Tier', render: r => <span style={{ fontSize: 12, color: 'var(--admin-text-secondary)', textTransform: 'capitalize' }}>{r.tier}</span> },
+          { key: 'status', label: 'Status', render: r => <StatusDot status={r.active ? 'success' : 'muted'} label={r.active ? 'Active' : 'Inactive'} /> },
+          { key: 'actions', label: '', align: 'right', render: r => <ActionLinks><TextLink onClick={() => openEdit(r)}>Edit</TextLink><TextLink onClick={() => del(r.id)} color="var(--admin-danger)">Delete</TextLink></ActionLinks> },
+        ]} rows={rows} />
       )}
-
-      {loading ? (
-        <p className="text-[13px] text-[#0A2540]/30">Loading...</p>
-      ) : sponsors.length === 0 ? (
-        <p className="text-[13px] text-[#0A2540]/30 py-12 text-center">No sponsors yet.</p>
-      ) : (
-        <table className="w-full">
-          <thead>
-            <tr style={{ borderBottom: '1px solid rgba(10,37,64,0.06)' }}>
-              <th className="text-left pb-2.5 font-medium" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>Sponsor</th>
-              <th className="text-left pb-2.5 font-medium hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>Tier</th>
-              <th className="text-left pb-2.5 font-medium hidden md:table-cell" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)' }}>Status</th>
-              <th className="text-right pb-2.5 font-medium" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(10,37,64,0.2)', width: '100px' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sponsors.map((s, i) => (
-              <tr key={s.id} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(10,37,64,0.015)' }}>
-                <td className="py-2.5 pr-4">
-                  <div className="flex items-center gap-3">
-                    {s.logo_url && <img src={s.logo_url} alt="" className="w-6 h-6 object-contain flex-shrink-0" />}
-                    <div>
-                      <p className="text-[13px] font-medium text-[#0A2540]/70">{s.name}</p>
-                      {s.website_url && <p className="text-[10px] text-[#0A2540]/20 truncate max-w-[200px]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{s.website_url}</p>}
-                    </div>
-                  </div>
-                </td>
-                <td className="py-2.5 pr-4 hidden md:table-cell">
-                  <span className="text-[10px] uppercase tracking-[0.1em] font-medium"
-                    style={{ fontFamily: "'JetBrains Mono', monospace", color: tierColors[s.tier] || '#999' }}>
-                    {s.tier}
-                  </span>
-                </td>
-                <td className="py-2.5 pr-4 hidden md:table-cell">
-                  <button onClick={() => handleToggleActive(s)} className="inline-flex items-center gap-1.5 cursor-pointer">
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.active ? '#22C55E' : '#D1D5DB' }} />
-                    <span className="text-[10px] uppercase tracking-[0.1em]" style={{ fontFamily: "'JetBrains Mono', monospace", color: s.active ? '#22C55E' : '#9CA3AF' }}>
-                      {s.active ? 'Active' : 'Inactive'}
-                    </span>
-                  </button>
-                </td>
-                <td className="py-2.5 text-right">
-                  <button onClick={() => setEditingSponsor(s)} className="text-[12px] text-[#1478B5] hover:text-[#0A2540] transition-colors">Edit</button>
-                  <span className="text-[#0A2540]/10 mx-1.5">|</span>
-                  <button onClick={() => handleDelete(s.id)} className="text-[12px] text-[#DC2626]/50 hover:text-[#DC2626] transition-colors">Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <Modal open={modal} onClose={() => setModal(false)} title={editing ? 'Edit Sponsor' : 'Add Sponsor'}>
+        <FormField label="Name"><input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={inputStyle} /></FormField>
+        <FormField label="Logo URL"><input type="url" value={form.logo_url} onChange={e => setForm({ ...form, logo_url: e.target.value })} style={inputStyle} placeholder="https://..." /></FormField>
+        <FormField label="Website"><input type="url" value={form.website_url} onChange={e => setForm({ ...form, website_url: e.target.value })} style={inputStyle} placeholder="https://..." /></FormField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <FormField label="Tier">
+            <select value={form.tier} onChange={e => setForm({ ...form, tier: e.target.value })} style={selectStyle}>
+              {TIERS.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+            </select>
+          </FormField>
+          <FormField label="Sort Order"><input type="number" value={form.sort_order} onChange={e => setForm({ ...form, sort_order: Number(e.target.value) })} style={inputStyle} /></FormField>
+        </div>
+        <FormField label="Active">
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+            <input type="checkbox" checked={form.active} onChange={e => setForm({ ...form, active: e.target.checked })} /> Active
+          </label>
+        </FormField>
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <Button onClick={save} disabled={saving || !form.name}>{saving ? 'Saving...' : editing ? 'Update' : 'Add'}</Button>
+          <Button variant="ghost" onClick={() => setModal(false)}>Cancel</Button>
+        </div>
+      </Modal>
     </div>
   )
 }

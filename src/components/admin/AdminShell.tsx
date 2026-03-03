@@ -2,34 +2,21 @@
 
 import { usePathname } from 'next/navigation'
 import { Sidebar } from './Sidebar'
+import { ReactNode } from 'react'
 
-interface AdminUser {
-  full_name?: string | null
-  email?: string
-  role?: string | null
-}
+interface AdminUser { full_name?: string | null; email?: string; role?: string | null }
 
-export function AdminShell({ admin, children }: { admin: AdminUser | null; children: React.ReactNode }) {
+export function AdminShell({ admin, children }: { admin: AdminUser | null; children: ReactNode }) {
   const pathname = usePathname()
-  const isLoginPage = pathname === '/admin/login'
+  if (pathname === '/admin/login') return <div style={{ fontFamily: "'DM Sans', sans-serif" }}>{children}</div>
 
-  // Login page — no sidebar, no wrapper
-  if (isLoginPage) {
-    return (
-      <div style={{ fontFamily: "'DM Sans', sans-serif" }}>
-        {children}
-      </div>
-    )
-  }
-
-  // Authenticated admin — full layout
   if (admin) {
     return (
-      <div style={{ fontFamily: "'DM Sans', sans-serif", backgroundColor: '#F7F8FA', minHeight: '100vh' }}>
+      <div style={{ fontFamily: "'DM Sans', sans-serif", backgroundColor: 'var(--admin-bg)', minHeight: '100vh' }}>
         <div style={{ display: 'flex', minHeight: '100vh' }}>
           <Sidebar userName={admin.full_name || admin.email} userRole={admin.role || 'admin'} />
-          <main className="md:ml-[260px] ml-0" style={{ flex: 1 }}>
-            <div style={{ padding: '32px 40px', maxWidth: 1280, margin: '0 auto' }}>
+          <main className="md:ml-[260px] ml-0" style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ padding: '36px 44px', maxWidth: 1200 }}>
               {children}
             </div>
           </main>
@@ -38,10 +25,5 @@ export function AdminShell({ admin, children }: { admin: AdminUser | null; child
     )
   }
 
-  // Not authenticated, not login page — will redirect via requireAdmin()
-  return (
-    <div style={{ fontFamily: "'DM Sans', sans-serif" }}>
-      {children}
-    </div>
-  )
+  return <div style={{ fontFamily: "'DM Sans', sans-serif" }}>{children}</div>
 }

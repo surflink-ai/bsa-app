@@ -85,54 +85,41 @@ export function StreamClient({ initialStatus, streamConfig, vodVideos = [] }: {
     return () => clearInterval(interval)
   }, [])
 
-  // Poll LiveHeats scores every 10 seconds when live + event configured
+  // Poll BSA Compete scores every 5 seconds when live
   useEffect(() => {
-    if (!status.live || !streamConfig.event_id) return
+    if (!status.live) return
     const poll = async () => {
       try {
-        const res = await fetch(`/api/event/${streamConfig.event_id}`)
-        const event = await res.json()
-        if (event?.eventDivisions) {
-          // Find active heat
-          for (const div of event.eventDivisions) {
-            for (const round of div.rounds || []) {
-              for (const h of round.heats || []) {
-                if (h.status === 'active' || h.status === 'in_progress') {
-                  const scores: HeatScore[] = (h.athletes || []).map((a: Record<string, unknown>, i: number) => {
-                    const waveScores = ((a.waves || []) as Record<string, number>[]).map(w => w.score).filter(Boolean).sort((x, y) => y - x)
-                    const best2 = waveScores.slice(0, 2)
-                    return {
-                      athleteName: (a.athlete as Record<string, string>)?.name || `Athlete ${i + 1}`,
-                      athleteImage: (a.athlete as Record<string, string>)?.image || null,
-                      scores: best2,
-                      total: best2.reduce((s, v) => s + v, 0),
-                      position: i + 1,
-                      needsScore: Math.max(0, 2 - best2.length),
-                      priority: !!(a.priority),
-                    }
-                  }).sort((a: HeatScore, b: HeatScore) => b.total - a.total)
-                  scores.forEach((s, i) => { s.position = i + 1 })
-
-                  setHeat({
-                    heatName: h.name || `Heat ${h.position || ''}`,
-                    divisionName: div.division?.name || '',
-                    roundName: round.name || '',
-                    status: h.status,
-                    scores,
-                    nextHeat: null,
-                  })
-                  return
-                }
-              }
-            }
-          }
+        const res = await fetch('/api/stream/active-heat')
+        const data = await res.json()
+        if (data.active && data.heat) {
+          const h = data.heat
+          const scores: HeatScore[] = h.athletes.map((a: Record<string, unknown>) => ({
+            athleteName: a.name as string,
+            athleteImage: null,
+            scores: (a.bestWaves as number[]) || [],
+            total: a.total as number,
+            position: a.position as number,
+            needsScore: Math.max(0, 2 - ((a.bestWaves as number[])?.length || 0)),
+            priority: !!(a.priority),
+          }))
+          setHeat({
+            heatName: `Heat ${h.heatNumber}`,
+            divisionName: h.divisionName,
+            roundName: h.roundName,
+            status: 'live',
+            scores,
+            nextHeat: null,
+          })
+        } else {
+          setHeat(null)
         }
       } catch {}
     }
     poll()
-    const interval = setInterval(poll, 10000)
+    const interval = setInterval(poll, 5000)
     return () => clearInterval(interval)
-  }, [status.live, streamConfig.event_id])
+  }, [status.live])
 
   // Load VOD library
   useEffect(() => {

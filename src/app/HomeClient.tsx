@@ -8,7 +8,25 @@ import { CountdownTimer } from "./components/CountdownTimer"
 import { WaveDivider } from "./components/WaveDivider"
 import { ChevronDownIcon, ArrowRightIcon, TrophyIcon, UsersIcon, CompassIcon } from "./components/Icons"
 import { SurfConditionsBar } from "./components/SurfConditionsBar"
-import { getLatestArticles, getCategoryLabel } from "@/lib/news"
+interface ArticlePreview {
+  slug: string
+  title: string
+  excerpt: string
+  date: string
+  category: string
+}
+
+const categoryLabels: Record<string, string> = {
+  "event-recap": "Event Recap",
+  "athlete-spotlight": "Athlete Spotlight",
+  "announcement": "Announcement",
+  "news": "News",
+  "feature": "Feature",
+}
+
+function getCategoryLabel(category: string): string {
+  return categoryLabels[category] || category
+}
 
 interface Props {
   org: BSAOrg & { events: BSAEvent[]; series: { id: string; name: string }[] }
@@ -19,6 +37,7 @@ interface Props {
     eventName: string
     eventDate: string
   } | null
+  latestArticles?: ArticlePreview[]
 }
 
 // 2026 SOTY Schedule (verified from BSA Instagram Feb 25, 2026)
@@ -51,7 +70,7 @@ const COMPETITION_BREAKS = [
   { name: "Long Beach", coast: "South Coast", desc: "Sandy beach break on the south-east coast with multiple shifting peaks. Works on most tides and handles a range of swell sizes. Popular for all levels." },
 ]
 
-export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: Props) {
+export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, latestArticles = [] }: Props) {
   const nextEvent = upcomingEvents[0] || null
   const totalEvents = org.events.length
 
@@ -360,7 +379,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults }: P
             <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.5rem, 3vw, 2.5rem)", color: "#0A2540", lineHeight: 1.15, marginBottom: 32 }}>What&apos;s Happening</h2>
           </ScrollReveal>
           <div className="grid-responsive-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
-            {getLatestArticles(3).map(article => (
+            {latestArticles.map(article => (
               <ScrollReveal key={article.slug}>
                 <Link href={`/news/${article.slug}`} style={{ textDecoration: "none", display: "block", height: "100%" }}>
                   <div style={{ backgroundColor: "#fff", borderRadius: 12, padding: 24, border: "1px solid rgba(10,37,64,0.06)", height: "100%", display: "flex", flexDirection: "column", transition: "box-shadow 0.2s" }}>

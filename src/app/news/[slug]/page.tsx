@@ -5,7 +5,7 @@ export const revalidate = 300
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const article = getArticle(slug)
+  const article = await getArticle(slug)
   if (!article) return <div style={{ paddingTop: '8rem', textAlign: 'center', color: 'rgba(26,26,26,0.4)' }}>Article not found.</div>
 
   return (

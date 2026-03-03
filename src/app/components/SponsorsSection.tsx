@@ -1,9 +1,10 @@
 import { getSponsorsByTier, hasSponsors } from "@/lib/sponsors"
 
-export function SponsorsSection() {
-  if (!hasSponsors()) return null
+export async function SponsorsSection() {
+  const hasSp = await hasSponsors()
+  if (!hasSp) return null
 
-  const tiers = getSponsorsByTier()
+  const tiers = await getSponsorsByTier()
 
   return (
     <div style={{ maxWidth: 1280, margin: "0 auto" }}>

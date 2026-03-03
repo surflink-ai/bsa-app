@@ -1,7 +1,6 @@
-// Event photo gallery data
-// Key = LiveHeats event ID, Value = array of photo objects
-// To add photos: add the event ID and photo URLs here
-// Future: move to Supabase or CMS
+// Event photo gallery data — now fetched from Supabase
+
+import { createClient } from '@/lib/supabase/server'
 
 interface Photo {
   src: string
@@ -9,13 +8,17 @@ interface Photo {
   credit?: string
 }
 
-const eventPhotos: Record<string, Photo[]> = {
-  // Example:
-  // "abc123": [
-  //   { src: "https://example.com/photo1.jpg", alt: "Finals action", credit: "John Doe Photography" },
-  // ],
-}
-
-export function getEventPhotos(eventId: string): Photo[] {
-  return eventPhotos[eventId] || []
+export async function getEventPhotos(eventId: string): Promise<Photo[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('event_photos')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('sort_order')
+  if (error || !data) return []
+  return data.map(p => ({
+    src: p.src,
+    alt: p.alt || undefined,
+    credit: p.credit || undefined,
+  }))
 }

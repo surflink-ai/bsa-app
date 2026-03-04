@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BSA Priority Watch — Apple Watch Ultra Mockup</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0A1628;
+    color: #fff;
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 40px;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #2BA5A0;
+    text-align: center;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: rgba(255,255,255,0.35);
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  .states {
+    display: flex;
+    gap: 48px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .state-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.25);
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  /* Apple Watch Ultra shell */
+  .watch-shell {
+    width: 220px;
+    height: 268px;
+    border-radius: 52px;
+    background: #1C1C1E;
+    border: 3px solid #3A3A3C;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.05),
+      0 8px 32px rgba(0,0,0,0.6),
+      0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  /* Orange action button (Ultra) */
+  .watch-shell::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 80px;
+    width: 6px;
+    height: 24px;
+    border-radius: 3px 0 0 3px;
+    background: #FF6B00;
+    z-index: 10;
+  }
+
+  /* Digital crown */
+  .watch-shell::after {
+    content: '';
+    position: absolute;
+    right: -8px;
+    top: 72px;
+    width: 6px;
+    height: 32px;
+    border-radius: 0 4px 4px 0;
+    background: #48484A;
+    z-index: 10;
+  }
+
+  .watch-screen {
+    position: absolute;
+    inset: 12px;
+    border-radius: 40px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Jersey color stripe at top */
+  .jersey-stripe {
+    height: 6px;
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  .watch-content {
+    flex: 1;
+    padding: 10px 14px 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #000;
+  }
+
+  /* Top row: BSA + heat info */
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .bsa-logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    color: #2BA5A0;
+    letter-spacing: 0.15em;
+  }
+  .heat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.08em;
+  }
+
+  /* Priority — the hero element */
+  .priority-section {
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+  .priority-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.25);
+  }
+  .priority-number {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 72px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -2px;
+  }
+  .priority-number.p1 { color: #FFD700; text-shadow: 0 0 20px rgba(255,215,0,0.3); }
+  .priority-number.p2 { color: #C0C0C0; }
+  .priority-number.p3 { color: #CD7F32; }
+  .priority-number.p4 { color: rgba(255,255,255,0.25); }
+
+  .priority-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+  }
+  .priority-text.p1 { color: #FFD700; }
+  .priority-text.p2 { color: rgba(255,255,255,0.4); }
+
+  /* Stats row */
+  .stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .stat {
+    text-align: center;
+  }
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+  }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.2);
+    margin-top: 2px;
+  }
+
+  /* Timer */
+  .timer-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: #2BA5A0;
+    line-height: 1;
+  }
+  .timer-value.warning { color: #EF4444; }
+  .timer-value.low { color: #EAB308; }
+
+  /* Needs */
+  .needs-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.5);
+    line-height: 1;
+  }
+
+  /* Interference alert state */
+  .interference-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(220, 38, 38, 0.15);
+    border: 2px solid rgba(220, 38, 38, 0.4);
+    border-radius: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    z-index: 5;
+  }
+  .int-icon {
+    font-size: 28px;
+  }
+  .int-text {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #EF4444;
+    letter-spacing: 0.08em;
+  }
+  .int-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: rgba(239,68,68,0.6);
+    letter-spacing: 0.05em;
+  }
+
+  /* Establishing state */
+  .establishing-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.05em;
+    text-align: center;
+  }
+  .establishing-dots {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  .est-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.15);
+  }
+  .est-dot.filled {
+    background: #2BA5A0;
+    border-color: #2BA5A0;
+  }
+  .est-dot.you {
+    border-color: #FFD700;
+    box-shadow: 0 0 6px rgba(255,215,0,0.3);
+  }
+
+  .note {
+    font-size: 12px;
+    color: rgba(255,255,255,0.15);
+    text-align: center;
+    max-width: 600px;
+    line-height: 1.6;
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div>
+  <h1>BSA Priority Watch</h1>
+  <div class="subtitle">Apple Watch Ultra — Athlete View</div>
+</div>
+
+<div class="states">
+
+  <!-- STATE 1: You have P1 (Priority) -->
+  <div>
+    <div class="state-label">You Have Priority</div>
+    <div class="watch-shell">
+      <div class="watch-screen">
+        <div class="jersey-stripe" style="background: #DC2626;"></div>
+        <div class="watch-content">
+          <div class="top-row">
+            <span class="bsa-logo">BSA</span>
+            <span class="heat-label">H3 · R1 · OPEN MEN</span>
+          </div>
+          <div class="priority-section">
+            <div class="priority-label">Priority</div>
+            <div class="priority-number p1">P1</div>
+            <div class="priority-text p1">YOUR WAVE</div>
+          </div>
+          <div class="stats-row">
+            <div class="stat">
+              <div class="timer-value">14:32</div>
+              <div class="stat-label">Time</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">3</div>
+              <div class="stat-label">Waves</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value" style="color: #2BA5A0;">12.40</div>
+              <div class="stat-label">Total</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATE 2: You're P3 with needs score -->
+  <div>
+    <div class="state-label">Chasing · Needs Score</div>
+    <div class="watch-shell">
+      <div class="watch-screen">
+        <div class="jersey-stripe" style="background: #2563EB;"></div>
+        <div class="watch-content">
+          <div class="top-row">
+            <span class="bsa-logo">BSA</span>
+            <span class="heat-label">H3 · R1 · OPEN MEN</span>
+          </div>
+          <div class="priority-section">
+            <div class="priority-label">Priority</div>
+            <div class="priority-number p3">P3</div>
+            <div class="needs-value">need 7.24</div>
+          </div>
+          <div class="stats-row">
+            <div class="stat">
+              <div class="timer-value low">04:15</div>
+              <div class="stat-label">Time</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">5</div>
+              <div class="stat-label">Waves</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value" style="color: rgba(255,255,255,0.5);">10.67</div>
+              <div class="stat-label">Total</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATE 3: Interference called -->
+  <div>
+    <div class="state-label">Interference Alert</div>
+    <div class="watch-shell">
+      <div class="watch-screen">
+        <div class="jersey-stripe" style="background: #EAB308;"></div>
+        <div class="watch-content" style="position: relative;">
+          <div class="interference-overlay">
+            <div class="int-icon">🚩</div>
+            <div class="int-text">INTERFERENCE</div>
+            <div class="int-sub">2nd best wave halved · P4</div>
+          </div>
+          <div class="top-row">
+            <span class="bsa-logo">BSA</span>
+            <span class="heat-label">H3 · R1</span>
+          </div>
+          <div class="priority-section">
+            <div class="priority-number p4">P4</div>
+          </div>
+          <div class="stats-row">
+            <div class="stat">
+              <div class="timer-value">11:08</div>
+              <div class="stat-label">Time</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">4</div>
+              <div class="stat-label">Waves</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value" style="color: #EF4444;">8.22</div>
+              <div class="stat-label">Total</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATE 4: Priority Establishing -->
+  <div>
+    <div class="state-label">Heat Start · Establishing</div>
+    <div class="watch-shell">
+      <div class="watch-screen">
+        <div class="jersey-stripe" style="background: #E2E8F0;"></div>
+        <div class="watch-content">
+          <div class="top-row">
+            <span class="bsa-logo">BSA</span>
+            <span class="heat-label">H3 · R1 · OPEN MEN</span>
+          </div>
+          <div class="priority-section">
+            <div class="priority-label">Priority</div>
+            <div class="establishing-text">Establishing...</div>
+            <div class="establishing-dots">
+              <div class="est-dot filled"></div>
+              <div class="est-dot filled"></div>
+              <div class="est-dot you"></div>
+              <div class="est-dot"></div>
+            </div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 8px; color: rgba(255,255,255,0.2); margin-top: 8px; letter-spacing: 0.05em;">2 of 3 riders · you're next</div>
+          </div>
+          <div class="stats-row">
+            <div class="stat">
+              <div class="timer-value">19:45</div>
+              <div class="stat-label">Time</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">0</div>
+              <div class="stat-label">Waves</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value" style="color: rgba(255,255,255,0.15);">0.00</div>
+              <div class="stat-label">Total</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="note">
+  Apple Watch Ultra · 49mm · Always-On Display<br>
+  Haptics: strong buzz on P1 gain · tap on position change · double buzz on interference · long buzz at 30s warning<br>
+  Jersey color stripe matches competition vest · ISA-compliant (display only, no coaching data)
+</div>
+
+</body>
+</html>

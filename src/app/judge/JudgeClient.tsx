@@ -3,17 +3,35 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-const JERSEY_HEX: Record<string, string> = { red: '#DC2626', blue: '#2563EB', white: '#E2E8F0', yellow: '#EAB308', green: '#16A34A', black: '#1E293B', pink: '#EC4899', orange: '#EA580C' }
+/* ─── Constants ─── */
+const JERSEY: Record<string, { bg: string; text: string; ring: string }> = {
+  red:    { bg: 'bg-red-600',    text: 'text-white',    ring: 'ring-red-600' },
+  blue:   { bg: 'bg-blue-600',   text: 'text-white',    ring: 'ring-blue-600' },
+  white:  { bg: 'bg-slate-200',  text: 'text-slate-900', ring: 'ring-slate-300' },
+  yellow: { bg: 'bg-yellow-400', text: 'text-slate-900', ring: 'ring-yellow-400' },
+  green:  { bg: 'bg-green-600',  text: 'text-white',    ring: 'ring-green-600' },
+  black:  { bg: 'bg-slate-800',  text: 'text-white',    ring: 'ring-slate-700' },
+  pink:   { bg: 'bg-pink-500',   text: 'text-white',    ring: 'ring-pink-500' },
+  orange: { bg: 'bg-orange-500', text: 'text-white',    ring: 'ring-orange-500' },
+}
 
 const ISA_CRITERIA = [
-  { range: '0.0–1.9', label: 'Poor', color: '#DC2626', desc: 'Minimal commitment and/or no completed maneuvers' },
-  { range: '2.0–3.9', label: 'Fair', color: '#EA580C', desc: 'Some minor maneuvers with limited execution' },
-  { range: '4.0–5.9', label: 'Average', color: '#EAB308', desc: 'Competent surfing with moderate variety' },
-  { range: '6.0–7.9', label: 'Good', color: '#2BA5A0', desc: 'Strong maneuvers with power, speed and flow' },
-  { range: '8.0–9.9', label: 'Excellent', color: '#2563EB', desc: 'Exceptional and innovative surfing, high risk' },
-  { range: '10.0', label: 'Perfect', color: '#FFD700', desc: 'Flawless execution with maximum commitment' },
+  { range: '0–1.9',  label: 'Poor',      color: 'text-red-500',    desc: 'Minimal commitment, no completed maneuvers' },
+  { range: '2–3.9',  label: 'Fair',      color: 'text-orange-500', desc: 'Minor maneuvers with limited execution' },
+  { range: '4–5.9',  label: 'Average',   color: 'text-yellow-500', desc: 'Competent surfing, moderate variety' },
+  { range: '6–7.9',  label: 'Good',      color: 'text-teal-500',   desc: 'Strong maneuvers — power, speed, flow' },
+  { range: '8–9.9',  label: 'Excellent', color: 'text-blue-500',   desc: 'Exceptional and innovative, high risk' },
+  { range: '10',     label: 'Perfect',   color: 'text-yellow-300', desc: 'Flawless, maximum commitment' },
 ]
 
+const SCORE_PAD = [
+  [0.5, 1.0, 1.5, 2.0, 2.5],
+  [3.0, 3.5, 4.0, 4.5, 5.0],
+  [5.5, 6.0, 6.5, 7.0, 7.5],
+  [8.0, 8.5, 9.0, 9.5, 10.0],
+]
+
+/* ─── Types ─── */
 interface Judge { id: string; name: string; role: string }
 interface AthleteScore {
   heat_athlete_id: string
@@ -30,8 +48,29 @@ interface HeatInfo {
   status: string
   priority_order: string[]
   is_head_judge: boolean
+  actual_start: string | null
+  duration_minutes: number
 }
 
+/* ─── Timer Hook ─── */
+function useHeatTimer(startTime: string | null, durationMin: number, status: string) {
+  const [remaining, setRemaining] = useState(durationMin * 60)
+  useEffect(() => {
+    if (!startTime || status !== 'live') { setRemaining(durationMin * 60); return }
+    const tick = () => {
+      const elapsed = Math.floor((Date.now() - new Date(startTime).getTime()) / 1000)
+      setRemaining(Math.max(0, durationMin * 60 - elapsed))
+    }
+    tick()
+    const i = setInterval(tick, 1000)
+    return () => clearInterval(i)
+  }, [startTime, durationMin, status])
+  const mins = Math.floor(remaining / 60)
+  const secs = remaining % 60
+  return { remaining, formatted: `${mins}:${secs.toString().padStart(2, '0')}`, warning: remaining <= 30, low: remaining <= 300 && remaining > 30 }
+}
+
+/* ─── Component ─── */
 export function JudgeClient() {
   const [judge, setJudge] = useState<Judge | null>(null)
   const [pin, setPin] = useState('')
@@ -40,491 +79,349 @@ export function JudgeClient() {
   const [athletes, setAthletes] = useState<AthleteScore[]>([])
   const [heats, setHeats] = useState<{ id: string; label: string }[]>([])
   const [selectedHeatId, setSelectedHeatId] = useState<string | null>(null)
-  const [selectedAthlete, setSelectedAthlete] = useState<string | null>(null)
-  const [scoreValue, setScoreValue] = useState('')
+  const [activeAthlete, setActiveAthlete] = useState<string | null>(null)
+  const [scoreValue, setScoreValue] = useState<number | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [lastScore, setLastScore] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const [showCriteria, setShowCriteria] = useState(false)
-  const [confirmScore, setConfirmScore] = useState<{ athleteId: string; wave: number; score: number } | null>(null)
+  const [confirmScore, setConfirmScore] = useState<{ athleteId: string; name: string; jersey: string | null; wave: number; score: number } | null>(null)
 
   const sb = createClient()
+  const timer = useHeatTimer(heat?.actual_start || null, heat?.duration_minutes || 20, heat?.status || 'pending')
 
-  // PIN login
+  /* ─── Auth ─── */
   const login = async () => {
     setPinError('')
-    const res = await fetch('/api/judge/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin }),
-    })
+    const res = await fetch('/api/judge/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin }) })
     const data = await res.json()
-    if (data.judge) {
-      setJudge(data.judge)
-      localStorage.setItem('bsa_judge', JSON.stringify(data.judge))
-    } else {
-      setPinError('Invalid PIN')
-    }
+    if (data.judge) { setJudge(data.judge); localStorage.setItem('bsa_judge', JSON.stringify(data.judge)) }
+    else setPinError('Invalid PIN')
   }
+  const logout = () => { setJudge(null); localStorage.removeItem('bsa_judge') }
 
-  useEffect(() => {
-    const saved = localStorage.getItem('bsa_judge')
-    if (saved) setJudge(JSON.parse(saved))
-  }, [])
+  useEffect(() => { const s = localStorage.getItem('bsa_judge'); if (s) setJudge(JSON.parse(s)) }, [])
 
-  // Load live heats (only those this judge is assigned to)
+  /* ─── Load Heats ─── */
   const loadHeats = useCallback(async () => {
     if (!judge) return
-
-    // Get heats this judge is assigned to
-    const { data: assignments } = await sb
-      .from('comp_heat_judges')
-      .select('heat_id, is_head_judge')
-      .eq('judge_id', judge.id)
-
-    if (!assignments || assignments.length === 0) {
-      setHeats([])
-      return
-    }
-
+    const { data: assignments } = await sb.from('comp_heat_judges').select('heat_id, is_head_judge').eq('judge_id', judge.id)
+    if (!assignments?.length) { setHeats([]); return }
     const heatIds = assignments.map(a => a.heat_id)
-    const headJudgeHeats = new Set(assignments.filter(a => a.is_head_judge).map(a => a.heat_id))
-
-    const { data } = await sb
-      .from('comp_heats')
-      .select(`
-        id, heat_number, status,
-        round:comp_rounds(name, event_division:comp_event_divisions(division:comp_divisions(name)))
-      `)
-      .in('id', heatIds)
-      .eq('status', 'live')
-
-    if (data && data.length > 0) {
-      const heatList = data.map((h: Record<string, unknown>) => {
-        const round = h.round as unknown as Record<string, unknown>
-        const ed = round?.event_division as unknown as Record<string, unknown>
-        const div = ed?.division as unknown as Record<string, string>
-        return {
-          id: h.id as string,
-          label: `${div?.name || ''} — ${round?.name || ''} — Heat ${h.heat_number}`,
-          is_head_judge: headJudgeHeats.has(h.id as string),
-        }
-      })
-      setHeats(heatList)
-      if (!selectedHeatId && heatList.length > 0) setSelectedHeatId(heatList[0].id)
-    } else {
-      setHeats([])
-    }
+    const { data } = await sb.from('comp_heats').select('id, heat_number, status, round:comp_rounds(name, event_division:comp_event_divisions(division:comp_divisions(name)))').in('id', heatIds).eq('status', 'live')
+    if (data?.length) {
+      const list = data.map((h: any) => ({ id: h.id, label: `${h.round?.event_division?.division?.name || ''} — ${h.round?.name || ''} — Heat ${h.heat_number}` }))
+      setHeats(list)
+      if (!selectedHeatId && list.length) setSelectedHeatId(list[0].id)
+    } else setHeats([])
   }, [judge, selectedHeatId])
 
-  useEffect(() => {
-    if (judge) { loadHeats(); const i = setInterval(loadHeats, 10000); return () => clearInterval(i) }
-  }, [judge, loadHeats])
+  useEffect(() => { if (judge) { loadHeats(); const i = setInterval(loadHeats, 10000); return () => clearInterval(i) } }, [judge, loadHeats])
 
-  // Load heat data (blind — only my scores)
+  /* ─── Load Heat Data ─── */
   const loadHeatData = useCallback(async () => {
     if (!selectedHeatId || !judge) return
-
-    // Get my scores only (blind judging)
     const res = await fetch(`/api/judge/score-v2?judge_id=${judge.id}&heat_id=${selectedHeatId}`)
     const data = await res.json()
     if (Array.isArray(data)) setAthletes(data)
 
-    // Get heat info
-    const { data: h } = await sb
-      .from('comp_heats')
-      .select(`
-        id, heat_number, status, priority_order,
-        round:comp_rounds(name, event_division:comp_event_divisions(division:comp_divisions(name)))
-      `)
-      .eq('id', selectedHeatId)
-      .single()
-
+    const { data: h } = await sb.from('comp_heats').select('id, heat_number, status, priority_order, actual_start, duration_minutes, round:comp_rounds(name, event_division:comp_event_divisions(division:comp_divisions(name)))').eq('id', selectedHeatId).single()
     if (h) {
-      const round = h.round as unknown as Record<string, unknown>
-      const ed = round?.event_division as unknown as Record<string, unknown>
-      const div = ed?.division as unknown as Record<string, string>
-
-      // Check if head judge
-      const { data: assignment } = await sb
-        .from('comp_heat_judges')
-        .select('is_head_judge')
-        .eq('heat_id', selectedHeatId)
-        .eq('judge_id', judge.id)
-        .single()
-
+      const { data: asgn } = await sb.from('comp_heat_judges').select('is_head_judge').eq('heat_id', selectedHeatId).eq('judge_id', judge.id).single()
       setHeat({
-        id: h.id as string,
-        heat_number: h.heat_number as number,
-        round_name: (round?.name as string) || '',
-        division_name: div?.name || '',
-        status: h.status as string,
+        id: h.id, heat_number: h.heat_number as number, status: h.status as string,
         priority_order: (h.priority_order as string[]) || [],
-        is_head_judge: assignment?.is_head_judge || false,
+        is_head_judge: asgn?.is_head_judge || false,
+        actual_start: h.actual_start as string | null,
+        duration_minutes: (h.duration_minutes as number) || 20,
+        round_name: (h.round as any)?.name || '', division_name: (h.round as any)?.event_division?.division?.name || '',
       })
     }
   }, [selectedHeatId, judge])
 
   useEffect(() => { loadHeatData() }, [selectedHeatId, loadHeatData])
 
-  // Realtime: refresh when new scores come in (only my own will show)
+  /* ─── Realtime ─── */
   useEffect(() => {
     if (!selectedHeatId) return
-    const channel = sb.channel(`judge-${selectedHeatId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'comp_judge_scores' }, () => { loadHeatData() })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'comp_heat_athletes' }, () => { loadHeatData() })
+    const ch = sb.channel(`judge-${selectedHeatId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comp_judge_scores' }, () => loadHeatData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comp_heat_athletes' }, () => loadHeatData())
       .subscribe()
-    return () => { sb.removeChannel(channel) }
+    return () => { sb.removeChannel(ch) }
   }, [selectedHeatId, loadHeatData])
 
-  // Submit score (with confirmation step)
-  const initiateScore = (athleteId: string, wave: number, score: number) => {
-    setConfirmScore({ athleteId, wave, score })
-  }
-
+  /* ─── Submit Score ─── */
   const submitScore = async () => {
     if (!confirmScore || !judge) return
     setSubmitting(true)
     const res = await fetch('/api/judge/score-v2', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        judge_id: judge.id,
-        heat_athlete_id: confirmScore.athleteId,
-        wave_number: confirmScore.wave,
-        score: confirmScore.score,
-      }),
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ judge_id: judge.id, heat_athlete_id: confirmScore.athleteId, wave_number: confirmScore.wave, score: confirmScore.score }),
     })
     const data = await res.json()
     setSubmitting(false)
     setConfirmScore(null)
-    setScoreValue('')
-    setSelectedAthlete(null)
-
-    if (data.success) {
-      setLastScore(`${confirmScore.score.toFixed(1)} submitted`)
-      setTimeout(() => setLastScore(null), 2000)
-    } else {
-      setLastScore(`Error: ${data.error}`)
-      setTimeout(() => setLastScore(null), 4000)
-    }
+    setScoreValue(null)
+    setActiveAthlete(null)
+    if (data.success) { showToast(`${confirmScore.score.toFixed(1)} locked`, true) }
+    else showToast(data.error || 'Error', false)
     loadHeatData()
   }
 
-  const logout = () => { setJudge(null); localStorage.removeItem('bsa_judge') }
+  const showToast = (msg: string, ok: boolean) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 2500) }
 
-  // Get priority position for an athlete
-  const getPriorityPosition = (athleteId: string): number => {
-    if (!heat?.priority_order) return 0
-    return heat.priority_order.indexOf(athleteId) + 1
-  }
+  const getPriority = (id: string) => heat?.priority_order ? heat.priority_order.indexOf(id) + 1 : 0
 
-  // ─── PIN Screen ───
-  if (!judge) {
-    return (
-      <div style={{ minHeight: '100vh', background: '#0A2540', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <div style={{ width: '100%', maxWidth: 340, textAlign: 'center' }}>
-          <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 700, color: '#fff', marginBottom: 4 }}>BSA</div>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: 40 }}>Judge Login</div>
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  /* PIN SCREEN                               */
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  if (!judge) return (
+    <div className="min-h-dvh bg-[#0A2540] flex items-center justify-center p-6">
+      <div className="w-full max-w-xs text-center">
+        <div className="text-3xl font-bold text-white tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>BSA</div>
+        <div className="text-[10px] tracking-[0.2em] text-white/20 uppercase mt-1 mb-10 font-mono">Competition Judge</div>
+
+        <div className="relative">
           <input
             type="tel" inputMode="numeric" value={pin}
             onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-            placeholder="Enter PIN"
-            style={{
-              width: '100%', padding: '18px', fontSize: 28, textAlign: 'center',
-              fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.3em',
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 12, color: '#fff', outline: 'none', boxSizing: 'border-box',
-            }}
             onKeyDown={e => { if (e.key === 'Enter' && pin.length >= 4) login() }}
+            placeholder="• • • •"
+            className="w-full text-center text-3xl tracking-[0.4em] font-mono font-bold bg-white/[0.04] border border-white/10 rounded-2xl py-5 px-4 text-white placeholder:text-white/15 outline-none focus:border-teal-500/50 transition-colors"
           />
-          {pinError && <div style={{ color: '#DC2626', fontSize: 13, marginTop: 12 }}>{pinError}</div>}
-          <button onClick={login} disabled={pin.length < 4} style={{
-            width: '100%', padding: 16, marginTop: 20, borderRadius: 12,
-            background: pin.length >= 4 ? '#2BA5A0' : 'rgba(255,255,255,0.06)',
-            color: '#fff', border: 'none', fontSize: 16, fontWeight: 600,
-            fontFamily: "'Space Grotesk', sans-serif", cursor: pin.length >= 4 ? 'pointer' : 'default',
-            opacity: pin.length >= 4 ? 1 : 0.4,
-          }}>Enter</button>
         </div>
-      </div>
-    )
-  }
+        {pinError && <div className="text-red-500 text-sm mt-3 font-medium">{pinError}</div>}
 
-  // ─── No Live Heats ───
-  if (heats.length === 0) {
-    return (
-      <div style={{ minHeight: '100vh', background: '#0A2540', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, color: '#fff' }}>
-        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, marginBottom: 8 }}>No Live Heats</div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 32 }}>Waiting for a heat to go live...</div>
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>Logged in as {judge.name} ({judge.role})</div>
-        <button onClick={logout} style={{ marginTop: 16, fontSize: 12, color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Sign out</button>
+        <button onClick={login} disabled={pin.length < 4}
+          className="w-full mt-5 py-4 rounded-2xl text-base font-semibold transition-all duration-200 disabled:opacity-30 disabled:cursor-default bg-teal-600 hover:bg-teal-500 text-white cursor-pointer"
+          style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+          Enter
+        </button>
       </div>
-    )
-  }
+    </div>
+  )
 
-  // ─── Scoring Interface (BLIND) ───
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  /* NO LIVE HEATS                            */
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  if (!heats.length) return (
+    <div className="min-h-dvh bg-[#0A2540] flex flex-col items-center justify-center p-6 text-center">
+      <div className="w-12 h-12 rounded-full bg-white/[0.04] flex items-center justify-center mb-4">
+        <span className="text-xl">🌊</span>
+      </div>
+      <div className="text-lg font-semibold text-white/80" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>No Live Heats</div>
+      <div className="text-sm text-white/30 mt-1">Waiting for a heat to go live…</div>
+      <div className="text-xs text-white/15 mt-8 font-mono">{judge.name} · {judge.role === 'head_judge' ? 'Head Judge' : 'Judge'}</div>
+      <button onClick={logout} className="text-xs text-white/20 mt-3 underline cursor-pointer bg-transparent border-none">Sign out</button>
+    </div>
+  )
+
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  /* SCORING INTERFACE                        */
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   return (
-    <div style={{ minHeight: '100vh', background: '#0A2540', color: '#fff', fontFamily: "'DM Sans', sans-serif" }}>
-      {/* Header */}
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 700 }}>BSA</span>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)', marginLeft: 8, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            {judge.name} · {judge.role === 'head_judge' ? 'Head Judge' : 'Judge'}
-          </span>
+    <div className="min-h-dvh bg-[#0A2540] text-white select-none">
+
+      {/* ── Top Bar ── */}
+      <div className="sticky top-0 z-30 bg-[#0A2540]/95 backdrop-blur-sm border-b border-white/[0.06]">
+        <div className="flex items-center justify-between px-4 py-3">
+          {/* Left: heat info */}
+          <div className="flex items-center gap-3">
+            <span className="text-base font-bold tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+              Heat {heat?.heat_number}
+            </span>
+            <span className="text-[10px] text-white/25 font-mono tracking-wide">
+              {heat?.division_name} · {heat?.round_name}
+            </span>
+          </div>
+
+          {/* Center: timer */}
+          <div className={`font-mono text-2xl font-bold tracking-wider ${timer.warning ? 'text-red-500 animate-pulse' : timer.low ? 'text-yellow-400' : 'text-white/90'}`}>
+            {timer.formatted}
+          </div>
+
+          {/* Right: judge info + actions */}
+          <div className="flex items-center gap-4">
+            <button onClick={() => setShowCriteria(true)} className="text-[10px] font-mono tracking-wide text-teal-500 hover:text-teal-400 cursor-pointer bg-transparent border-none uppercase">
+              ISA Scale
+            </button>
+            <span className="text-[10px] text-white/20 font-mono">{judge.name}</span>
+            <button onClick={logout} className="text-[10px] text-white/15 hover:text-white/30 cursor-pointer bg-transparent border-none">Exit</button>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button onClick={() => setShowCriteria(true)} style={{ fontSize: 10, color: '#2BA5A0', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace", textTransform: 'uppercase', letterSpacing: '0.08em' }}>ISA Scale</button>
-          <button onClick={logout} style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer' }}>Exit</button>
+
+        {/* Heat selector (if multiple) */}
+        {heats.length > 1 && (
+          <div className="flex gap-2 px-4 pb-3 overflow-x-auto">
+            {heats.map(h => (
+              <button key={h.id} onClick={() => setSelectedHeatId(h.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all border ${
+                  selectedHeatId === h.id
+                    ? 'bg-teal-500/15 border-teal-500/30 text-teal-400'
+                    : 'bg-white/[0.02] border-white/[0.06] text-white/40 hover:text-white/60'
+                }`} style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{h.label}</button>
+            ))}
+          </div>
+        )}
+
+        {/* Blind notice */}
+        <div className="px-4 pb-2">
+          <div className="text-[9px] font-mono text-white/10 tracking-widest uppercase">Blind judging · Your scores only</div>
         </div>
       </div>
 
-      {/* Heat selector */}
-      {heats.length > 1 && (
-        <div style={{ padding: '8px 16px', display: 'flex', gap: 8, overflowX: 'auto' }}>
-          {heats.map(h => (
-            <button key={h.id} onClick={() => setSelectedHeatId(h.id)} style={{
-              padding: '8px 14px', borderRadius: 8, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
-              fontFamily: "'Space Grotesk', sans-serif",
-              background: selectedHeatId === h.id ? 'rgba(43,165,160,0.2)' : 'rgba(255,255,255,0.04)',
-              border: selectedHeatId === h.id ? '1px solid rgba(43,165,160,0.4)' : '1px solid rgba(255,255,255,0.06)',
-              color: selectedHeatId === h.id ? '#2BA5A0' : 'rgba(255,255,255,0.5)',
-              cursor: 'pointer',
-            }}>{h.label}</button>
-          ))}
-        </div>
+      {/* ── Toast ── */}
+      {toast && (
+        <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-xl text-sm font-semibold font-mono shadow-lg transition-all ${
+          toast.ok ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
+        }`}>{toast.msg}</div>
       )}
 
-      {/* Heat info + blind notice */}
-      {heat && (
-        <div style={{ padding: '12px 16px 4px' }}>
-          <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 700 }}>
-            Heat {heat.heat_number}
-          </div>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em' }}>
-            {heat.division_name} — {heat.round_name}
-          </div>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.15)', marginTop: 4, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-            Blind judging · Your scores only
-          </div>
-        </div>
-      )}
+      {/* ── Athlete Grid (4 columns on iPad, stacked on phone) ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 min-h-0">
+        {athletes.map(athlete => {
+          const j = JERSEY[athlete.jersey_color || ''] || JERSEY.white
+          const p = getPriority(athlete.heat_athlete_id)
+          const isActive = activeAthlete === athlete.heat_athlete_id
+          const nextWave = athlete.my_scores.length ? Math.max(...athlete.my_scores.map(s => s.wave_number)) + 1 : 1
 
-      {/* Score confirmation toast */}
-      {lastScore && (
-        <div style={{
-          margin: '8px 16px', padding: '10px 16px', borderRadius: 8,
-          background: lastScore.startsWith('Error') ? 'rgba(220,38,38,0.15)' : 'rgba(43,165,160,0.15)',
-          border: `1px solid ${lastScore.startsWith('Error') ? 'rgba(220,38,38,0.3)' : 'rgba(43,165,160,0.3)'}`,
-          fontFamily: "'JetBrains Mono', monospace", fontSize: 13,
-          color: lastScore.startsWith('Error') ? '#EF4444' : '#2BA5A0', textAlign: 'center',
-        }}>{lastScore}</div>
-      )}
+          return (
+            <div key={athlete.heat_athlete_id}
+              className={`border-b border-r border-white/[0.04] flex flex-col transition-colors ${isActive ? 'bg-white/[0.03]' : ''}`}>
 
-      {/* Athletes — BLIND: no totals, no positions, no other judge scores */}
-      {athletes.map(athlete => {
-        const isSelected = selectedAthlete === athlete.heat_athlete_id
-        const nextWave = athlete.my_scores.length > 0
-          ? Math.max(...athlete.my_scores.map(s => s.wave_number)) + 1
-          : 1
-        const priorityPos = getPriorityPosition(athlete.heat_athlete_id)
+              {/* Jersey color bar */}
+              <div className={`h-1.5 ${j.bg}`} />
 
-        return (
-          <div key={athlete.heat_athlete_id} style={{ margin: '8px 16px', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-            <button
-              onClick={() => { setSelectedAthlete(isSelected ? null : athlete.heat_athlete_id); setScoreValue('') }}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
-                background: isSelected ? 'rgba(43,165,160,0.08)' : 'transparent',
-                border: 'none', cursor: 'pointer', textAlign: 'left',
-                borderBottom: isSelected ? '1px solid rgba(255,255,255,0.06)' : 'none',
-              }}
-            >
-              {/* Priority indicator */}
-              {priorityPos > 0 && (
-                <span style={{
-                  fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
-                  padding: '2px 6px', borderRadius: 4,
-                  background: priorityPos === 1 ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.04)',
-                  color: priorityPos === 1 ? '#FFD700' : 'rgba(255,255,255,0.2)',
-                  fontWeight: 700, letterSpacing: '0.05em',
-                }}>P{priorityPos}</span>
-              )}
+              {/* Athlete header — tap to select */}
+              <button
+                onClick={() => { setActiveAthlete(isActive ? null : athlete.heat_athlete_id); setScoreValue(null) }}
+                className="w-full text-left px-4 pt-4 pb-3 cursor-pointer bg-transparent border-none">
 
-              {/* Jersey */}
-              {athlete.jersey_color && (
-                <span style={{
-                  width: 16, height: 16, borderRadius: 4,
-                  background: JERSEY_HEX[athlete.jersey_color] || '#94A3B8',
-                  border: athlete.jersey_color === 'white' ? '1px solid rgba(255,255,255,0.3)' : 'none',
-                  flexShrink: 0,
-                }} />
-              )}
+                <div className="flex items-center gap-2 mb-1">
+                  {/* Priority badge */}
+                  {p > 0 && (
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                      p === 1 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-white/[0.06] text-white/25'
+                    }`}>P{p}</span>
+                  )}
+                  {/* Jersey pill */}
+                  <span className={`w-4 h-4 rounded ${j.bg} ${athlete.jersey_color === 'white' ? 'ring-1 ring-inset ring-white/30' : ''}`} />
+                </div>
 
-              {/* Name */}
-              <span style={{ flex: 1, fontSize: 15, fontWeight: 600, color: '#fff' }}>
-                {athlete.athlete_name}
-              </span>
+                <div className="text-base font-semibold text-white tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                  {athlete.athlete_name}
+                </div>
 
-              {/* My score count (not totals — blind) */}
-              <span style={{
-                fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
-                color: 'rgba(255,255,255,0.25)',
-              }}>
-                {athlete.my_scores.length} wave{athlete.my_scores.length !== 1 ? 's' : ''}
-              </span>
-            </button>
+                <div className="text-[10px] font-mono text-white/20 mt-1">
+                  {athlete.my_scores.length} wave{athlete.my_scores.length !== 1 ? 's' : ''} scored
+                </div>
+              </button>
 
-            {/* Expanded: my scores only + score input */}
-            {isSelected && (
-              <div style={{ padding: '12px 16px 16px' }}>
-                {/* My previous scores for this athlete */}
-                {athlete.my_scores.length > 0 && (
-                  <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
-                    {athlete.my_scores.map(s => (
-                      <div key={s.wave_number} style={{
-                        padding: '6px 12px', borderRadius: 6, textAlign: 'center',
-                        background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
-                      }}>
-                        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em' }}>W{s.wave_number}</div>
-                        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.6)' }}>
-                          {s.score.toFixed(1)}
-                        </div>
-                        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 7, color: 'rgba(255,255,255,0.15)', marginTop: 2 }}>LOCKED</div>
-                      </div>
+              {/* Wave scores (always visible) */}
+              <div className="px-4 pb-3 flex gap-1.5 flex-wrap">
+                {athlete.my_scores.map(s => (
+                  <div key={s.wave_number} className="bg-white/[0.04] rounded-lg px-2.5 py-1.5 text-center min-w-[42px]">
+                    <div className="text-[8px] font-mono text-white/20">W{s.wave_number}</div>
+                    <div className="text-sm font-mono font-bold text-white/50">{s.score.toFixed(1)}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Score pad (when active) */}
+              {isActive && (
+                <div className="px-3 pb-4 mt-auto">
+                  <div className="text-[9px] font-mono text-white/20 tracking-wider uppercase mb-2 px-1">
+                    Wave {nextWave}
+                  </div>
+
+                  {/* Score numpad */}
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {SCORE_PAD.flat().map(s => (
+                      <button key={s} onClick={() => setScoreValue(s)}
+                        className={`py-3 rounded-xl text-base font-mono font-bold transition-all cursor-pointer border-none ${
+                          scoreValue === s
+                            ? 'bg-teal-500/25 text-teal-400 ring-1 ring-teal-500/40'
+                            : 'bg-white/[0.04] text-white/50 hover:bg-white/[0.08] active:bg-white/[0.12]'
+                        }`}>
+                        {s.toFixed(1)}
+                      </button>
                     ))}
                   </div>
-                )}
 
-                {/* Score input */}
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', marginBottom: 8, letterSpacing: '0.06em' }}>
-                  WAVE {nextWave}
-                </div>
-
-                {/* Quick score buttons */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6, marginBottom: 10 }}>
-                  {[0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 9.5, 10.0].map(s => (
-                    <button key={s} onClick={() => setScoreValue(s.toFixed(1))} style={{
-                      padding: '14px 0', borderRadius: 8, border: 'none',
-                      background: scoreValue === s.toFixed(1) ? 'rgba(43,165,160,0.2)' : 'rgba(255,255,255,0.04)',
-                      color: scoreValue === s.toFixed(1) ? '#2BA5A0' : 'rgba(255,255,255,0.5)',
-                      fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 600,
-                      cursor: 'pointer',
-                    }}>{s.toFixed(1)}</button>
-                  ))}
-                </div>
-
-                {/* Custom input + submit */}
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <input
-                    type="number" inputMode="decimal" step="0.1" min="0" max="10"
-                    value={scoreValue} onChange={e => setScoreValue(e.target.value)}
-                    placeholder="0.0"
-                    style={{
-                      flex: 1, padding: '14px', fontSize: 24, textAlign: 'center',
-                      fontFamily: "'JetBrains Mono', monospace", fontWeight: 700,
-                      background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-                      borderRadius: 10, color: '#fff', outline: 'none', boxSizing: 'border-box',
-                    }}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && scoreValue) {
-                        const val = parseFloat(scoreValue)
-                        if (val >= 0 && val <= 10) initiateScore(athlete.heat_athlete_id, nextWave, val)
-                      }
-                    }}
-                  />
+                  {/* Submit */}
                   <button
                     onClick={() => {
-                      const val = parseFloat(scoreValue)
-                      if (val >= 0 && val <= 10) initiateScore(athlete.heat_athlete_id, nextWave, val)
+                      if (scoreValue !== null) setConfirmScore({ athleteId: athlete.heat_athlete_id, name: athlete.athlete_name, jersey: athlete.jersey_color, wave: nextWave, score: scoreValue })
                     }}
-                    disabled={!scoreValue || parseFloat(scoreValue) < 0 || parseFloat(scoreValue) > 10}
-                    style={{
-                      padding: '14px 28px', borderRadius: 10, border: 'none',
-                      background: scoreValue && parseFloat(scoreValue) >= 0 && parseFloat(scoreValue) <= 10 ? '#2BA5A0' : 'rgba(255,255,255,0.06)',
-                      color: '#fff', fontSize: 16, fontWeight: 700,
-                      fontFamily: "'Space Grotesk', sans-serif", cursor: 'pointer',
-                    }}
-                  >Submit</button>
+                    disabled={scoreValue === null}
+                    className="w-full mt-3 py-4 rounded-xl text-lg font-bold transition-all cursor-pointer border-none disabled:opacity-20 disabled:cursor-default bg-teal-600 hover:bg-teal-500 active:bg-teal-400 text-white"
+                    style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                    {scoreValue !== null ? `Submit ${scoreValue.toFixed(1)}` : 'Select Score'}
+                  </button>
                 </div>
-              </div>
-            )}
-          </div>
-        )
-      })}
+              )}
+            </div>
+          )
+        })}
+      </div>
 
-      {/* If head judge, show link to head judge panel */}
+      {/* Head judge link */}
       {heat?.is_head_judge && (
-        <div style={{ margin: '16px 16px 0', padding: '12px 16px', borderRadius: 8, background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.2)', textAlign: 'center' }}>
-          <a href={`/judge/head?heat_id=${heat.id}`} style={{ color: '#FFD700', fontSize: 13, fontWeight: 600, fontFamily: "'Space Grotesk', sans-serif", textDecoration: 'none' }}>
+        <div className="mx-4 mt-4 mb-6">
+          <a href={`/judge/head?heat_id=${heat.id}`}
+            className="block text-center py-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-sm font-semibold no-underline"
+            style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
             Open Head Judge Panel →
           </a>
         </div>
       )}
 
-      {/* Score Confirmation Modal */}
+      {/* ── Confirm Modal ── */}
       {confirmScore && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 100,
-        }} onClick={() => setConfirmScore(null)}>
-          <div onClick={e => e.stopPropagation()} style={{
-            background: '#0A2540', borderRadius: 16, padding: 32, maxWidth: 320, width: '100%',
-            border: '1px solid rgba(255,255,255,0.1)', textAlign: 'center',
-          }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
-              Confirm Score
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-6 z-50" onClick={() => setConfirmScore(null)}>
+          <div onClick={e => e.stopPropagation()} className="bg-[#0B2D4A] rounded-3xl p-8 max-w-xs w-full text-center border border-white/10">
+            {/* Jersey bar */}
+            <div className={`h-1 rounded-full mx-auto w-16 mb-6 ${JERSEY[confirmScore.jersey || '']?.bg || 'bg-slate-500'}`} />
+
+            <div className="text-[10px] font-mono text-white/25 tracking-widest uppercase mb-2">Confirm Score</div>
+            <div className="text-6xl font-mono font-bold text-teal-400 mb-1">{confirmScore.score.toFixed(1)}</div>
+            <div className="text-sm text-white/40 mb-1" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+              {confirmScore.name} · Wave {confirmScore.wave}
             </div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 48, fontWeight: 700, color: '#2BA5A0', marginBottom: 4 }}>
-              {confirmScore.score.toFixed(1)}
-            </div>
-            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>
-              Wave {confirmScore.wave}
-            </div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.2)', marginBottom: 24, letterSpacing: '0.06em' }}>
-              Score will be locked after submission
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setConfirmScore(null)} style={{
-                flex: 1, padding: 14, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)',
-                background: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: 14, fontWeight: 600,
-                fontFamily: "'Space Grotesk', sans-serif", cursor: 'pointer',
-              }}>Cancel</button>
-              <button onClick={submitScore} disabled={submitting} style={{
-                flex: 1, padding: 14, borderRadius: 10, border: 'none',
-                background: '#2BA5A0', color: '#fff', fontSize: 14, fontWeight: 600,
-                fontFamily: "'Space Grotesk', sans-serif", cursor: 'pointer',
-                opacity: submitting ? 0.5 : 1,
-              }}>{submitting ? '...' : 'Confirm'}</button>
+            <div className="text-[9px] font-mono text-white/15 mb-8 tracking-wide">Score locks after submission</div>
+
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmScore(null)}
+                className="flex-1 py-3.5 rounded-xl border border-white/10 bg-transparent text-white/40 text-sm font-semibold cursor-pointer hover:bg-white/[0.04]"
+                style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Cancel</button>
+              <button onClick={submitScore} disabled={submitting}
+                className="flex-1 py-3.5 rounded-xl border-none bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold cursor-pointer disabled:opacity-50"
+                style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{submitting ? '…' : 'Lock Score'}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ISA Criteria Reference Slide-up */}
+      {/* ── ISA Scale Slide-up ── */}
       {showCriteria && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex',
-          alignItems: 'flex-end', justifyContent: 'center', zIndex: 100,
-        }} onClick={() => setShowCriteria(false)}>
-          <div onClick={e => e.stopPropagation()} style={{
-            background: '#0A2540', borderRadius: '16px 16px 0 0', padding: '24px 20px 40px',
-            width: '100%', maxWidth: 480, border: '1px solid rgba(255,255,255,0.1)', borderBottom: 'none',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 700, color: '#fff' }}>ISA Judging Scale</span>
-              <button onClick={() => setShowCriteria(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 18, cursor: 'pointer' }}>✕</button>
+        <div className="fixed inset-0 bg-black/70 flex items-end justify-center z-50" onClick={() => setShowCriteria(false)}>
+          <div onClick={e => e.stopPropagation()} className="bg-[#0B2D4A] rounded-t-3xl p-6 pb-10 w-full max-w-lg border-t border-white/10">
+            <div className="flex justify-between items-center mb-5">
+              <span className="text-base font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>ISA Judging Scale</span>
+              <button onClick={() => setShowCriteria(false)} className="text-white/30 text-lg cursor-pointer bg-transparent border-none hover:text-white/50">✕</button>
             </div>
-            {ISA_CRITERIA.map(c => (
-              <div key={c.range} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 700, color: c.color, width: 60, textAlign: 'center' }}>{c.range}</span>
-                <div>
-                  <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, color: c.color }}>{c.label}</div>
-                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{c.desc}</div>
+            <div className="space-y-1">
+              {ISA_CRITERIA.map(c => (
+                <div key={c.range} className="flex items-center gap-4 py-2.5 border-b border-white/[0.04]">
+                  <span className={`font-mono text-sm font-bold w-14 text-center ${c.color}`}>{c.range}</span>
+                  <div>
+                    <div className={`text-sm font-semibold ${c.color}`} style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{c.label}</div>
+                    <div className="text-[11px] text-white/30">{c.desc}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.15)', textAlign: 'center', marginTop: 16, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              ))}
+            </div>
+            <div className="text-[9px] font-mono text-white/10 text-center mt-5 tracking-widest uppercase">
               Commitment · Difficulty · Variety · Speed · Power · Flow
             </div>
           </div>

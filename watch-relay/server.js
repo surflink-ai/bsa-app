@@ -53,6 +53,18 @@ let clientIdCounter = 0
 const httpServer = http.createServer((req, res) => {
   const pathname = url.parse(req.url).pathname
 
+  // CORS for cloud deployment
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return }
+
+  if (pathname === '/' || pathname === '') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' })
+    res.end('BSA Priority Watch Relay v1.0\nWebSocket: wss://relay.bsa.surf/?heat_id=xxx&athlete_id=xxx\nHealth: /health\nHeats: /heats')
+    return
+  }
+
   if (pathname === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify({

@@ -1,20 +1,19 @@
 import SwiftUI
 
 // BSA Priority Watch — Apple Watch Ultra
-// Connects DIRECTLY to relay server over WiFi. No iPhone needed.
-// Watch pre-joins beach WiFi before entering water.
+// Connects DIRECTLY to Supabase Realtime over internet (Starlink + UniFi AP).
+// No relay server. No iPhone. Just WiFi.
 
 @main
 struct BSAPriorityWatchApp: App {
     @State private var relay = RelayConnection()
-    @State private var relayURL = UserDefaults.standard.string(forKey: "relayURL") ?? "ws://192.168.1.1:8080"
     @State private var heatId = ""
     @State private var athleteId = ""
     @State private var isConnected = false
     
     var body: some Scene {
         WindowGroup {
-            if isConnected && relay.isConnected {
+            if isConnected {
                 PriorityView(relay: relay)
                     .toolbar {
                         ToolbarItem(placement: .topBarLeading) {
@@ -30,14 +29,11 @@ struct BSAPriorityWatchApp: App {
                     }
             } else {
                 ConnectView(
-                    relayURL: $relayURL,
                     heatId: $heatId,
                     athleteId: $athleteId,
                     connectionState: relay.connectionState,
                     onConnect: {
-                        // Save relay URL for next time
-                        UserDefaults.standard.set(relayURL, forKey: "relayURL")
-                        relay.connect(relayURL: relayURL, heatId: heatId, athleteId: athleteId)
+                        relay.connect(heatId: heatId, athleteId: athleteId)
                         isConnected = true
                     }
                 )

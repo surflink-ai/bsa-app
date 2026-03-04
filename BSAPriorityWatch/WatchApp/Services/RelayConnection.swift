@@ -1,17 +1,17 @@
 import Foundation
 import WatchKit
 
-// MARK: - Direct WebSocket Connection to BSA Relay Server
-// 
-// Apple Watch Ultra connects DIRECTLY to the relay server over WiFi.
-// No iPhone needed. Watch pre-joins beach WiFi before the heat.
+// MARK: - Direct Supabase Realtime Connection
+//
+// Apple Watch Ultra connects DIRECTLY to Supabase Realtime over the internet.
+// No relay server needed. No iPhone needed.
 //
 // Architecture:
-//   Supabase Realtime → Relay Server (Mac mini on beach WiFi) ← WiFi → Watch Ultra
+//   Supabase Realtime (wss://veggfcumdveuoumrblcn.supabase.co/realtime) ← internet → Watch Ultra
 //
-// watchOS supports URLSessionWebSocketTask natively.
-// Apple Watch Ultra: independent WiFi + 100m water resistance.
-// Fallback: LTE cellular on Apple Watch Ultra (cellular model).
+// Beach setup: Starlink + UniFi outdoor AP → Watch connects over WiFi to internet
+// The watch subscribes to comp_heats + comp_heat_athletes changes via Supabase Realtime.
+// Also polls /api/judge/priority for full state on connect.
 
 @Observable
 class RelayConnection {
@@ -21,7 +21,6 @@ class RelayConnection {
     var timer = TimerState.empty
     var heatStatus: HeatStatus?
     var interferenceAlert: InterferenceAlert?
-    var lastHapticPattern: String?
     var reconnectCount = 0
     
     enum ConnectionState: String {
@@ -31,242 +30,305 @@ class RelayConnection {
         case reconnecting = "Reconnecting..."
     }
     
+    // Supabase config
+    private let supabaseURL = "https://veggfcumdveuoumrblcn.supabase.co"
+    private let supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ2dmY3VtZHZldW91bXJibGNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMjM5MTUsImV4cCI6MjA4NzY5OTkxNX0.jIpiFFheiqkbKUEaHuQPN01fSYEE3U1Fygj3nfoxyao"
+    private let bsaBaseURL = "https://bsa.surf"
+    
     private var webSocket: URLSessionWebSocketTask?
     private var session: URLSession?
-    private var relayURL: String = ""
     private var heatId: String = ""
     private var athleteId: String = ""
-    private var previousPosition: Int = 0
     private var shouldReconnect = true
-    private let maxReconnectAttempts = 50 // Keep trying for a long time (ocean session)
-    private let reconnectBaseDelay: TimeInterval = 2.0
+    private let maxReconnectAttempts = 50
+    private var timerTask: Task<Void, Never>?
+    private var pollTask: Task<Void, Never>?
+    private var heatStartTime: Date?
+    private var heatDurationMinutes: Int = 20
     
-    // MARK: - Connect (Direct from Watch — no iPhone needed)
+    // MARK: - Connect
     
-    func connect(relayURL: String, heatId: String, athleteId: String) {
-        self.relayURL = relayURL
+    func connect(heatId: String, athleteId: String) {
         self.heatId = heatId
         self.athleteId = athleteId
         self.shouldReconnect = true
         self.reconnectCount = 0
+        self.connectionState = .connecting
         
-        performConnect()
-    }
-    
-    private func performConnect() {
-        let urlString = "\(relayURL)/?heat_id=\(heatId)&athlete_id=\(athleteId)"
-        guard let url = URL(string: urlString) else {
-            print("[WS] Invalid URL: \(urlString)")
-            return
-        }
+        // 1. Fetch initial state via REST
+        Task { await fetchFullState() }
         
-        // Configure session for watch — low power, keep-alive
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 30
-        config.timeoutIntervalForResource = 300
-        config.waitsForConnectivity = true // Wait for WiFi to come back
+        // 2. Subscribe to Realtime changes
+        connectRealtime()
         
-        session = URLSession(configuration: config)
-        webSocket = session?.webSocketTask(with: url)
-        webSocket?.resume()
+        // 3. Start polling as backup (every 3s) — Realtime can be flaky on watch WiFi
+        startPolling()
         
-        connectionState = .connecting
-        print("[WS] Connecting to \(urlString) (attempt \(reconnectCount + 1))")
-        
-        receiveMessage()
-        
-        // Send periodic pings to keep connection alive
-        schedulePing()
+        // 4. Start local timer
+        startTimer()
     }
     
     func disconnect() {
         shouldReconnect = false
         webSocket?.cancel(with: .goingAway, reason: nil)
         webSocket = nil
+        timerTask?.cancel()
+        pollTask?.cancel()
         isConnected = false
         connectionState = .disconnected
     }
     
-    // Keep-alive ping every 15 seconds (important for WiFi in ocean environment)
-    private func schedulePing() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
-            guard let self = self, self.isConnected else { return }
-            self.webSocket?.sendPing { error in
-                if let error = error {
-                    print("[WS] Ping failed: \(error.localizedDescription)")
-                }
+    // MARK: - REST: Fetch Full State
+    
+    private func fetchFullState() async {
+        // Fetch heat data
+        guard let heatURL = URL(string: "\(supabaseURL)/rest/v1/comp_heats?id=eq.\(heatId)&select=id,status,heat_number,duration_minutes,actual_start,is_paused,priority_order,priority_established,priority_riders,certified") else { return }
+        
+        var heatReq = URLRequest(url: heatURL)
+        heatReq.setValue(supabaseKey, forHTTPHeaderField: "apikey")
+        heatReq.setValue("Bearer \(supabaseKey)", forHTTPHeaderField: "Authorization")
+        
+        // Fetch athletes
+        guard let athURL = URL(string: "\(supabaseURL)/rest/v1/comp_heat_athletes?heat_id=eq.\(heatId)&select=id,athlete_name,jersey_color,wave_count,total_score,needs_score,has_priority,priority_status,priority_position,penalty,is_disqualified,result_position&order=seed_position") else { return }
+        
+        var athReq = URLRequest(url: athURL)
+        athReq.setValue(supabaseKey, forHTTPHeaderField: "apikey")
+        athReq.setValue("Bearer \(supabaseKey)", forHTTPHeaderField: "Authorization")
+        
+        do {
+            let session = URLSession.shared
+            let (heatData, _) = try await session.data(for: heatReq)
+            let (athData, _) = try await session.data(for: athReq)
+            
+            guard let heats = try? JSONSerialization.jsonObject(with: heatData) as? [[String: Any]],
+                  let heat = heats.first,
+                  let athletes = try? JSONSerialization.jsonObject(with: athData) as? [[String: Any]] else { return }
+            
+            await MainActor.run {
+                updateState(heat: heat, athletes: athletes)
+                isConnected = true
+                connectionState = .connected
             }
-            self.schedulePing()
+        } catch {
+            print("[REST] Fetch error: \(error.localizedDescription)")
         }
     }
     
-    // MARK: - Receive
+    // MARK: - Update State from JSON
     
-    private func receiveMessage() {
+    @MainActor
+    private func updateState(heat: [String: Any], athletes: [[String: Any]]) {
+        let oldPosition = priority.myPosition
+        
+        // Heat status
+        let status = heat["status"] as? String ?? "pending"
+        let established = heat["priority_established"] as? Bool ?? false
+        let riders = heat["priority_riders"] as? [String] ?? []
+        let priorityOrder = heat["priority_order"] as? [String] ?? []
+        let heatNumber = heat["heat_number"] as? Int ?? 0
+        let certified = heat["certified"] as? Bool ?? false
+        let durationMin = heat["duration_minutes"] as? Int ?? 20
+        let isPaused = heat["is_paused"] as? Bool ?? false
+        
+        heatDurationMinutes = durationMin
+        if let startStr = heat["actual_start"] as? String {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            heatStartTime = formatter.date(from: startStr)
+        }
+        
+        // Find my athlete
+        let me = athletes.first { ($0["id"] as? String) == athleteId }
+        let myPos = priorityOrder.firstIndex(of: athleteId).map { $0 + 1 } ?? 0
+        
+        // Build priority order
+        let order = priorityOrder.enumerated().map { (i, id) -> PriorityEntry in
+            let a = athletes.first { ($0["id"] as? String) == id }
+            return PriorityEntry(
+                position: i + 1,
+                athleteId: id,
+                athleteName: a?["athlete_name"] as? String ?? "Unknown",
+                jerseyColor: a?["jersey_color"] as? String,
+                priorityStatus: a?["priority_status"] as? String ?? "none",
+                isMe: id == athleteId
+            )
+        }
+        
+        priority = PriorityState(
+            phase: established ? "established" : "establishing",
+            myPosition: myPos,
+            myPriorityStatus: me?["priority_status"] as? String ?? "none",
+            myJersey: me?["jersey_color"] as? String,
+            myWaveCount: me?["wave_count"] as? Int ?? 0,
+            myTotalScore: me?["total_score"] as? Double ?? 0,
+            myNeedsScore: me?["needs_score"] as? Double,
+            myResultPosition: me?["result_position"] as? Int,
+            myPenalty: me?["penalty"] as? String,
+            myIsDisqualified: me?["is_disqualified"] as? Bool ?? false,
+            priorityOrder: order,
+            ridersCount: riders.count,
+            ridersNeeded: max(athletes.count - 1, 1),
+            athleteCount: athletes.count
+        )
+        
+        heatStatus = HeatStatus(
+            status: status,
+            heatNumber: heatNumber,
+            certified: certified,
+            priorityEstablished: established,
+            message: nil
+        )
+        
+        // Haptics on priority change
+        if myPos != oldPosition && oldPosition != 0 {
+            if myPos == 1 {
+                playHaptic(.success)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { self.playHaptic(.success) }
+            } else if myPos < oldPosition {
+                playHaptic(.success)
+            } else if myPos > oldPosition {
+                playHaptic(.start) // click
+            }
+        }
+        
+        // Check for interference on me
+        if let penalty = me?["penalty"] as? String, penalty != "none", penalty != priority.myPenalty {
+            interferenceAlert = InterferenceAlert(
+                athleteId: athleteId,
+                waveNumber: 0,
+                penaltyType: penalty,
+                isMe: true,
+                message: penalty == "double_interference" ? "DISQUALIFIED" : "2nd best wave halved"
+            )
+            playHaptic(.failure)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { self.playHaptic(.failure) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) { self.interferenceAlert = nil }
+        }
+    }
+    
+    // MARK: - Supabase Realtime WebSocket
+    
+    private func connectRealtime() {
+        // Supabase Realtime endpoint
+        let realtimeURL = supabaseURL.replacingOccurrences(of: "https://", with: "wss://") + "/realtime/v1/websocket?apikey=\(supabaseKey)&vsn=1.0.0"
+        
+        guard let url = URL(string: realtimeURL) else { return }
+        
+        let config = URLSessionConfiguration.default
+        config.waitsForConnectivity = true
+        session = URLSession(configuration: config)
+        webSocket = session?.webSocketTask(with: url)
+        webSocket?.resume()
+        
+        // Join the channel for our heat's tables
+        let joinHeat = """
+        {"topic":"realtime:public:comp_heats:id=eq.\(heatId)","event":"phx_join","payload":{"config":{"postgres_changes":[{"event":"*","schema":"public","table":"comp_heats","filter":"id=eq.\(heatId)"}]}},"ref":"1"}
+        """
+        
+        let joinAthletes = """
+        {"topic":"realtime:public:comp_heat_athletes:heat_id=eq.\(heatId)","event":"phx_join","payload":{"config":{"postgres_changes":[{"event":"*","schema":"public","table":"comp_heat_athletes","filter":"heat_id=eq.\(heatId)"}]}},"ref":"2"}
+        """
+        
+        webSocket?.send(.string(joinHeat)) { _ in }
+        webSocket?.send(.string(joinAthletes)) { _ in }
+        
+        receiveRealtime()
+        scheduleHeartbeat()
+    }
+    
+    private func receiveRealtime() {
         webSocket?.receive { [weak self] result in
             switch result {
-            case .success(let message):
-                DispatchQueue.main.async {
-                    self?.isConnected = true
-                    self?.connectionState = .connected
-                    self?.reconnectCount = 0 // Reset on successful receive
-                }
-                
-                switch message {
-                case .string(let text):
-                    self?.handleMessage(text)
-                case .data(let data):
-                    if let text = String(data: data, encoding: .utf8) {
-                        self?.handleMessage(text)
+            case .success(let msg):
+                if case .string(let text) = msg {
+                    // Any change → refetch full state
+                    if text.contains("postgres_changes") && text.contains("UPDATE") {
+                        Task { await self?.fetchFullState() }
                     }
-                @unknown default:
-                    break
                 }
-                // Continue receiving
-                self?.receiveMessage()
+                self?.receiveRealtime()
                 
             case .failure(let error):
-                print("[WS] Receive error: \(error.localizedDescription)")
-                DispatchQueue.main.async {
-                    self?.isConnected = false
-                    self?.connectionState = .reconnecting
-                }
-                self?.attemptReconnect()
+                print("[RT] Error: \(error.localizedDescription)")
+                // Polling will keep us alive — Realtime is bonus
             }
         }
     }
     
-    // MARK: - Reconnect with exponential backoff
-    // Critical: surfer may temporarily lose WiFi in the ocean
-    // Keep trying — they'll come back in range
+    // Supabase Realtime requires heartbeat every 30s
+    private func scheduleHeartbeat() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
+            guard let self = self, self.shouldReconnect else { return }
+            let hb = """
+            {"topic":"phoenix","event":"heartbeat","payload":{},"ref":"hb"}
+            """
+            self.webSocket?.send(.string(hb)) { _ in }
+            self.scheduleHeartbeat()
+        }
+    }
     
-    private func attemptReconnect() {
-        guard shouldReconnect, reconnectCount < maxReconnectAttempts else {
-            print("[WS] Max reconnect attempts reached or stopped")
-            DispatchQueue.main.async {
-                self.connectionState = .disconnected
+    // MARK: - Polling (backup — works even if Realtime drops)
+    
+    private func startPolling() {
+        pollTask = Task {
+            while shouldReconnect && !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
+                await fetchFullState()
             }
+        }
+    }
+    
+    // MARK: - Local Timer (no network needed once heat starts)
+    
+    private func startTimer() {
+        timerTask = Task { @MainActor in
+            while shouldReconnect && !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+                updateTimer()
+            }
+        }
+    }
+    
+    @MainActor
+    private func updateTimer() {
+        guard let start = heatStartTime, heatStatus?.status == "live" else {
+            timer = TimerState(remainingSeconds: heatDurationMinutes * 60, remainingFormatted: formatTime(heatDurationMinutes * 60), durationMinutes: heatDurationMinutes, isPaused: false, status: heatStatus?.status ?? "pending", warning: false, low: false)
             return
         }
         
-        reconnectCount += 1
-        // Exponential backoff: 2s, 4s, 8s, max 30s
-        let delay = min(reconnectBaseDelay * pow(2, Double(min(reconnectCount - 1, 4))), 30.0)
+        let elapsed = Int(Date().timeIntervalSince(start))
+        let total = heatDurationMinutes * 60
+        let remaining = max(0, total - elapsed)
         
-        print("[WS] Reconnecting in \(delay)s (attempt \(reconnectCount)/\(maxReconnectAttempts))")
+        let oldWarning = timer.warning
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-            guard let self = self, self.shouldReconnect else { return }
-            self.webSocket?.cancel(with: .goingAway, reason: nil)
-            self.performConnect()
+        timer = TimerState(
+            remainingSeconds: remaining,
+            remainingFormatted: formatTime(remaining),
+            durationMinutes: heatDurationMinutes,
+            isPaused: false,
+            status: "live",
+            warning: remaining <= 30,
+            low: remaining <= 300 && remaining > 30
+        )
+        
+        // 30-second warning haptic
+        if timer.warning && !oldWarning {
+            playHaptic(.notification)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { self.playHaptic(.notification) }
         }
     }
     
-    // MARK: - Message Handler
-    
-    private func handleMessage(_ text: String) {
-        guard let data = text.data(using: .utf8) else { return }
-        
-        // Parse the envelope to get the type
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let type = json["type"] as? String,
-              let payloadData = json["data"] else { return }
-        
-        let payloadJson = try? JSONSerialization.data(withJSONObject: payloadData)
-        
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            
-            switch type {
-            case "priority":
-                if let pj = payloadJson, let state = try? JSONDecoder().decode(PriorityState.self, from: pj) {
-                    let oldPosition = self.priority.myPosition
-                    self.priority = state
-                    
-                    // Haptic feedback on priority change
-                    if state.myPosition != oldPosition && oldPosition != 0 {
-                        if state.myPosition == 1 {
-                            // Gained P1! Strong buzz
-                            self.playHaptic(.notification, type: .success)
-                            self.playHaptic(.notification, type: .success) // double for emphasis
-                        } else if state.myPosition < oldPosition {
-                            // Moved up
-                            self.playHaptic(.notification, type: .success)
-                        } else {
-                            // Moved down
-                            self.playHaptic(.click)
-                        }
-                    }
-                }
-                
-            case "timer":
-                if let pj = payloadJson, let state = try? JSONDecoder().decode(TimerState.self, from: pj) {
-                    self.timer = state
-                    
-                    // 30 second warning haptic
-                    if state.warning && state.remainingSeconds == 30 {
-                        self.playHaptic(.notification, type: .warning)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            self.playHaptic(.notification, type: .warning)
-                        }
-                    }
-                }
-                
-            case "interference":
-                if let pj = payloadJson, let alert = try? JSONDecoder().decode(InterferenceAlert.self, from: pj) {
-                    self.interferenceAlert = alert
-                    
-                    if alert.isMe {
-                        // Double strong buzz for interference on me
-                        self.playHaptic(.notification, type: .failure)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            self.playHaptic(.notification, type: .failure)
-                        }
-                    }
-                    
-                    // Clear alert after 5 seconds
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                        self.interferenceAlert = nil
-                    }
-                }
-                
-            case "heat_status":
-                if let pj = payloadJson, let status = try? JSONDecoder().decode(HeatStatus.self, from: pj) {
-                    self.heatStatus = status
-                    
-                    if status.status == "complete" {
-                        // Long buzz for heat end
-                        self.playHaptic(.notification, type: .warning)
-                    }
-                }
-                
-            case "haptic":
-                if let pj = payloadJson, let trigger = try? JSONDecoder().decode(HapticTrigger.self, from: pj) {
-                    self.lastHapticPattern = trigger.pattern
-                    self.playHaptic(.notification, type: .warning)
-                }
-                
-            default:
-                print("[WS] Unknown message type: \(type)")
-            }
-        }
+    private func formatTime(_ totalSeconds: Int) -> String {
+        let mins = totalSeconds / 60
+        let secs = totalSeconds % 60
+        return "\(mins):\(String(format: "%02d", secs))"
     }
     
     // MARK: - Haptics
     
-    private func playHaptic(_ type: WKHapticType, type notificationType: WKInterfaceDevice.NotificationType? = nil) {
-        #if os(watchOS)
-        if let nt = notificationType {
-            WKInterfaceDevice.current().play(type)
-        } else {
-            WKInterfaceDevice.current().play(type)
-        }
-        #endif
-    }
-    
+    @MainActor
     private func playHaptic(_ type: WKHapticType) {
-        #if os(watchOS)
         WKInterfaceDevice.current().play(type)
-        #endif
     }
 }

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SurfVision AI — Pitch Deck</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #0A0F1C; color: #fff; }
+
+  .slide {
+    min-height: 100vh; width: 100%; scroll-snap-align: start;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    padding: 60px 80px; position: relative; overflow: hidden;
+  }
+
+  .slide::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 50%, rgba(43,165,160,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .mono { font-family: 'Geist Mono', monospace; }
+  .teal { color: #2BA5A0; }
+  .gold { color: #FFD700; }
+  .red { color: #DC2626; }
+  .muted { color: rgba(255,255,255,0.35); }
+  .dim { color: rgba(255,255,255,0.55); }
+
+  h1 { font-size: 64px; font-weight: 900; letter-spacing: -2px; line-height: 1.05; }
+  h2 { font-size: 42px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; }
+  h3 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+  p { font-size: 20px; line-height: 1.6; color: rgba(255,255,255,0.7); max-width: 800px; }
+  .big-number { font-family: 'Geist Mono', monospace; font-size: 72px; font-weight: 800; color: #2BA5A0; line-height: 1; }
+  .big-label { font-family: 'Geist Mono', monospace; font-size: 13px; letter-spacing: 0.15em; color: rgba(255,255,255,0.35); margin-top: 8px; }
+
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; width: 100%; max-width: 1100px; margin-top: 48px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; width: 100%; max-width: 1100px; margin-top: 48px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 24px; width: 100%; max-width: 1100px; margin-top: 48px; }
+
+  .card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 20px; padding: 32px; backdrop-filter: blur(20px);
+  }
+  .card h3 { margin-bottom: 12px; }
+  .card p { font-size: 15px; line-height: 1.5; }
+
+  .tag {
+    display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 11px;
+    font-family: 'Geist Mono', monospace; font-weight: 600; letter-spacing: 0.05em;
+  }
+  .tag-yes { background: rgba(43,165,160,0.15); color: #2BA5A0; }
+  .tag-no { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.2); }
+  .tag-planned { background: rgba(255,215,0,0.12); color: #FFD700; }
+
+  table { width: 100%; max-width: 1100px; border-collapse: collapse; margin-top: 32px; }
+  th { text-align: left; padding: 12px 16px; font-size: 11px; font-family: 'Geist Mono', monospace; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); border-bottom: 1px solid rgba(255,255,255,0.06); }
+  td { padding: 10px 16px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); color: rgba(255,255,255,0.7); }
+  td:first-child { color: #fff; font-weight: 600; }
+
+  .slide-num { position: absolute; bottom: 24px; right: 40px; font-family: 'Geist Mono', monospace; font-size: 12px; color: rgba(255,255,255,0.15); }
+  .logo-mark { font-family: 'Geist Mono', monospace; font-size: 12px; color: rgba(43,165,160,0.4); position: absolute; bottom: 24px; left: 40px; letter-spacing: 0.15em; }
+
+  .timeline { display: flex; gap: 0; width: 100%; max-width: 1100px; margin-top: 48px; }
+  .timeline-item { flex: 1; padding: 20px; border-left: 2px solid rgba(43,165,160,0.3); position: relative; }
+  .timeline-item::before { content: ''; position: absolute; left: -5px; top: 20px; width: 8px; height: 8px; border-radius: 50%; background: #2BA5A0; }
+  .timeline-item h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .timeline-item p { font-size: 12px; line-height: 1.4; color: rgba(255,255,255,0.45); }
+  .timeline-item .mono { font-size: 10px; color: rgba(255,255,255,0.25); margin-bottom: 4px; }
+
+  .stack-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide">
+  <div style="text-align: center;">
+    <div class="mono muted" style="font-size: 13px; letter-spacing: 0.2em; margin-bottom: 24px;">INTRODUCING</div>
+    <h1>SurfVision <span class="teal">AI</span></h1>
+    <p style="margin-top: 20px; text-align: center;">The world's first end-to-end AI-assisted<br>surf competition platform</p>
+    <div style="margin-top: 40px; display: flex; gap: 24px; justify-content: center;">
+      <span class="tag tag-yes">COMPETITION MANAGEMENT</span>
+      <span class="tag tag-yes">AI VISION</span>
+      <span class="tag tag-yes">WEARABLE TELEMETRY</span>
+      <span class="tag tag-yes">JUDGE CO-PILOT</span>
+    </div>
+  </div>
+  <div class="slide-num">01</div>
+  <div class="logo-mark">SURFVISION AI</div>
+</div>
+
+<!-- SLIDE 2: THE PROBLEM -->
+<div class="slide">
+  <div style="max-width: 900px;">
+    <div class="mono teal" style="font-size: 13px; letter-spacing: 0.2em; margin-bottom: 16px;">THE PROBLEM</div>
+    <h2>Surf judging hasn't evolved<br>in <span class="red">30 years</span></h2>
+    <div class="grid-3" style="margin-top: 48px;">
+      <div class="card">
+        <h3 style="font-size: 20px;">Subjective Scoring</h3>
+        <p>5 judges watch a 20-second wave with no objective data. Scores vary by 2+ points regularly. Fans lose trust.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size: 20px;">Legacy Technology</h3>
+        <p>ISA's current tech partner uses Windows-based local servers from 1996. Hardware shipped per event with trained operators.</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size: 20px;">Fragmented Stack</h3>
+        <p>Scoring, video replay, athlete tracking, broadcast — all separate systems from separate vendors. Nothing talks to anything.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">02</div>
+  <div class="logo-mark">SURFVISION AI</div>
+</div>
+
+<!-- SLIDE 3: THE MARKET -->
+<div class="slide">
+  <div style="text-align: center; width: 100%;">
+    <div class="mono teal" style="font-size: 13px; letter-spacing: 0.2em; margin-bottom: 16px;">MARKET OPPORTUNITY</div>
+    <h2>A massive market with zero AI penetration</h2>
+    <div class="grid-4" style="margin-top: 48px;">
+      <div style="text-align: center;">
+        <div class="big-number">35M</div>
+        <div class="big-label">ACTIVE SURFERS</div>
+      </div>
+      <div style="text-align: center;">
+        <div class="big-number">$4.6B</div>
+        <div class="big-label">SURF EQUIPMENT MARKET</div>
+      </div>
+      <div style="text-align: center;">
+        <div class="big-number">$8.9B</div>
+        <div class="big-label">AI IN SPORTS (2024)</div>
+      </div>
+      <div style="text-align: center;">
+        <div class="big-number">$61B</div>
+        <div class="big-label">AI IN SPORTS (2034)</div>
+      </div>
+    </div>
+    <div style="margin-top: 48px;">
+      <div class="grid-3">
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 48px; font-weight: 800; font-family: 'Geist Mono', monospace;">100+</div>
+          <div class="big-label">ISA MEMBER COUNTRIES</div>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 48px; font-weight: 800; font-family: 'Geist Mono', monospace;">5,000+</div>
+          <div class="big-label">EVENTS PER YEAR</div>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 48px; font-weight: 800; font-family: 'Geist Mono', monospace;">21%+</div>
+          <div class="big-label">AI SPORTS CAGR</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">03</div>
+  <div class="logo-mark">SURFVISION AI</div>
+</div>
+
+<!-- SLIDE 4: COMPETITIVE MAP -->
+<div class="slide">
+  <div style="width: 100%;">
+    <div class="mono teal" style="font-size: 13px; letter-spacing: 0.2em; margin-bottom: 16px;">COMPETITIVE LANDSCAPE</div>
+    <h2>Nobody has the full stack</h2>
+    <table>
+      <tr><th>CAPABILITY</th><th>SURFVISION</th><th>WSL/AWS</th><th>FLOWSTATE</th><th>LIVEHEATS</th><th>REFRESH</th></tr>
+      <tr><td>Competition Management</td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-no">PARTIAL</span></td></tr>
+      <tr><td>ISA Blind Judging</td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td></tr>
+      <tr><td>Apple Watch Athletes</td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td></tr>
+      <tr><td>Computer Vision</td><td><span class="tag tag-planned">BUILDING</span></td><td><span class="tag tag-no">ROADMAP</span></td><td><span class="tag tag-yes">POOLS</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td></tr>
+      <tr><td>AI Judge Assistance</td><td><span class="tag tag-planned">BUILDING</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td></tr>
+      <tr><td>Wearable Telemetry</td><td><span class="tag tag-planned">BUILDING</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td></tr>
+      <tr><td>Livestream Overlay</td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-yes">YES</span></td></tr>
+      <tr><td>Cloud-Native</td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-no">NO</span></td></tr>
+    </table>
+  </div>
+  <div class="slide-num">04</div>
+  <div class="logo-mark">SURFVISION AI</div>
+</div>
+
+<!-- SLIDE 5: THE SOLUTION -->
+<div class="slide">
+  <div style="max-width: 1000px;">
+    <div class="mono teal" style="font-size: 13px; letter-spacing: 0.2em; margin-bottom: 16px;">THE UNIFIED STACK</div>
+    <h2>Six layers. One platform.</h2>
+    <div class="grid-3" style="margin-top: 40px;">
+      <div class="card" style="border-color: rgba(43,165,160,0.2);">
+        <div class="mono teal" style="font-size: 10px; letter-spacing: 0.15em; margin-bottom: 8px;">LAYER 1 — BUILT</div>
+        <h3 style="font-size: 18px;">Competition Management</h3>
+        <p>Registration, seeding, draw, heats, ISA-compliant blind scoring, auto-advancement, season points</p>
+      </div>
+      <div class="card" style="border-color: rgba(43,165,160,0.2);">
+        <div class="mono teal" style="font-size: 10px; letter-spacing: 0.15em; margin-bottom: 8px;">LAYER 2 — BUILT</div>
+        <h3 style="font-size: 18px;">Watch Priority Display</h3>
+        <p>Real-time priority on surfer's wrist. WebSocket relay, zero-typing connect, haptic alerts, 50-retry reconnect</p>
+      </div>
+      <div class="card" style="border-color: rgba(43,165,160,0.2);">
+        <div class="mono teal" style="font-size: 10px; letter-spacing: 0.15em; margin-bottom: 8px;">LAYER 3 — BUILT</div>
+        <h3 style="font-size: 18px;">Livestream & Broadcast</h3>
+        <p>Cloudflare Stream, score overlay API, HLS player with real-time updates, VOD library</p>
+      </div>
+      <div class="card" style="border-color: rgba(255,215,0,0.2);">
+        <div class="mono gold" style="font-size: 10px; letter-spacing: 0.15em; margin-bottom: 8px;">LAYER 4 — BUILDING</div>
+        <h3 style="font-size: 18px;">AI Telemetry</h3>
+        <p>Watch accelerometer + gyroscope + GPS. Auto wave counting, ride duration, speed, G-force on turns</p>
+      </div>
+      <div class="card" style="border-color: rgba(255,215,0,0.2);">
+        <div class="mono gold" style="font-size: 10px; letter-spacing: 0.15em; margin-bottom: 8px;">LAYER 5 — BUILDING</div>
+        <h3 style="font-size: 18px;">Computer Vision</h3>
+        <p>Jersey detection, wave detection, maneuver classification, spray height, wave quality metrics from livestream</p>
+      </div>
+      <div class="card" style="border-color: rgba(255,215,0,0.2);">
+        <div class="mono gold" style="font-size: 10px; letter-spacing: 0.15em; margin-bottom: 8px;">LAYER 6 — BUILDING</div>
+        <h3 style="font-size: 18px;">Judge Co-Pilot</h3>
+        <p>Real-time objective data on iPad. AI score suggestions, consistency alerts, post-heat audit reports</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">05</div>
+  <div class="logo-mark">SURFVISION AI</div>
+</div>
+
+<!-- SLIDE 6: ISA COMPLIANCE -->
+<div class="slide">
+  <div style="max-width: 900px;">
+    <div class="mono teal" style="font-size: 13px; letter-spacing: 0.2em; margin-bottom: 16px;">ISA COMPLIANT BY DESIGN</div>
+    <h2>The "Judging Co-Pilot"<br>not the "Robo-Judge"</h2>
+    <p style="margin-top: 24px;">ISA rules are clear: AI cannot autonomously score a heat. Technology must be a "Judging Aid" or "Video Arbitration" tool. SurfVision AI is designed from the ground up to assist judges with objective data — never to replace their subjective judgment.</p>
+    <div class="grid-2" style="margin-top: 40px;">
+      <div class="card">
+        <h3 style="font-size: 18px;">What Judges See</h3>
+        <div style="margin-top: 16px; font-family: 'Geist Mono', monospace; font-size: 14px; line-height: 2; color: rgba(255,255,255,0.5);">
+          Speed: <span class="teal">32 km/h</span><br>
+          Rotation: <span class="teal">360 deg</span><br>
+          Spray Height: <span class="teal">4ft</span><br>
+          Wave Criticality: <span class="teal">8.5</span><br>
+          Suggested Range: <span class="gold">6.5 — 7.5</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="font-size: 18px;">What Stays Human</h3>
+        <div style="margin-top: 16px; font-size: 15px; line-height: 2; color: rgba(255,255,255,0.5);">
+          Final score decision<br>
+          Priority calls<br>
+          Interference calls<br>
+          Heat certification<br>
+          Protest adjudication
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">06</div>
+  <div class="logo-mark">SURFVISION AI</div>
+</div>
+
+<!-- SLIDE 7: DATA FLYWHEEL -->
+<div class="slide">
+  <div style="max-width: 900px; text-align: center;">
+    <div class="mono teal" style="font-size: 13px; letter-spacing: 0.2em; margin-bottom: 16px;">THE FLYWHEEL</div>
+    <h2>Every event makes the AI smarter</h2>
+    <p style="margin-top: 24px; text-align: center;">Each wave scored = labeled training data (video + telemetry + 3-5 human scores). More events = better AI = more federations = more data.</p>
+    <div class="grid-3" style="margin-top: 48px;">
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 36px; font-weight: 800; font-family: 'Geist Mono', monospace; color: #2BA5A0;">50</div>
+        <div class="big-label">EVENTS</div>
+        <p style="margin-top: 8px; font-size: 13px;">~2,000 scored waves. Comparable to early Flowstate dataset.</p>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 36px; font-weight: 800; font-family: 'Geist Mono', monospace; color: #2BA5A0;">200</div>
+        <div class="big-label">EVENTS</div>
+        <p style="margin-top: 8px; font-size: 13px;">Largest ocean surf competition dataset in the world.</p>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 36px; font-weight: 800; font-family: 'Geist Mono', monospace; color: #2BA5A0;">1000+</div>
+        <div class="big-label">EVENTS</div>
+        <p style="margin-top: 8px; font-size: 13px;">AI accuracy rivals human judges. Publishable research. Industry standard.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">07</div>
+  <div class="logo-mark">SURFVISION AI</div>
+</div>
+
+<!-- SLIDE 8: GO TO MARKET -->
+<div class="slide">
+  <div style="width: 100%; max-width: 1100px;">
+    <div class="mono teal" style="font-size: 13px; letter-spacing: 0.2em; margin-bottom: 16px;">ROADMAP</div>
+    <h2>18-month path to ISA partnership</h2>
+    <div class="timeline" style="margin-top: 48px;">
+      <div class="timeline-item">
+        <div class="mono">MAR 2026</div>
+        <h4>Prove It</h4>
+        <p>BSA events live on platform. Parallel test vs LiveHeats. Demo reel. Case study.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="mono">APR — JUN</div>
+        <h4>Regional Adoption</h4>
+        <p>Caribbean federations. Free pilots. Watch telemetry ships. Auto wave counting.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="mono">JUN — SEP</div>
+        <h4>ISA Approach</h4>
+        <p>Contact ISA Technical Committee. Free pilot at sanctioned event. "Judging Aid" positioning.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="mono">SEP — DEC</div>
+        <h4>AI Launch</h4>
+        <p>CV MVP: jersey detection, wave detection, maneuver classification. Judge Co-Pilot ships.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="mono">2027</div>
+        <h4>Scale</h4>
+        <p>ISA official partner. B2B2C athlete subscriptions. Wave pool installations. WSL conversations.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">08</div>
+  <div class="logo-mark">SURFVISION AI</div>
+</div>
+
+<!-- SLIDE 9: WHY US -->
+<div class="slide">
+  <div style="max-width: 900px; text-align: center;">
+    <div class="mono teal" style="font-size: 13px; letter-spacing: 0.2em; margin-bottom: 16px;">WHY SURFVISION</div>
+    <h2>We're not starting from zero</h2>
+    <div class="grid-2" style="margin-top: 48px; text-align: left;">
+      <div class="card">
+        <div class="mono teal" style="font-size: 10px; letter-spacing: 0.1em; margin-bottom: 12px;">ALREADY BUILT</div>
+        <div style="font-size: 15px; line-height: 2; color: rgba(255,255,255,0.6);">
+          Full ISA-compliant competition system<br>
+          Multi-judge blind scoring (3-5 panels)<br>
+          Apple Watch priority display<br>
+          WebSocket real-time relay (tested)<br>
+          Livestream with score overlay<br>
+          109 athletes, 15 events imported<br>
+          Admin dashboard + public results<br>
+          Head judge panel with outlier detection
+        </div>
+      </div>
+      <div class="card">
+        <div class="mono gold" style="font-size: 10px; letter-spacing: 0.1em; margin-bottom: 12px;">READY TO BUILD</div>
+        <div style="font-size: 15px; line-height: 2; color: rgba(255,255,255,0.6);">
+          Watch telemetry capture (accelerometer/GPS)<br>
+          Auto wave counting from motion data<br>
+          CV from livestream (jersey/wave detection)<br>
+          Maneuver classification (snap/air/barrel)<br>
+          Judge Co-Pilot data overlay<br>
+          AI score range suggestions<br>
+          Post-heat audit reports<br>
+          B2B2C athlete analytics platform
+        </div>
+      </div>
+    </div>
+    <p style="margin-top: 32px; text-align: center; font-size: 16px;">LiveHeats took 8 years and $1.8M to build their scorecard.<br>We built the full stack — with watches and livestream — in weeks.</p>
+  </div>
+  <div class="slide-num">09</div>
+  <div class="logo-mark">SURFVISION AI</div>
+</div>
+
+<!-- SLIDE 10: THE ASK / CLOSE -->
+<div class="slide">
+  <div style="text-align: center;">
+    <h1 style="font-size: 56px;">The future of surf<br>competition is <span class="teal">intelligent</span></h1>
+    <p style="margin-top: 24px; text-align: center; font-size: 22px;">One platform. Every layer.<br>From registration to real-time AI analysis.</p>
+    <div style="margin-top: 48px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+      <span class="tag tag-yes" style="font-size: 13px; padding: 8px 20px;">ISA COMPLIANT</span>
+      <span class="tag tag-yes" style="font-size: 13px; padding: 8px 20px;">CLOUD NATIVE</span>
+      <span class="tag tag-yes" style="font-size: 13px; padding: 8px 20px;">APPLE WATCH</span>
+      <span class="tag tag-yes" style="font-size: 13px; padding: 8px 20px;">COMPUTER VISION</span>
+      <span class="tag tag-yes" style="font-size: 13px; padding: 8px 20px;">JUDGE CO-PILOT</span>
+    </div>
+    <div style="margin-top: 64px;">
+      <div class="mono muted" style="font-size: 12px; letter-spacing: 0.15em;">SURFVISION AI</div>
+      <div class="dim" style="margin-top: 8px; font-size: 16px;">bsa.surf</div>
+    </div>
+  </div>
+  <div class="slide-num">10</div>
+  <div class="logo-mark">SURFVISION AI</div>
+</div>
+
+</body>
+</html>

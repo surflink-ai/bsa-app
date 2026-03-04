@@ -83,8 +83,10 @@ export function JudgeClient() {
   const [selectedHeatId, setSelectedHeatId] = useState<string | null>(null)
   const [numpad, setNumpad] = useState<{ athleteId: string; name: string; jersey: string | null; wave: number; rect: DOMRect } | null>(null)
   const [selectedScore, setSelectedScore] = useState<number | null>(null)
+  const [customInput, setCustomInput] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
+  const [connected, setConnected] = useState(true)
 
   const sb = createClient()
   const timer = useTimer(heat?.actual_start || null, heat?.duration_minutes || 20, heat?.status || 'pending')
@@ -130,7 +132,7 @@ export function JudgeClient() {
     const ch = sb.channel(`judge-${selectedHeatId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comp_judge_scores' }, () => loadHeatData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comp_heat_athletes' }, () => loadHeatData())
-      .subscribe()
+      .subscribe((status) => { setConnected(status === 'SUBSCRIBED') })
     return () => { sb.removeChannel(ch) }
   }, [selectedHeatId, loadHeatData])
 
@@ -140,11 +142,22 @@ export function JudgeClient() {
     const res = await fetch('/api/judge/score-v2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ judge_id: judge.id, heat_athlete_id: numpad.athleteId, wave_number: numpad.wave, score: selectedScore }) })
     const d = await res.json()
     setSubmitting(false)
-    if (d.success) { showMsg(`${selectedScore.toFixed(1)} locked`, true); setNumpad(null); setSelectedScore(null) }
-    else showMsg(d.error || 'Error', false)
+    if (d.success) {
+      showMsg(`${selectedScore.toFixed(1)} locked`, true)
+      setNumpad(null); setSelectedScore(null); setCustomInput('')
+    } else showMsg(d.error || 'Error', false)
     loadHeatData()
   }
   const showMsg = (msg: string, ok: boolean) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 2500) }
+  const handleCustomInput = (val: string) => {
+    setCustomInput(val)
+    const n = parseFloat(val)
+    if (!isNaN(n) && n >= 0 && n <= 10) {
+      setSelectedScore(Math.round(n * 10) / 10)
+    } else if (val === '') {
+      setSelectedScore(null)
+    }
+  }
   const getPriority = (id: string) => heat?.priority_order ? heat.priority_order.indexOf(id) + 1 : 0
 
   /* ━━━ PIN LOGIN ━━━ */
@@ -197,7 +210,8 @@ export function JudgeClient() {
         <div style={{ fontFamily: ff.mono, fontSize: 40, fontWeight: 800, letterSpacing: '0.04em', lineHeight: 1, color: timer.warn ? '#DC2626' : T.text, animation: timer.warn ? 'pulse 1s ease-in-out infinite' : undefined }}>
           {timer.fmt}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ width: 6, height: 6, borderRadius: 3, background: connected ? '#16A34A' : '#DC2626' }} title={connected ? 'Connected' : 'Reconnecting'} />
           <span style={{ fontFamily: ff.mono, fontSize: 10, color: T.textMuted }}>{judge.name}</span>
           <button onClick={logout} style={{ fontFamily: ff.mono, fontSize: 9, color: T.textMuted, background: 'none', border: 'none', cursor: 'pointer' }}>Exit</button>
         </div>
@@ -253,7 +267,10 @@ export function JudgeClient() {
                 </div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1.2 }}>{athlete.athlete_name}</div>
-                  {getPriority(athlete.heat_athlete_id) === 1 && <span style={{ fontFamily: ff.mono, fontSize: 8, fontWeight: 700, color: T.textSec }}>P1</span>}
+                  <div style={{ display: 'flex', gap: 6, marginTop: 1 }}>
+                    {getPriority(athlete.heat_athlete_id) === 1 && <span style={{ fontFamily: ff.mono, fontSize: 8, fontWeight: 700, color: T.textSec }}>P1</span>}
+                    {athlete.my_scores.length > 0 && <span style={{ fontFamily: ff.mono, fontSize: 8, color: T.textMuted }}>{athlete.my_scores.length}w</span>}
+                  </div>
                 </div>
               </div>
 
@@ -277,6 +294,7 @@ export function JudgeClient() {
                       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
                       setNumpad({ athleteId: athlete.heat_athlete_id, name: athlete.athlete_name, jersey: athlete.jersey_color, wave: wn, rect })
                       setSelectedScore(null)
+                      setCustomInput('')
                     }} style={{ flex: 1, minWidth: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, cursor: 'pointer', transition: 'background 0.15s', color: T.textMuted, fontSize: 14, fontFamily: ff.mono }}>
                       <span style={{ opacity: 0.3 }}>+</span>
                     </div>
@@ -344,18 +362,25 @@ export function JudgeClient() {
                 <span style={{ fontFamily: ff.mono, fontSize: 10, color: T.textSec, ...glass('transparent', T.glassBorder, 20, 6), padding: '2px 8px' }}>W{numpad.wave}</span>
               </div>
 
-              <div style={{ textAlign: 'center', marginBottom: 14, padding: '10px 0', borderRadius: 14, background: selectedScore !== null ? `${jc}08` : 'transparent' }}>
-                <div style={{ fontFamily: ff.mono, fontSize: 52, fontWeight: 800, color: selectedScore !== null ? T.text : T.textMuted, transition: 'color 0.15s' }}>
-                  {selectedScore !== null ? selectedScore.toFixed(1) : '—.—'}
+              {/* Custom score input */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <input type="number" inputMode="decimal" step="0.1" min="0" max="10" value={customInput}
+                  onChange={e => handleCustomInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && selectedScore !== null) submitScore() }}
+                  placeholder="Custom"
+                  style={{ flex: 1, textAlign: 'center', fontSize: 28, fontFamily: ff.mono, fontWeight: 800, padding: '12px 8px', ...glass(selectedScore !== null ? `${jc}06` : 'rgba(0,0,0,0.02)', T.glassBorder, 15, 14), color: T.text, outline: 'none', boxSizing: 'border-box' }} />
+                <div style={{ textAlign: 'center', minWidth: 60 }}>
+                  <div style={{ fontFamily: ff.mono, fontSize: 10, color: T.textMuted }}>0.0 – 10.0</div>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 5, marginBottom: 12 }}>
+              {/* Quick-select grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, marginBottom: 10 }}>
                 {SCORES.map(s => {
-                  const sel = selectedScore === s
+                  const sel = selectedScore === s && customInput === ''
                   return (
-                    <button key={s} onClick={() => setSelectedScore(s)}
-                      style={{ padding: '13px 0', borderRadius: 10, border: 'none', fontFamily: ff.mono, fontSize: 15, fontWeight: 700, cursor: 'pointer', transition: 'all 0.12s',
+                    <button key={s} onClick={() => { setSelectedScore(s); setCustomInput('') }}
+                      style={{ padding: '11px 0', borderRadius: 10, border: 'none', fontFamily: ff.mono, fontSize: 14, fontWeight: 700, cursor: 'pointer', transition: 'all 0.12s',
                         background: sel ? `${jc}15` : 'rgba(0,0,0,0.03)',
                         color: sel ? T.text : T.textSec,
                         boxShadow: sel ? `inset 0 0 0 1.5px ${jc}40` : 'none',

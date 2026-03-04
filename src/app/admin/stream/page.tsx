@@ -18,6 +18,7 @@ export default function StreamPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [streamLive, setStreamLive] = useState(false)
+  const [scoreSource, setScoreSource] = useState('liveheats')
 
   // Video library
   const [videos, setVideos] = useState<StreamVideo[]>([])
@@ -27,7 +28,7 @@ export default function StreamPage() {
 
   const loadConfig = async () => {
     const { data } = await createClient().from('stream_config').select('*').limit(1).single()
-    if (data) { setActive(data.active); setTitle(data.title || ''); setEventId(data.event_id || '') }
+    if (data) { setActive(data.active); setTitle(data.title || ''); setEventId(data.event_id || ''); setScoreSource(data.score_source || 'liveheats') }
     setLoading(false)
   }
 
@@ -45,7 +46,7 @@ export default function StreamPage() {
   const save = async () => {
     setSaving(true)
     const sb = createClient()
-    const data = { active, title: title || null, event_id: eventId || null }
+    const data = { active, title: title || null, event_id: eventId || null, score_source: scoreSource }
     const { data: existing } = await sb.from('stream_config').select('id').limit(1).single()
     if (existing) await sb.from('stream_config').update(data).eq('id', existing.id)
     else await sb.from('stream_config').insert(data)
@@ -91,9 +92,40 @@ export default function StreamPage() {
             <FormField label="Event Title (shown on stream page)">
               <input value={title} onChange={e => setTitle(e.target.value)} style={inputStyle} placeholder="BSA SOTY Event #1 — Drill Hall" />
             </FormField>
-            <FormField label="LiveHeats Event ID (for live scores)">
-              <input value={eventId} onChange={e => setEventId(e.target.value)} style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }} placeholder="e.g. 385619" />
+            <FormField label="Score Overlay Source">
+              <div style={{ display: 'flex', gap: 4 }}>
+                {[
+                  { value: 'liveheats', label: 'LiveHeats' },
+                  { value: 'compete', label: 'BSA Compete' },
+                  { value: 'off', label: 'Off' },
+                ].map(opt => (
+                  <button key={opt.value} onClick={() => setScoreSource(opt.value)} style={{
+                    flex: 1, padding: '10px 0', borderRadius: 'var(--admin-radius)', fontSize: 12, fontWeight: 600,
+                    fontFamily: "'Space Grotesk', sans-serif", cursor: 'pointer', transition: 'all 0.15s',
+                    background: scoreSource === opt.value ? 'var(--admin-navy)' : 'rgba(10,37,64,0.04)',
+                    color: scoreSource === opt.value ? '#fff' : 'var(--admin-text-secondary)',
+                    border: scoreSource === opt.value ? '1px solid var(--admin-navy)' : '1px solid var(--admin-border)',
+                  }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </FormField>
+            {scoreSource === 'liveheats' && (
+              <FormField label="LiveHeats Event ID">
+                <input value={eventId} onChange={e => setEventId(e.target.value)} style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }} placeholder="e.g. 385619" />
+              </FormField>
+            )}
+            {scoreSource === 'compete' && (
+              <MetaText style={{ display: 'block', marginBottom: 12 }}>
+                Scores pull automatically from the active live heat in BSA Compete. No event ID needed.
+              </MetaText>
+            )}
+            {scoreSource === 'off' && (
+              <MetaText style={{ display: 'block', marginBottom: 12 }}>
+                Score overlay is disabled. Stream will show video only.
+              </MetaText>
+            )}
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <Button onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save'}</Button>
               {saved && <span style={{ fontSize: 12, color: 'var(--admin-success)', fontWeight: 500 }}>Saved</span>}

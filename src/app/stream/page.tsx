@@ -11,7 +11,7 @@ export const metadata = {
 
 export default async function StreamPage() {
   let initialStatus = { live: false, hlsUrl: '', currentVideo: null as string | null }
-  let streamConfig = { active: false, title: null as string | null, event_id: null as string | null }
+  let streamConfig = { active: false, title: null as string | null, event_id: null as string | null, score_source: 'liveheats' as string }
   let vodVideos: { id: string; title: string; url: string; source: string; thumbnail_url: string | null }[] = []
 
   try {
@@ -21,7 +21,7 @@ export default async function StreamPage() {
   try {
     const supabase = await createClient()
     const { data } = await supabase.from('stream_config').select('*').limit(1).single()
-    if (data) streamConfig = { active: data.active, title: data.title, event_id: data.event_id }
+    if (data) streamConfig = { active: data.active, title: data.title, event_id: data.event_id, score_source: data.score_source || 'liveheats' }
   } catch {}
 
   try {

@@ -14,6 +14,7 @@ interface StreamConfig {
   active: boolean
   title: string | null
   event_id: string | null
+  score_source: string // 'liveheats' | 'compete' | 'off'
 }
 
 interface HeatScore {
@@ -85,10 +86,11 @@ export function StreamClient({ initialStatus, streamConfig, vodVideos = [] }: {
     return () => clearInterval(interval)
   }, [])
 
-  // Poll BSA Compete scores every 5 seconds when live
+  // Poll scores — source depends on stream_config.score_source
   useEffect(() => {
-    if (!status.live) return
-    const poll = async () => {
+    if (!status.live || streamConfig.score_source === 'off') { setHeat(null); return }
+
+    const pollCompete = async () => {
       try {
         const res = await fetch('/api/stream/active-heat')
         const data = await res.json()
@@ -116,10 +118,54 @@ export function StreamClient({ initialStatus, streamConfig, vodVideos = [] }: {
         }
       } catch {}
     }
+
+    const pollLiveHeats = async () => {
+      if (!streamConfig.event_id) return
+      try {
+        const res = await fetch(`/api/event/${streamConfig.event_id}`)
+        const event = await res.json()
+        if (event?.eventDivisions) {
+          for (const div of event.eventDivisions) {
+            for (const round of div.rounds || []) {
+              for (const h of round.heats || []) {
+                if (h.status === 'active' || h.status === 'in_progress') {
+                  const scores: HeatScore[] = (h.athletes || []).map((a: Record<string, unknown>, i: number) => {
+                    const waveScores = ((a.waves || []) as Record<string, number>[]).map(w => w.score).filter(Boolean).sort((x, y) => y - x)
+                    const best2 = waveScores.slice(0, 2)
+                    return {
+                      athleteName: (a.athlete as Record<string, string>)?.name || `Athlete ${i + 1}`,
+                      athleteImage: (a.athlete as Record<string, string>)?.image || null,
+                      scores: best2,
+                      total: best2.reduce((s, v) => s + v, 0),
+                      position: i + 1,
+                      needsScore: Math.max(0, 2 - best2.length),
+                      priority: !!(a.priority),
+                    }
+                  }).sort((a: HeatScore, b: HeatScore) => b.total - a.total)
+                  scores.forEach((s, i) => { s.position = i + 1 })
+                  setHeat({
+                    heatName: h.name || `Heat ${h.position || ''}`,
+                    divisionName: div.division?.name || '',
+                    roundName: round.name || '',
+                    status: h.status,
+                    scores,
+                    nextHeat: null,
+                  })
+                  return
+                }
+              }
+            }
+          }
+        }
+      } catch {}
+    }
+
+    const poll = streamConfig.score_source === 'compete' ? pollCompete : pollLiveHeats
+    const interval_ms = streamConfig.score_source === 'compete' ? 5000 : 10000
     poll()
-    const interval = setInterval(poll, 5000)
+    const interval = setInterval(poll, interval_ms)
     return () => clearInterval(interval)
-  }, [status.live])
+  }, [status.live, streamConfig.score_source, streamConfig.event_id])
 
   // Load VOD library
   useEffect(() => {

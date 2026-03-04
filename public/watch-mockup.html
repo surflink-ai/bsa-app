@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BSA Priority Watch — Apple Watch Ultra Mockup</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600;700;800&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    background: #0A1628;
-    color: #fff;
-    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: linear-gradient(145deg, #E4E9EF, #EDF1F5, #E6EBF0);
+    color: #0F172A;
+    font-family: 'Inter', -apple-system, sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -22,15 +22,15 @@
   }
 
   h1 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 28px;
     font-weight: 700;
-    color: #2BA5A0;
+    color: #0F172A;
     text-align: center;
   }
   .subtitle {
     font-size: 14px;
-    color: rgba(255,255,255,0.35);
+    color: rgba(15,23,42,0.35);
     text-align: center;
     margin-top: 4px;
   }
@@ -43,11 +43,11 @@
   }
 
   .state-label {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Geist Mono', 'JetBrains Mono', monospace;
     font-size: 10px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.25);
+    color: rgba(15,23,42,0.25);
     text-align: center;
     margin-bottom: 12px;
   }
@@ -115,7 +115,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background: #000;
+    background: linear-gradient(145deg, #E4E9EF, #EDF1F5, #E6EBF0);
   }
 
   /* Top row: BSA + heat info */
@@ -125,16 +125,16 @@
     align-items: center;
   }
   .bsa-logo {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 9px;
     font-weight: 700;
-    color: #2BA5A0;
+    color: #0F172A;
     letter-spacing: 0.15em;
   }
   .heat-label {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Geist Mono', monospace;
     font-size: 8px;
-    color: rgba(255,255,255,0.3);
+    color: rgba(15,23,42,0.25);
     letter-spacing: 0.08em;
   }
 
@@ -149,32 +149,33 @@
     gap: 2px;
   }
   .priority-label {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Geist Mono', monospace;
     font-size: 8px;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.25);
+    color: rgba(15,23,42,0.25);
   }
   .priority-number {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 72px;
-    font-weight: 700;
+    font-weight: 800;
     line-height: 1;
     letter-spacing: -2px;
+    color: #0F172A;
   }
-  .priority-number.p1 { color: #FFD700; text-shadow: 0 0 20px rgba(255,215,0,0.3); }
-  .priority-number.p2 { color: #C0C0C0; }
-  .priority-number.p3 { color: #CD7F32; }
-  .priority-number.p4 { color: rgba(255,255,255,0.25); }
+  .priority-number.p1 { color: #0F172A; }
+  .priority-number.p2 { color: #0F172A; }
+  .priority-number.p3 { color: rgba(15,23,42,0.55); }
+  .priority-number.p4 { color: rgba(15,23,42,0.25); }
 
   .priority-text {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Geist Mono', monospace;
     font-size: 9px;
     font-weight: 600;
     letter-spacing: 0.1em;
   }
-  .priority-text.p1 { color: #FFD700; }
-  .priority-text.p2 { color: rgba(255,255,255,0.4); }
+  .priority-text.p1 { color: rgba(15,23,42,0.55); }
+  .priority-text.p2 { color: rgba(15,23,42,0.25); }
 
   /* Stats row */
   .stats-row {
@@ -182,44 +183,44 @@
     justify-content: space-between;
     align-items: flex-end;
     padding-top: 4px;
-    border-top: 1px solid rgba(255,255,255,0.06);
+    border-top: 1px solid rgba(0,0,0,0.06);
   }
   .stat {
     text-align: center;
   }
   .stat-value {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Geist Mono', monospace;
     font-size: 16px;
     font-weight: 700;
-    color: #fff;
+    color: #0F172A;
     line-height: 1;
   }
   .stat-label {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Geist Mono', monospace;
     font-size: 7px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.2);
+    color: rgba(15,23,42,0.2);
     margin-top: 2px;
   }
 
   /* Timer */
   .timer-value {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Geist Mono', monospace;
     font-size: 16px;
     font-weight: 700;
-    color: #2BA5A0;
+    color: rgba(15,23,42,0.55);
     line-height: 1;
   }
-  .timer-value.warning { color: #EF4444; }
+  .timer-value.warning { color: #DC2626; }
   .timer-value.low { color: #EAB308; }
 
   /* Needs */
   .needs-value {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Geist Mono', monospace;
     font-size: 14px;
     font-weight: 700;
-    color: rgba(255,255,255,0.5);
+    color: rgba(15,23,42,0.35);
     line-height: 1;
   }
 
@@ -227,8 +228,8 @@
   .interference-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(220, 38, 38, 0.15);
-    border: 2px solid rgba(220, 38, 38, 0.4);
+    background: rgba(220, 38, 38, 0.08);
+    border: 2px solid rgba(220, 38, 38, 0.3);
     border-radius: 40px;
     display: flex;
     flex-direction: column;
@@ -258,7 +259,7 @@
   .establishing-text {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
-    color: rgba(255,255,255,0.3);
+    color: rgba(15,23,42,0.3);
     letter-spacing: 0.05em;
     text-align: center;
   }
@@ -285,7 +286,7 @@
 
   .note {
     font-size: 12px;
-    color: rgba(255,255,255,0.15);
+    color: rgba(15,23,42,0.15);
     text-align: center;
     max-width: 600px;
     line-height: 1.6;
@@ -328,7 +329,7 @@
               <div class="stat-label">Waves</div>
             </div>
             <div class="stat">
-              <div class="stat-value" style="color: #2BA5A0;">12.40</div>
+              <div class="stat-value" >12.40</div>
               <div class="stat-label">Total</div>
             </div>
           </div>
@@ -363,7 +364,7 @@
               <div class="stat-label">Waves</div>
             </div>
             <div class="stat">
-              <div class="stat-value" style="color: rgba(255,255,255,0.5);">10.67</div>
+              <div class="stat-value" style="color: rgba(15,23,42,0.5);">10.67</div>
               <div class="stat-label">Total</div>
             </div>
           </div>
@@ -430,7 +431,7 @@
               <div class="est-dot you"></div>
               <div class="est-dot"></div>
             </div>
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 8px; color: rgba(255,255,255,0.2); margin-top: 8px; letter-spacing: 0.05em;">2 of 3 riders · you're next</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 8px; color: rgba(15,23,42,0.2); margin-top: 8px; letter-spacing: 0.05em;">2 of 3 riders · you're next</div>
           </div>
           <div class="stats-row">
             <div class="stat">
@@ -442,7 +443,7 @@
               <div class="stat-label">Waves</div>
             </div>
             <div class="stat">
-              <div class="stat-value" style="color: rgba(255,255,255,0.15);">0.00</div>
+              <div class="stat-value" style="color: rgba(15,23,42,0.15);">0.00</div>
               <div class="stat-label">Total</div>
             </div>
           </div>

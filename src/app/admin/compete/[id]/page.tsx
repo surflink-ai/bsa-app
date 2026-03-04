@@ -65,6 +65,17 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   const [regAthleteName, setRegAthleteName] = useState('')
   const [regAthleteId, setRegAthleteId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'brackets' | 'registrations'>('brackets')
+  const [seedingDiv, setSeedingDiv] = useState<string | null>(null)
+  const [drawModal, setDrawModal] = useState<{ edId: string; divName: string } | null>(null)
+  const [drawPerHeat, setDrawPerHeat] = useState(4)
+  const [drawPreview, setDrawPreview] = useState<any>(null)
+  const [drawLoading, setDrawLoading] = useState(false)
+  const [walkUpModal, setWalkUpModal] = useState<EventDivisionWithRegs | null>(null)
+  const [walkUpName, setWalkUpName] = useState('')
+  const [walkUpId, setWalkUpId] = useState<string | null>(null)
+  const [csvModal, setCsvModal] = useState<EventDivisionWithRegs | null>(null)
+  const [csvText, setCsvText] = useState('')
+  const [csvLoading, setCsvLoading] = useState(false)
 
   const load = async () => {
     const { data: ev } = await sb.from('comp_events').select(`
@@ -214,6 +225,108 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     load()
   }
 
+  const autoSeed = async (edId: string) => {
+    setSeedingDiv(edId)
+    try {
+      const res = await fetch('/api/compete/seed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_division_id: edId }),
+      })
+      const data = await res.json()
+      if (data.error) alert(data.error)
+      else setAdvanceMsg(data.message)
+      setTimeout(() => setAdvanceMsg(null), 5000)
+    } catch (e: any) { alert(e.message) }
+    setSeedingDiv(null)
+    load()
+  }
+
+  const previewDraw = async (edId: string) => {
+    setDrawLoading(true)
+    try {
+      const res = await fetch('/api/compete/draw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_division_id: edId, athletes_per_heat: drawPerHeat, preview: true }),
+      })
+      const data = await res.json()
+      if (data.error) { alert(data.error); setDrawLoading(false); return }
+      setDrawPreview(data)
+    } catch (e: any) { alert(e.message) }
+    setDrawLoading(false)
+  }
+
+  const confirmDraw = async () => {
+    if (!drawModal) return
+    setDrawLoading(true)
+    try {
+      const res = await fetch('/api/compete/draw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_division_id: drawModal.edId, athletes_per_heat: drawPerHeat, preview: false }),
+      })
+      const data = await res.json()
+      if (data.error) { alert(data.error); setDrawLoading(false); return }
+      setAdvanceMsg(data.message)
+      setTimeout(() => setAdvanceMsg(null), 5000)
+      setDrawModal(null); setDrawPreview(null)
+      setActiveTab('brackets')
+    } catch (e: any) { alert(e.message) }
+    setDrawLoading(false)
+    load()
+  }
+
+  const updateSeedRank = async (regId: string, rank: number) => {
+    await sb.from('comp_registrations').update({ seed_rank: rank, updated_at: new Date().toISOString() }).eq('id', regId)
+    load()
+  }
+
+  const walkUpAdd = async (edId: string, athleteName: string, athleteId: string | null) => {
+    // Find round 1 for this division
+    const ed = event?.event_divisions.find(e => e.id === edId)
+    if (!ed?.rounds?.length) return
+    const r1 = ed.rounds.find(r => r.round_number === 1)
+    if (!r1?.heats?.length) return
+
+    // Find heat with fewest athletes
+    const sorted = [...r1.heats].sort((a, b) => (a.athletes?.length || 0) - (b.athletes?.length || 0))
+    const targetHeat = sorted[0]
+    const jersey = JERSEY_COLORS[(targetHeat.athletes?.length || 0) % JERSEY_COLORS.length]
+
+    await sb.from('comp_heat_athletes').insert({
+      heat_id: targetHeat.id,
+      athlete_id: athleteId || null,
+      athlete_name: athleteName,
+      jersey_color: jersey,
+      seed_position: (targetHeat.athletes?.length || 0) + 1,
+    })
+    load()
+  }
+
+  const handleWalkUp = async () => {
+    if (!walkUpModal || !walkUpName) return
+    setSaving(true)
+    await walkUpAdd(walkUpModal.id, walkUpName, walkUpId)
+    setSaving(false); setWalkUpModal(null); setWalkUpName(''); setWalkUpId(null)
+  }
+
+  const handleCsvImport = async () => {
+    if (!csvModal || !csvText) return
+    setCsvLoading(true)
+    try {
+      const res = await fetch('/api/compete/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_division_id: csvModal.id, csv: csvText }),
+      })
+      const data = await res.json()
+      if (data.error) alert(data.error)
+      else { setAdvanceMsg(data.message); setTimeout(() => setAdvanceMsg(null), 5000) }
+    } catch (e: any) { alert(e.message) }
+    setCsvLoading(false); setCsvModal(null); setCsvText(''); load()
+  }
+
   const removeAthlete = async (haId: string) => {
     await sb.from('comp_heat_athletes').delete().eq('id', haId)
     load()
@@ -322,7 +435,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {(!ed.rounds || ed.rounds.length === 0) && (
-                    <Button variant="primary" onClick={() => { setGenerateModal(ed); setNumAthletes(ed.max_athletes) }}>Generate Bracket</Button>
+                    <Button variant="primary" onClick={() => { setGenerateModal(ed); setNumAthletes(ed.registrations?.length || ed.max_athletes) }}>Generate Bracket</Button>
+                  )}
+                  {ed.rounds && ed.rounds.length > 0 && (
+                    <Button variant="secondary" onClick={() => { setWalkUpModal(ed); setWalkUpName(''); setWalkUpId(null) }}>Walk-Up Add</Button>
                   )}
                   <Button variant="danger" onClick={() => removeDivision(ed.id)}>Remove</Button>
                 </div>
@@ -414,6 +530,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               <StatusDot status={event.registration_open ? 'success' : 'muted'} label={event.registration_open ? 'Open' : 'Closed'} />
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
+              <Button variant="secondary" href={`/api/compete/export?event_id=${id}&type=registrations`}>📥 Export CSV</Button>
               <Button variant={event.registration_open ? 'danger' : 'primary'} onClick={toggleRegistration}>
                 {event.registration_open ? 'Close Registration' : 'Open Registration'}
               </Button>
@@ -436,7 +553,16 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 600, color: 'var(--admin-navy)' }}>{ed.division?.name}</span>
                         <MetaText>{confirmed} confirmed{pending > 0 ? ` · ${pending} pending` : ''} / {ed.max_athletes} max</MetaText>
                       </div>
-                      <Button variant="secondary" onClick={() => { setRegModal(ed); setRegAthleteName(''); setRegAthleteId(null) }}>+ Register Athlete</Button>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <Button variant="secondary" onClick={() => autoSeed(ed.id)} disabled={seedingDiv === ed.id || regs.length === 0}>
+                          {seedingDiv === ed.id ? 'Seeding...' : '🎯 Auto-Seed'}
+                        </Button>
+                        <Button variant="primary" onClick={() => { setDrawModal({ edId: ed.id, divName: ed.division?.name || '' }); setDrawPreview(null); setDrawPerHeat(4) }} disabled={regs.length === 0}>
+                          🎲 Generate Draw
+                        </Button>
+                        <Button variant="secondary" onClick={() => { setCsvModal(ed); setCsvText('') }}>📎 CSV Import</Button>
+                        <Button variant="secondary" onClick={() => { setRegModal(ed); setRegAthleteName(''); setRegAthleteId(null) }}>+ Register</Button>
+                      </div>
                     </div>
 
                     {regs.length === 0 ? (
@@ -444,17 +570,30 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         {/* Header */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr 100px 80px 100px 60px', gap: 8, padding: '8px 12px', borderBottom: '1px solid var(--admin-border)' }}>
-                          <MetaText>#</MetaText>
+                        <div style={{ display: 'grid', gridTemplateColumns: '50px 1fr 100px 80px 100px 60px', gap: 8, padding: '8px 12px', borderBottom: '1px solid var(--admin-border)' }}>
+                          <MetaText>Seed</MetaText>
                           <MetaText>Athlete</MetaText>
                           <MetaText>Status</MetaText>
                           <MetaText>Payment</MetaText>
                           <MetaText>Registered</MetaText>
                           <MetaText>{' '}</MetaText>
                         </div>
-                        {regs.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).map((reg, i) => (
-                          <div key={reg.id} style={{ display: 'grid', gridTemplateColumns: '40px 1fr 100px 80px 100px 60px', gap: 8, padding: '10px 12px', alignItems: 'center', borderBottom: '1px solid var(--admin-border-subtle)', background: i % 2 === 1 ? 'rgba(10,37,64,0.012)' : 'transparent' }}>
-                            <span style={{ fontSize: 12, color: 'var(--admin-text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>{i + 1}</span>
+                        {regs.sort((a, b) => {
+                          // Sort by seed rank first, then by creation date
+                          if (a.seed_rank && b.seed_rank) return a.seed_rank - b.seed_rank
+                          if (a.seed_rank) return -1
+                          if (b.seed_rank) return 1
+                          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                        }).map((reg, i) => (
+                          <div key={reg.id} style={{ display: 'grid', gridTemplateColumns: '50px 1fr 100px 80px 100px 60px', gap: 8, padding: '10px 12px', alignItems: 'center', borderBottom: '1px solid var(--admin-border-subtle)', background: i % 2 === 1 ? 'rgba(10,37,64,0.012)' : 'transparent' }}>
+                            <input
+                              type="number"
+                              value={reg.seed_rank || ''}
+                              onChange={e => updateSeedRank(reg.id, parseInt(e.target.value) || 0)}
+                              min={1}
+                              style={{ width: 40, padding: '2px 4px', fontSize: 12, border: '1px solid var(--admin-border)', borderRadius: 4, textAlign: 'center', fontFamily: "'JetBrains Mono', monospace", color: reg.seed_rank ? 'var(--admin-teal)' : 'var(--admin-text-muted)', background: 'transparent' }}
+                              placeholder="-"
+                            />
                             <div>
                               <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--admin-text)' }}>{reg.athlete_name}</span>
                               {reg.email && <span style={{ fontSize: 10, color: 'var(--admin-text-muted)', marginLeft: 8 }}>{reg.email}</span>}
@@ -490,6 +629,101 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
           )}
         </div>
       )}
+
+      {/* Walk-Up Add Modal */}
+      <Modal open={!!walkUpModal} onClose={() => setWalkUpModal(null)} title={`Walk-Up Add — ${walkUpModal?.division?.name || ''}`}>
+        <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 16 }}>Athlete will be added to the least-full Round 1 heat with an auto-assigned jersey.</p>
+        <FormField label="Athlete">
+          <AthleteSearch
+            value={walkUpName}
+            onChange={(val) => { setWalkUpName(val); setWalkUpId(null) }}
+            onSelect={(athlete) => { setWalkUpName(athlete.name); setWalkUpId(athlete.id) }}
+            onCreateNew={(name) => { setWalkUpName(name); setWalkUpId(null) }}
+            placeholder="Search athlete..."
+            autoFocus
+          />
+        </FormField>
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <Button onClick={handleWalkUp} disabled={saving || !walkUpName}>{saving ? 'Adding...' : 'Add to Heat'}</Button>
+          <Button variant="ghost" onClick={() => setWalkUpModal(null)}>Cancel</Button>
+        </div>
+      </Modal>
+
+      {/* CSV Import Modal */}
+      <Modal open={!!csvModal} onClose={() => setCsvModal(null)} title={`CSV Import — ${csvModal?.division?.name || ''}`}>
+        <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 16 }}>
+          Paste CSV with columns: Name, Email (optional), Phone (optional), Emergency Contact (optional). First row is the header.
+        </p>
+        <FormField label="CSV Data">
+          <textarea
+            value={csvText}
+            onChange={e => setCsvText(e.target.value)}
+            rows={8}
+            placeholder={'Name,Email,Phone\nJohn Doe,john@email.com,+1234567890\nJane Smith,,'}
+            style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace", fontSize: 12, resize: 'vertical' }}
+          />
+        </FormField>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button onClick={handleCsvImport} disabled={csvLoading || !csvText}>{csvLoading ? 'Importing...' : 'Import'}</Button>
+          <Button variant="ghost" onClick={() => setCsvModal(null)}>Cancel</Button>
+        </div>
+      </Modal>
+
+      {/* Generate Draw Modal */}
+      <Modal open={!!drawModal} onClose={() => { setDrawModal(null); setDrawPreview(null) }} title={`Generate Draw — ${drawModal?.divName || ''}`} width={640}>
+        <FormField label="Athletes per Heat">
+          <select value={drawPerHeat} onChange={e => { setDrawPerHeat(parseInt(e.target.value)); setDrawPreview(null) }} style={selectStyle}>
+            <option value={2}>2 (Man on Man)</option>
+            <option value={3}>3</option>
+            <option value={4}>4 (Standard)</option>
+            <option value={5}>5</option>
+            <option value={6}>6</option>
+          </select>
+        </FormField>
+
+        {!drawPreview && (
+          <Button onClick={() => drawModal && previewDraw(drawModal.edId)} disabled={drawLoading}>
+            {drawLoading ? 'Loading...' : 'Preview Draw'}
+          </Button>
+        )}
+
+        {drawPreview && (
+          <div>
+            <SectionLabel>Draw Preview — {drawPreview.athletes} athletes</SectionLabel>
+
+            {/* Rounds overview */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+              {drawPreview.rounds?.map((r: any) => (
+                <span key={r.name} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, backgroundColor: 'rgba(10,37,64,0.04)', color: 'var(--admin-text-secondary)', fontFamily: "'JetBrains Mono', monospace" }}>
+                  {r.name}: {r.heats} heat{r.heats !== 1 ? 's' : ''}
+                </span>
+              ))}
+            </div>
+
+            {/* Round 1 heats */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
+              {drawPreview.round1?.map((heat: any) => (
+                <div key={heat.heat} style={{ border: '1px solid var(--admin-border)', borderRadius: 'var(--admin-radius)', padding: 12 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--admin-navy)', marginBottom: 8, fontFamily: "'Space Grotesk', sans-serif" }}>Heat {heat.heat}</div>
+                  {heat.athletes.map((a: any) => (
+                    <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: JERSEY_HEX[a.jersey] || '#94A3B8', border: a.jersey === 'white' ? '1px solid #CBD5E1' : 'none', flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, color: 'var(--admin-text)', flex: 1 }}>{a.name}</span>
+                      <span style={{ fontSize: 10, color: 'var(--admin-text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>#{a.seed}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Button onClick={confirmDraw} disabled={drawLoading}>{drawLoading ? 'Generating...' : 'Confirm & Generate'}</Button>
+              <Button variant="secondary" onClick={() => drawModal && previewDraw(drawModal.edId)} disabled={drawLoading}>Re-Shuffle</Button>
+              <Button variant="ghost" onClick={() => { setDrawModal(null); setDrawPreview(null) }}>Cancel</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Register Athlete Modal */}
       <Modal open={!!regModal} onClose={() => { setRegModal(null); setRegAthleteName(''); setRegAthleteId(null) }} title={`Register Athlete — ${regModal?.division?.name || ''}`}>

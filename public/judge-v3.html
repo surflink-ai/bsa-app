@@ -370,14 +370,15 @@
   .hj-mode .wave-cell.scored { cursor: pointer; }
   .hj-mode .wave-cell.scored:hover { background: rgba(43,165,160,0.06); }
   .judge-scores {
-    position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
-    display: flex; gap: 3px;
+    position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 5px;
   }
   .judge-score-pip {
-    font-family: var(--font-mono); font-size: 8px; font-weight: 600;
-    color: var(--text-muted);
+    font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+    color: rgba(255,255,255,0.18); letter-spacing: 0.02em;
   }
   .judge-score-pip.outlier { color: rgba(220,38,38,0.5); }
+  .judge-score-pip.dropped { color: rgba(255,255,255,0.06); text-decoration: line-through; }
 </style>
 </head>
 <body>
@@ -563,12 +564,24 @@ function render() {
         if (isBest) html += `<span class="best-marker"></span>`;
         if (currentView === 'head' && athlete.judgeScores[i]?.length) {
           html += `<div class="judge-scores">`;
-          const js = athlete.judgeScores[i];
-          const avg = js.reduce((a,b)=>a+b,0)/js.length;
-          js.forEach(s => {
-            const outlier = Math.abs(s - avg) > 1.2;
-            html += `<span class="judge-score-pip${outlier?' outlier':''}">${s.toFixed(1)}</span>`;
-          });
+          const js = [...athlete.judgeScores[i]];
+          if (js.length >= 5) {
+            const sorted = [...js].sort((a,b)=>a-b);
+            const lo = sorted[0], hi = sorted[sorted.length-1];
+            let loDropped = false, hiDropped = false;
+            js.forEach(s => {
+              const isDrop = (!loDropped && s === lo) || (!hiDropped && s === hi);
+              if (!loDropped && s === lo) loDropped = true;
+              else if (!hiDropped && s === hi) hiDropped = true;
+              const avg = js.reduce((a,b)=>a+b,0)/js.length;
+              const outlier = Math.abs(s - avg) > 1.5;
+              html += `<span class="judge-score-pip${isDrop?' dropped':''}${outlier?' outlier':''}">${s.toFixed(1)}</span>`;
+            });
+          } else {
+            js.forEach(s => {
+              html += `<span class="judge-score-pip">${s.toFixed(1)}</span>`;
+            });
+          }
           html += `</div>`;
         }
         html += `</div>`;

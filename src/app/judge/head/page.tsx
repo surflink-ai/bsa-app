@@ -118,7 +118,8 @@ function HeadJudgePage() {
   if (error) return <div style={{ minHeight: '100dvh', background: T.bg, color: T.red, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: ff.mono }}>{error}</div>
   if (!data) return <div style={{ minHeight: '100dvh', background: T.bg, color: T.textMuted, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading</div>
 
-  const maxWaves = Math.max(...data.athletes.map(a => a.waves.length), 3)
+  const highestWave = Math.max(0, ...data.athletes.flatMap(a => a.waves.filter(w => w.averaged_score != null).map(w => w.wave_number)))
+  const maxWaves = Math.min(10, Math.max(4, highestWave + 2))
   const leaderTotal = data.athletes.length ? Math.max(...data.athletes.map(a => a.total_score)) : 0
 
   return (
@@ -139,8 +140,8 @@ function HeadJudgePage() {
       </div>
 
       {/* PRIORITY */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 20px', margin: '6px 12px 0', flexShrink: 0 }}>
-        <span style={{ fontFamily: ff.mono, fontSize: 8, fontWeight: 600, color: T.textMuted, letterSpacing: '0.15em', marginRight: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 20px', margin: '6px 12px 0', flexShrink: 0, ...glass(T.glass, T.glassBorder, 20, 12) }}>
+        <span style={{ fontFamily: ff.mono, fontSize: 9, fontWeight: 700, color: T.textSec, letterSpacing: '0.12em', marginRight: 4 }}>
           PRIORITY{priorityState?.phase === 'establishing' ? ' / ESTABLISHING' : ''}
         </span>
         {priorityState?.phase === 'establishing' ? (
@@ -198,7 +199,7 @@ function HeadJudgePage() {
           <div style={{ width: 200, flexShrink: 0, paddingLeft: 16, fontFamily: ff.mono, fontSize: 8, fontWeight: 600, color: T.textMuted, letterSpacing: '0.12em' }}>ATHLETE</div>
           <div style={{ flex: 1, display: 'flex' }}>
             {Array.from({ length: maxWaves }, (_, i) => (
-              <div key={i} style={{ flex: 1, minWidth: 72, textAlign: 'center', fontFamily: ff.mono, fontSize: 8, fontWeight: 600, color: T.textMuted, letterSpacing: '0.1em', padding: '6px 0' }}>W{i + 1}</div>
+              <div key={i} style={{ flex: 1, minWidth: 72, textAlign: 'center', fontFamily: ff.mono, fontSize: 9, fontWeight: 600, color: T.textMuted, letterSpacing: '0.1em', padding: '6px 0' }}>W{i + 1}</div>
             ))}
           </div>
           <div style={{ width: 110, flexShrink: 0, textAlign: 'center', fontFamily: ff.mono, fontSize: 8, fontWeight: 600, color: T.textMuted, letterSpacing: '0.1em' }}>TOTAL</div>
@@ -215,40 +216,43 @@ function HeadJudgePage() {
 
           const wavesWithScores = athlete.waves.filter(w => w.averaged_score != null)
           const best2 = [...wavesWithScores].sort((a, b) => (b.averaged_score || 0) - (a.averaged_score || 0)).slice(0, 2).map(w => w.wave_number)
+          const bestLabel = best2.length >= 2 ? `W${best2[0]} + W${best2[1]}` : best2.length === 1 ? `W${best2[0]}` : ''
 
           return (
             <div key={athlete.id} style={{ flex: 1, display: 'flex', alignItems: 'center', minHeight: 0, overflow: 'hidden', opacity: isDQ ? 0.35 : 1, ...glass(T.glassStrong, T.glassBorder, 20, 14) }}>
 
-              <div style={{ width: 4, alignSelf: 'stretch', background: jc, borderRadius: '14px 0 0 14px', flexShrink: 0 }} />
+              <div style={{ width: 5, alignSelf: 'stretch', background: jc, borderRadius: '14px 0 0 14px', flexShrink: 0 }} />
 
-              <div style={{ width: 196, flexShrink: 0, padding: '0 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 26, height: 26, borderRadius: 8, background: jc, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: ff.mono, fontSize: 10, fontWeight: 800, color: (isWhite || athlete.jersey_color === 'yellow') ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.9)', flexShrink: 0 }}>
+              <div style={{ width: 195, flexShrink: 0, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: jc, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: ff.mono, fontSize: 15, fontWeight: 800, color: (isWhite || athlete.jersey_color === 'yellow') ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.9)', flexShrink: 0 }}>
                   {athlete.result_position || '-'}
                 </div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.2 }}>{athlete.athlete_name}</div>
-                  <div style={{ display: 'flex', gap: 4, marginTop: 1 }}>
-                    {isDQ && <span style={{ fontFamily: ff.mono, fontSize: 8, fontWeight: 800, color: T.red }}>DQ</span>}
-                    {hasInt && <span style={{ fontFamily: ff.mono, fontSize: 8, fontWeight: 800, color: T.red }}>INT</span>}
+                  <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.2 }}>{athlete.athlete_name}</div>
+                  <div style={{ display: 'flex', gap: 5, marginTop: 2 }}>
+                    {isDQ && <span style={{ fontFamily: ff.mono, fontSize: 9, fontWeight: 800, color: T.red }}>DQ</span>}
+                    {hasInt && <span style={{ fontFamily: ff.mono, fontSize: 9, fontWeight: 800, color: T.red }}>INT</span>}
                     <span style={{ fontFamily: ff.mono, fontSize: 9, color: T.textMuted }}>{athlete.wave_count}w</span>
                   </div>
                 </div>
               </div>
 
-              <div style={{ flex: 1, display: 'flex', alignSelf: 'stretch', gap: 3, padding: '4px 0' }}>
+              <div style={{ flex: 1, display: 'flex', alignSelf: 'stretch', gap: 4, padding: '6px 0' }}>
                 {Array.from({ length: maxWaves }, (_, wi) => {
                   const wave = athlete.waves.find(w => w.wave_number === wi + 1)
                   const isBest = best2.includes(wi + 1)
-                  if (!wave || wave.averaged_score == null) return <div key={wi} style={{ flex: 1, minWidth: 72 }} />
+                  if (!wave || wave.averaged_score == null) return (
+                    <div key={wi} style={{ flex: 1, minWidth: 72, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12, border: '1.5px dashed rgba(0,0,0,0.06)', background: 'rgba(0,0,0,0.01)' }} />
+                  )
 
                   const js = wave.judge_scores || []
-                  const sorted = [...js.map(s => s.score)].sort((a, b) => a - b)
-                  const lo = sorted[0], hi = sorted[sorted.length - 1]
+                  const sortedScores = [...js.map(s => s.score)].sort((a, b) => a - b)
+                  const lo = sortedScores[0], hi = sortedScores[sortedScores.length - 1]
                   let loD = false, hiD = false
 
                   return (
-                    <div key={wi} style={{ flex: 1, minWidth: 72, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: 10, background: isBest ? T.scoreBgBest : T.scoreBg, boxShadow: isBest ? `inset 0 0 0 1.5px ${jc}20` : 'none', gap: 1, position: 'relative' }}>
-                      <span style={{ fontFamily: ff.mono, fontWeight: 700, fontSize: isBest ? 18 : 16, color: T.text }}>{wave.averaged_score.toFixed(2)}</span>
+                    <div key={wi} style={{ flex: 1, minWidth: 72, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: 12, background: isBest ? T.scoreBgBest : T.scoreBg, boxShadow: isBest ? `inset 0 0 0 2px ${jc}25` : 'none', gap: 1, position: 'relative' }}>
+                      <span style={{ fontFamily: ff.mono, fontWeight: 700, fontSize: isBest ? 20 : 17, color: T.text }}>{wave.averaged_score.toFixed(2)}</span>
                       <div style={{ display: 'flex', gap: 3 }}>
                         {js.map((s, si) => {
                           let dropped = false
@@ -259,28 +263,28 @@ function HeadJudgePage() {
                           return <span key={si} style={{ fontFamily: ff.mono, fontSize: 8, fontWeight: 600, color: dropped ? T.textMuted : T.textSec, textDecoration: dropped ? 'line-through' : 'none' }}>{s.score.toFixed(1)}</span>
                         })}
                       </div>
-                      {isBest && <span style={{ position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)', width: 3, height: 3, borderRadius: '50%', background: jc }} />}
+                      {isBest && <span style={{ position: 'absolute', bottom: 4, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: jc }} />}
                     </div>
                   )
                 })}
               </div>
 
               <div style={{ width: 110, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: `1px solid ${T.glassBorder}` }}>
-                <span style={{ fontFamily: ff.mono, fontSize: 26, fontWeight: 800, lineHeight: 1, color: isLeader ? jc : T.text }}>{athlete.total_score.toFixed(2)}</span>
-                <span style={{ fontFamily: ff.mono, fontSize: 7, fontWeight: 600, color: T.textMuted, letterSpacing: '0.12em', marginTop: 2 }}>BEST 2</span>
+                <span style={{ fontFamily: ff.mono, fontSize: 28, fontWeight: 800, lineHeight: 1, color: isLeader ? jc : T.text }}>{athlete.total_score.toFixed(2)}</span>
+                {bestLabel && <span style={{ fontFamily: ff.mono, fontSize: 7, fontWeight: 600, color: T.textMuted, letterSpacing: '0.05em', marginTop: 3 }}>{bestLabel}</span>}
               </div>
 
               <div style={{ width: 80, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: `1px solid ${T.glassBorder}` }}>
                 {athlete.needs_score != null && athlete.needs_score > 0 && athlete.needs_score <= 10 && (
                   <>
-                    <span style={{ fontFamily: ff.mono, fontSize: 14, fontWeight: 600, color: T.textSec }}>{athlete.needs_score.toFixed(2)}</span>
+                    <span style={{ fontFamily: ff.mono, fontSize: 15, fontWeight: 600, color: T.textSec }}>{athlete.needs_score.toFixed(2)}</span>
                     <span style={{ fontFamily: ff.mono, fontSize: 7, color: T.textMuted, letterSpacing: '0.08em', marginTop: 1 }}>TO LEAD</span>
                   </>
                 )}
               </div>
 
               <div style={{ width: 40, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <button onClick={() => setIntModal({ id: athlete.id, name: athlete.athlete_name })} style={{ fontFamily: ff.mono, fontSize: 8, fontWeight: 700, background: `${T.red}08`, border: `1px solid ${T.red}20`, borderRadius: 6, cursor: 'pointer', color: T.red, opacity: 0.6, padding: '4px 8px', letterSpacing: '0.05em' }}>INT</button>
+                <button onClick={() => setIntModal({ id: athlete.id, name: athlete.athlete_name })} style={{ fontFamily: ff.mono, fontSize: 9, fontWeight: 700, background: `${T.red}08`, border: `1px solid ${T.red}20`, borderRadius: 6, cursor: 'pointer', color: T.red, opacity: 0.6, padding: '5px 8px', letterSpacing: '0.05em' }}>INT</button>
               </div>
             </div>
           )

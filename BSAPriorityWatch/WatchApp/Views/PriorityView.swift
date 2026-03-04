@@ -1,243 +1,257 @@
 import SwiftUI
+import WatchKit
 
-// MARK: - Main Watch Face — Priority Display
+// MARK: - Priority View — Main watch face during a heat
+// Designed for Apple Watch Ultra 49mm (410 × 502 logical points)
 
 struct PriorityView: View {
-    let relay: RelayConnection
-    
-    private var jerseyColor: Color {
-        guard let jersey = relay.priority.myJersey,
-              let rgb = JerseyColors.colors[jersey] else {
-            return .gray
-        }
-        return Color(red: rgb.r, green: rgb.g, blue: rgb.b)
-    }
-    
-    private var priorityColor: Color {
-        switch relay.priority.myPosition {
-        case 1: return .yellow // Gold
-        case 2: return Color(red: 0.75, green: 0.75, blue: 0.75) // Silver
-        case 3: return Color(red: 0.80, green: 0.50, blue: 0.20) // Bronze
-        default: return Color.white.opacity(0.25)
-        }
-    }
-    
-    private var timerColor: Color {
-        if relay.timer.warning { return .red }
-        if relay.timer.low { return .yellow }
-        return Color(red: 0.17, green: 0.65, blue: 0.63) // BSA teal
-    }
+    var relay: RelayConnection
     
     var body: some View {
         ZStack {
             // Background
             Color.black.ignoresSafeArea()
             
-            VStack(spacing: 0) {
-                // Jersey stripe
-                jerseyColor
-                    .frame(height: 4)
-                
-                // Top bar: BSA + Heat info
-                HStack {
-                    Text("BSA")
-                        .font(.system(size: 10, weight: .bold, design: .default))
-                        .foregroundColor(Color(red: 0.17, green: 0.65, blue: 0.63))
-                    
-                    Spacer()
-                    
-                    if let hs = relay.heatStatus {
-                        Text("H\(hs.heatNumber ?? 0)")
-                            .font(.system(size: 8, weight: .medium, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.3))
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 6)
-                
-                Spacer()
-                
-                // Priority section — the hero
-                if relay.priority.phase == "establishing" {
-                    establishingView
-                } else {
-                    establishedView
-                }
-                
-                Spacer()
-                
-                // Bottom stats
-                HStack {
-                    // Timer
-                    VStack(spacing: 1) {
-                        Text(relay.timer.remainingFormatted)
-                            .font(.system(size: 16, weight: .bold, design: .monospaced))
-                            .foregroundColor(timerColor)
-                        Text("TIME")
-                            .font(.system(size: 6, weight: .medium, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.2))
-                    }
-                    
-                    Spacer()
-                    
-                    // Wave count
-                    VStack(spacing: 1) {
-                        Text("\(relay.priority.myWaveCount)")
-                            .font(.system(size: 16, weight: .bold, design: .monospaced))
-                            .foregroundColor(.white)
-                        Text("WAVES")
-                            .font(.system(size: 6, weight: .medium, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.2))
-                    }
-                    
-                    Spacer()
-                    
-                    // Total score
-                    VStack(spacing: 1) {
-                        Text(String(format: "%.2f", relay.priority.myTotalScore))
-                            .font(.system(size: 16, weight: .bold, design: .monospaced))
-                            .foregroundColor(
-                                relay.priority.myResultPosition == 1
-                                    ? Color(red: 0.17, green: 0.65, blue: 0.63)
-                                    : .white.opacity(0.5)
-                            )
-                        Text("TOTAL")
-                            .font(.system(size: 6, weight: .medium, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.2))
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 4)
-                .overlay(
-                    Rectangle()
-                        .fill(Color.white.opacity(0.06))
-                        .frame(height: 1),
-                    alignment: .top
-                )
-                .padding(.bottom, 8)
-            }
-            
-            // Interference overlay
+            // Interference alert overlay
             if let alert = relay.interferenceAlert, alert.isMe {
-                interferenceOverlay(alert: alert)
+                interferenceOverlay(alert)
+            } else {
+                // Normal state
+                mainDisplay
             }
+        }
+    }
+    
+    // MARK: - Main Display
+    
+    @ViewBuilder
+    private var mainDisplay: some View {
+        let phase = relay.priority.phase
+        let status = relay.heatStatus?.status ?? "pending"
+        
+        if status == "complete" || status == "certified" {
+            heatCompleteView
+        } else if phase == "establishing" {
+            establishingView
+        } else {
+            establishedView
         }
     }
     
     // MARK: - Established Priority View
     
     private var establishedView: some View {
-        VStack(spacing: 2) {
-            Text("PRIORITY")
-                .font(.system(size: 8, weight: .medium, design: .monospaced))
-                .foregroundColor(.white.opacity(0.25))
-                .tracking(1.5)
+        let p = relay.priority
+        let pos = p.myPosition
+        let isP1 = pos == 1
+        
+        return VStack(spacing: 0) {
+            // Jersey stripe
+            jerseyBar
             
-            if relay.priority.myPosition > 0 {
-                Text("P\(relay.priority.myPosition)")
-                    .font(.system(size: 64, weight: .bold))
-                    .foregroundColor(priorityColor)
-                    .shadow(color: relay.priority.myPosition == 1 ? .yellow.opacity(0.3) : .clear, radius: 12)
+            Spacer().frame(height: 8)
+            
+            // Position — HUGE
+            Text("P\(pos)")
+                .font(.system(size: 72, weight: .black, design: .rounded))
+                .foregroundColor(positionColor(pos))
+                .shadow(color: positionColor(pos).opacity(0.3), radius: 8)
+            
+            // Status word
+            Text(isP1 ? "YOUR WAVE" : "CHASING")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .foregroundColor(isP1 ? Color(red: 1, green: 0.84, blue: 0) : .white.opacity(0.3))
+                .tracking(3)
+            
+            Spacer().frame(height: 12)
+            
+            // Score
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(String(format: "%.2f", p.myTotalScore))
+                    .font(.system(size: 28, weight: .bold, design: .monospaced))
+                    .foregroundColor(.white)
                 
-                if relay.priority.myPosition == 1 {
-                    Text("YOUR WAVE")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .foregroundColor(.yellow)
-                        .tracking(1)
-                } else if let needs = relay.priority.myNeedsScore {
+                if let needs = p.myNeedsScore, needs > 0 {
                     Text("need \(String(format: "%.2f", needs))")
-                        .font(.system(size: 13, weight: .bold, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.5))
+                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.25))
                 }
-            } else {
-                Text("—")
-                    .font(.system(size: 64, weight: .bold))
-                    .foregroundColor(.white.opacity(0.15))
             }
             
-            if relay.priority.myPriorityStatus == "suspended" {
-                Text("SUSPENDED")
-                    .font(.system(size: 8, weight: .bold, design: .monospaced))
-                    .foregroundColor(.yellow.opacity(0.6))
-                    .tracking(1)
+            // Wave dots
+            HStack(spacing: 3) {
+                ForEach(0..<max(p.myWaveCount, 0), id: \.self) { _ in
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 4, height: 4)
+                }
             }
+            .padding(.top, 4)
+            
+            Spacer()
+            
+            // Timer
+            timerDisplay
         }
+        .padding(.horizontal, 8)
     }
     
-    // MARK: - Establishing Phase View
+    // MARK: - Establishing Phase
     
     private var establishingView: some View {
-        VStack(spacing: 6) {
-            Text("PRIORITY")
-                .font(.system(size: 8, weight: .medium, design: .monospaced))
-                .foregroundColor(.white.opacity(0.25))
-                .tracking(1.5)
+        let p = relay.priority
+        let progress = p.ridersNeeded > 0 ? Double(p.ridersCount) / Double(p.ridersNeeded) : 0
+        
+        return VStack(spacing: 0) {
+            jerseyBar
             
-            Text("Establishing...")
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                .foregroundColor(.white.opacity(0.3))
+            Spacer().frame(height: 16)
             
-            // Dots showing riders progress
-            HStack(spacing: 6) {
-                ForEach(0..<relay.priority.ridersNeeded, id: \.self) { i in
-                    Circle()
-                        .fill(i < relay.priority.ridersCount
-                              ? Color(red: 0.17, green: 0.65, blue: 0.63)
-                              : Color.clear)
-                        .frame(width: 10, height: 10)
-                        .overlay(
-                            Circle()
-                                .stroke(
-                                    i < relay.priority.ridersCount
-                                        ? Color(red: 0.17, green: 0.65, blue: 0.63)
-                                        : Color.white.opacity(0.15),
-                                    lineWidth: 1.5
-                                )
-                        )
+            // Progress ring
+            ZStack {
+                Circle()
+                    .stroke(Color.white.opacity(0.06), lineWidth: 4)
+                    .frame(width: 80, height: 80)
+                
+                Circle()
+                    .trim(from: 0, to: progress)
+                    .stroke(
+                        Color(red: 0.17, green: 0.65, blue: 0.63),
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                    )
+                    .frame(width: 80, height: 80)
+                    .rotationEffect(.degrees(-90))
+                    .animation(.easeInOut(duration: 0.5), value: progress)
+                
+                VStack(spacing: 2) {
+                    Text("\(p.ridersCount)/\(p.ridersNeeded)")
+                        .font(.system(size: 20, weight: .bold, design: .monospaced))
+                        .foregroundColor(.white)
+                    Text("riders")
+                        .font(.system(size: 8, weight: .medium, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.2))
                 }
             }
             
-            Text("\(relay.priority.ridersCount) of \(relay.priority.ridersNeeded) riders")
-                .font(.system(size: 8, weight: .medium, design: .monospaced))
-                .foregroundColor(.white.opacity(0.2))
+            Text("ESTABLISHING")
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .foregroundColor(.white.opacity(0.15))
+                .tracking(3)
+                .padding(.top, 8)
+            
+            Spacer()
+            
+            timerDisplay
         }
+        .padding(.horizontal, 8)
+    }
+    
+    // MARK: - Heat Complete
+    
+    private var heatCompleteView: some View {
+        let p = relay.priority
+        let pos = p.myResultPosition ?? 0
+        let ordinal = pos == 1 ? "1ST" : pos == 2 ? "2ND" : pos == 3 ? "3RD" : "\(pos)TH"
+        
+        return VStack(spacing: 8) {
+            jerseyBar
+            
+            Spacer()
+            
+            Text(ordinal)
+                .font(.system(size: 48, weight: .black, design: .rounded))
+                .foregroundColor(pos <= 2 ? Color(red: 0.17, green: 0.65, blue: 0.63) : .white.opacity(0.5))
+            
+            Text(String(format: "%.2f", p.myTotalScore))
+                .font(.system(size: 22, weight: .bold, design: .monospaced))
+                .foregroundColor(.white.opacity(0.7))
+            
+            Text("HEAT OVER")
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .foregroundColor(.white.opacity(0.15))
+                .tracking(3)
+            
+            Spacer()
+        }
+        .padding(.horizontal, 8)
     }
     
     // MARK: - Interference Overlay
     
-    private func interferenceOverlay(alert: InterferenceAlert) -> some View {
+    private func interferenceOverlay(_ alert: InterferenceAlert) -> some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.red.opacity(0.15))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.red.opacity(0.4), lineWidth: 2)
-                )
+            Color.red.opacity(0.15)
+                .ignoresSafeArea()
             
-            VStack(spacing: 4) {
-                Text("🚩")
-                    .font(.system(size: 28))
+            VStack(spacing: 12) {
+                Spacer()
+                
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 36))
+                    .foregroundColor(.red)
                 
                 Text("INTERFERENCE")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 16, weight: .black, design: .monospaced))
                     .foregroundColor(.red)
-                    .tracking(0.8)
+                    .tracking(2)
                 
-                Text(alert.penaltyType == "double_interference"
-                     ? "DISQUALIFIED"
-                     : "2nd best wave halved · P\(relay.priority.myPosition)")
-                    .font(.system(size: 8, weight: .medium, design: .monospaced))
-                    .foregroundColor(.red.opacity(0.6))
+                Text(alert.message)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
                     .multilineTextAlignment(.center)
+                
+                Spacer()
+                
+                timerDisplay
             }
+            .padding(.horizontal, 8)
         }
-        .ignoresSafeArea()
     }
-}
-
-// MARK: - Preview
-
-#Preview {
-    let relay = RelayConnection()
-    PriorityView(relay: relay)
+    
+    // MARK: - Shared Components
+    
+    private var jerseyBar: some View {
+        let color = jerseySwiftColor(relay.priority.myJersey)
+        return Rectangle()
+            .fill(color)
+            .frame(height: 4)
+            .cornerRadius(2)
+            .padding(.horizontal, 20)
+            .padding(.top, 4)
+    }
+    
+    private var timerDisplay: some View {
+        let t = relay.timer
+        return VStack(spacing: 0) {
+            Text(t.remainingFormatted)
+                .font(.system(size: 24, weight: .bold, design: .monospaced))
+                .foregroundColor(t.warning ? .red : t.low ? .yellow : .white.opacity(0.6))
+                .padding(.bottom, 8)
+        }
+    }
+    
+    // MARK: - Helpers
+    
+    private func positionColor(_ pos: Int) -> Color {
+        switch pos {
+        case 1: return Color(red: 1, green: 0.84, blue: 0)       // Gold
+        case 2: return Color(red: 0.75, green: 0.75, blue: 0.78)  // Silver
+        case 3: return Color(red: 0.80, green: 0.50, blue: 0.20)  // Bronze
+        default: return Color.white.opacity(0.3)
+        }
+    }
+    
+    private func jerseySwiftColor(_ jersey: String?) -> Color {
+        switch jersey?.lowercased() {
+        case "red":    return Color(red: 0.86, green: 0.15, blue: 0.15)
+        case "blue":   return Color(red: 0.15, green: 0.39, blue: 0.92)
+        case "white":  return Color(red: 0.89, green: 0.91, blue: 0.94)
+        case "yellow": return Color(red: 0.92, green: 0.70, blue: 0.03)
+        case "green":  return Color(red: 0.09, green: 0.64, blue: 0.20)
+        case "black":  return Color(red: 0.12, green: 0.16, blue: 0.24)
+        case "pink":   return Color(red: 0.93, green: 0.30, blue: 0.60)
+        case "orange": return Color(red: 0.92, green: 0.35, blue: 0.03)
+        default:       return Color.gray
+        }
+    }
 }

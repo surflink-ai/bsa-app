@@ -35,7 +35,6 @@ struct ConnectView: View {
                     
                     TextField("Heat ID", text: $heatId)
                         .font(.system(size: 12, design: .monospaced))
-                        .textFieldStyle(.roundedBorder)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                 }
@@ -49,7 +48,6 @@ struct ConnectView: View {
                     
                     TextField("Your ID", text: $athleteId)
                         .font(.system(size: 12, design: .monospaced))
-                        .textFieldStyle(.roundedBorder)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                 }

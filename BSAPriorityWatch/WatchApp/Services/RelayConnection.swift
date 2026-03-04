@@ -13,6 +13,7 @@ import WatchKit
 // The watch subscribes to comp_heats + comp_heat_athletes changes via Supabase Realtime.
 // Also polls /api/judge/priority for full state on connect.
 
+@MainActor
 @Observable
 class RelayConnection {
     var isConnected = false
@@ -104,11 +105,9 @@ class RelayConnection {
                   let heat = heats.first,
                   let athletes = try? JSONSerialization.jsonObject(with: athData) as? [[String: Any]] else { return }
             
-            await MainActor.run {
-                updateState(heat: heat, athletes: athletes)
-                isConnected = true
-                connectionState = .connected
-            }
+            updateState(heat: heat, athletes: athletes)
+            isConnected = true
+            connectionState = .connected
         } catch {
             print("[REST] Fetch error: \(error.localizedDescription)")
         }
@@ -116,7 +115,6 @@ class RelayConnection {
     
     // MARK: - Update State from JSON
     
-    @MainActor
     private func updateState(heat: [String: Any], athletes: [[String: Any]]) {
         let oldPosition = priority.myPosition
         
@@ -128,7 +126,7 @@ class RelayConnection {
         let heatNumber = heat["heat_number"] as? Int ?? 0
         let certified = heat["certified"] as? Bool ?? false
         let durationMin = heat["duration_minutes"] as? Int ?? 20
-        let isPaused = heat["is_paused"] as? Bool ?? false
+        let _ = heat["is_paused"] as? Bool ?? false
         
         heatDurationMinutes = durationMin
         if let startStr = heat["actual_start"] as? String {
@@ -237,18 +235,19 @@ class RelayConnection {
     }
     
     private func receiveRealtime() {
-        webSocket?.receive { [weak self] result in
-            switch result {
-            case .success(let msg):
-                if case .string(let text) = msg {
-                    // Any change → refetch full state
-                    if text.contains("postgres_changes") && text.contains("UPDATE") {
-                        Task { await self?.fetchFullState() }
+        Task {
+            guard let webSocket = self.webSocket else { return }
+            do {
+                while !Task.isCancelled && shouldReconnect {
+                    let msg = try await webSocket.receive()
+                    if case .string(let text) = msg {
+                        // Any change → refetch full state
+                        if text.contains("postgres_changes") && text.contains("UPDATE") {
+                            await fetchFullState()
+                        }
                     }
                 }
-                self?.receiveRealtime()
-                
-            case .failure(let error):
+            } catch {
                 print("[RT] Error: \(error.localizedDescription)")
                 // Polling will keep us alive — Realtime is bonus
             }
@@ -257,13 +256,15 @@ class RelayConnection {
     
     // Supabase Realtime requires heartbeat every 30s
     private func scheduleHeartbeat() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
-            guard let self = self, self.shouldReconnect else { return }
-            let hb = """
-            {"topic":"phoenix","event":"heartbeat","payload":{},"ref":"hb"}
-            """
-            self.webSocket?.send(.string(hb)) { _ in }
-            self.scheduleHeartbeat()
+        Task {
+            while !Task.isCancelled && shouldReconnect {
+                try? await Task.sleep(nanoseconds: 30_000_000_000) // 30 seconds
+                guard shouldReconnect else { break }
+                let hb = """
+                {"topic":"phoenix","event":"heartbeat","payload":{},"ref":"hb"}
+                """
+                webSocket?.send(.string(hb)) { _ in }
+            }
         }
     }
     
@@ -281,7 +282,7 @@ class RelayConnection {
     // MARK: - Local Timer (no network needed once heat starts)
     
     private func startTimer() {
-        timerTask = Task { @MainActor in
+        timerTask = Task {
             while shouldReconnect && !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
                 updateTimer()
@@ -289,7 +290,6 @@ class RelayConnection {
         }
     }
     
-    @MainActor
     private func updateTimer() {
         guard let start = heatStartTime, heatStatus?.status == "live" else {
             timer = TimerState(remainingSeconds: heatDurationMinutes * 60, remainingFormatted: formatTime(heatDurationMinutes * 60), durationMinutes: heatDurationMinutes, isPaused: false, status: heatStatus?.status ?? "pending", warning: false, low: false)
@@ -327,7 +327,6 @@ class RelayConnection {
     
     // MARK: - Haptics
     
-    @MainActor
     private func playHaptic(_ type: WKHapticType) {
         WKInterfaceDevice.current().play(type)
     }

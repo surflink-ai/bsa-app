@@ -3,6 +3,7 @@ import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader, Card, SectionLabel, FormField, Button, Modal, StatusDot, MetaText, EmptyState, inputStyle, selectStyle } from '@/components/admin/ui'
+import { AthleteSearch } from '@/components/admin/AthleteSearch'
 
 interface Division { id: string; name: string; short_name: string }
 interface EventDivision {
@@ -47,6 +48,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   const [athletesPerHeat, setAthletesPerHeat] = useState(4)
   const [athleteModal, setAthleteModal] = useState<Heat | null>(null)
   const [athleteName, setAthleteName] = useState('')
+  const [athleteId, setAthleteId] = useState<string | null>(null)
   const [athleteJersey, setAthleteJersey] = useState('red')
   const [saving, setSaving] = useState(false)
 
@@ -143,11 +145,21 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const existing = athleteModal.athletes?.length || 0
     await sb.from('comp_heat_athletes').insert({
       heat_id: athleteModal.id,
+      athlete_id: athleteId || null,
       athlete_name: athleteName,
       jersey_color: athleteJersey,
       seed_position: existing + 1,
     })
-    setSaving(false); setAthleteModal(null); setAthleteName(''); setAthleteJersey('red'); load()
+    setSaving(false); setAthleteModal(null); setAthleteName(''); setAthleteId(null); setAthleteJersey('red'); load()
+  }
+
+  const handleCreateNewAthlete = async (name: string) => {
+    // Create a new athlete in the registry and select them
+    const { data, error } = await sb.from('athletes').insert({ name, nationality: 'Barbados' }).select('id, name, image_url, nationality, gender').single()
+    if (data) {
+      setAthleteName(data.name)
+      setAthleteId(data.id)
+    }
   }
 
   const removeAthlete = async (haId: string) => {
@@ -376,9 +388,16 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
       </Modal>
 
       {/* Add Athlete Modal */}
-      <Modal open={!!athleteModal} onClose={() => setAthleteModal(null)} title={`Add Athlete — Heat ${athleteModal?.heat_number || ''}`}>
-        <FormField label="Athlete Name">
-          <input value={athleteName} onChange={e => setAthleteName(e.target.value)} style={inputStyle} placeholder="First Last" />
+      <Modal open={!!athleteModal} onClose={() => { setAthleteModal(null); setAthleteName(''); setAthleteId(null) }} title={`Add Athlete — Heat ${athleteModal?.heat_number || ''}`}>
+        <FormField label="Athlete">
+          <AthleteSearch
+            value={athleteName}
+            onChange={(val) => { setAthleteName(val); setAthleteId(null) }}
+            onSelect={(athlete) => { setAthleteName(athlete.name); setAthleteId(athlete.id) }}
+            onCreateNew={handleCreateNewAthlete}
+            placeholder="Search by name..."
+            autoFocus
+          />
         </FormField>
         <FormField label="Jersey Color">
           <div style={{ display: 'flex', gap: 8 }}>

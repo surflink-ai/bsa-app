@@ -24,7 +24,15 @@ const LIGHT = {
 }
 
 const JERSEY: Record<string, string> = { red: '#DC2626', blue: '#2563EB', white: '#E2E8F0', yellow: '#EAB308', green: '#16A34A', black: '#1E293B', pink: '#EC4899', orange: '#EA580C' }
-const ff = { display: 'Space Grotesk, sans-serif', mono: 'JetBrains Mono, monospace', body: 'DM Sans, sans-serif' }
+const ff = { display: 'Inter, -apple-system, sans-serif', mono: 'Geist Mono, ui-monospace, monospace', body: 'Inter, -apple-system, sans-serif' }
+
+const FONT_LINK_ID = 'bsa-fonts'
+if (typeof document !== 'undefined' && !document.getElementById(FONT_LINK_ID)) {
+  const link = document.createElement('link')
+  link.id = FONT_LINK_ID; link.rel = 'stylesheet'
+  link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600;700;800&display=swap'
+  document.head.appendChild(link)
+}
 
 function scoreColor(s: number): string {
   if (s >= 8) return '#60A5FA'; if (s >= 6) return '#2DD4BF';
@@ -144,8 +152,8 @@ function HeadJudgePage() {
         <div style={{ fontFamily: ff.mono, fontSize: 40, fontWeight: 800, letterSpacing: '0.06em', lineHeight: 1, color: timer.warn ? t.red : t.text }}>{timer.fmt}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {data.heat.status === 'live' && !data.heat.certified && <button onClick={certifyHeat} style={{ padding: '7px 16px', border: 'none', background: t.gold, color: '#0A2540', fontSize: 12, fontWeight: 800, cursor: 'pointer', fontFamily: ff.display, borderRadius: 10 }}>Certify</button>}
-          {data.heat.certified && <span style={{ fontSize: 11, fontFamily: ff.mono, color: t.teal, fontWeight: 700 }}>✓ CERTIFIED</span>}
-          <button onClick={toggleTheme} style={{ fontSize: 13, padding: '4px 8px', cursor: 'pointer', ...glass('transparent', t.glassBorder, 20, 8) }}>{dark ? '☀️' : '🌙'}</button>
+          {data.heat.certified && <span style={{ fontSize: 10, fontFamily: ff.mono, color: t.teal, fontWeight: 700, letterSpacing: '0.05em' }}>CERTIFIED</span>}
+          <button onClick={toggleTheme} style={{ fontFamily: ff.mono, fontSize: 9, fontWeight: 600, padding: '5px 10px', cursor: 'pointer', color: t.textSec, letterSpacing: '0.05em', ...glass('transparent', t.glassBorder, 20, 8) }}>{dark ? 'LIGHT' : 'DARK'}</button>
           <a href="/judge" style={{ fontSize: 11, color: t.textMuted, textDecoration: 'none', fontFamily: ff.mono }}>← Back</a>
         </div>
       </div>
@@ -162,7 +170,7 @@ function HeadJudgePage() {
               <button key={a.heat_athlete_id} onClick={() => !a.has_ridden ? priorityAction('wave_ridden', a.heat_athlete_id) : null}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', fontSize: 10, fontWeight: 700, fontFamily: ff.display, cursor: a.has_ridden ? 'default' : 'pointer', color: a.has_ridden ? t.textMuted : t.teal, ...glass(a.has_ridden ? 'transparent' : `${t.teal}12`, a.has_ridden ? t.glassBorder : `${t.teal}30`, 20, 8) }}>
                 <span style={{ width: 6, height: 6, borderRadius: 3, background: jc, boxShadow: `0 0 4px ${jc}60` }} />
-                {a.athlete_name?.split(' ').pop()}{a.has_ridden && ' ✓'}
+                {a.athlete_name?.split(' ').pop()}{a.has_ridden && ' done'}
               </button>
             )
           })
@@ -177,14 +185,14 @@ function HeadJudgePage() {
                 <button onClick={() => setPriorityMenu(priorityMenu === id ? null : id)}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', fontSize: 10, fontWeight: 700, fontFamily: ff.display, cursor: 'pointer', color: susp ? t.textMuted : i === 0 ? t.gold : t.textSec, opacity: susp ? 0.5 : 1, ...glass(i === 0 ? `${jc}12` : 'transparent', i === 0 ? `${t.gold}25` : t.glassBorder, 20, 8) }}>
                   <span style={{ width: 6, height: 6, borderRadius: 3, background: jc, boxShadow: `0 0 4px ${jc}60` }} />
-                  P{i + 1} {a?.athlete_name?.split(' ').pop()}{susp && ' ⏸'}
+                  P{i + 1} {a?.athlete_name?.split(' ').pop()}{susp && ' (sus)'}
                 </button>
                 {priorityMenu === id && (
                   <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 50, minWidth: 190, overflow: 'hidden', ...glass(t.modalGlass, t.glassBorder, 40, 14), boxShadow: t.shadow }}>
                     {[
-                      { label: '🌊 Wave Ridden', action: 'wave_ridden' },
-                      ...(susp ? [{ label: '▶ Reinstate', action: 'reinstate' }] : [{ label: '⏸ Suspend', action: 'suspend' }]),
-                      { label: '🚫 Blocking', action: 'block', danger: true },
+                      { label: 'Wave Ridden', action: 'wave_ridden' },
+                      ...(susp ? [{ label: 'Reinstate', action: 'reinstate' }] : [{ label: 'Suspend', action: 'suspend' }]),
+                      { label: 'Blocking', action: 'block', danger: true },
                     ].map(item => (
                       <button key={item.action} onClick={() => priorityAction(item.action, id)}
                         style={{ display: 'block', width: '100%', padding: '10px 14px', border: 'none', borderBottom: `1px solid ${t.glassBorder}`, background: 'transparent', color: (item as any).danger ? t.red : t.textSec, fontSize: 12, textAlign: 'left', cursor: 'pointer', fontFamily: ff.body }}>
@@ -296,7 +304,7 @@ function HeadJudgePage() {
               </div>
 
               <div style={{ width: 40, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <button onClick={() => setIntModal({ id: athlete.id, name: athlete.athlete_name })} style={{ fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', opacity: 0.3, padding: 4 }}>🚩</button>
+                <button onClick={() => setIntModal({ id: athlete.id, name: athlete.athlete_name })} style={{ fontFamily: ff.mono, fontSize: 8, fontWeight: 700, background: 'none', border: `1px solid ${t.red}20`, borderRadius: 6, cursor: 'pointer', color: t.red, opacity: 0.4, padding: '3px 6px', letterSpacing: '0.05em' }}>INT</button>
               </div>
             </div>
           )
@@ -324,7 +332,7 @@ function HeadJudgePage() {
         <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ position: 'absolute', inset: 0, background: t.scrim, backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} onClick={() => setIntModal(null)} />
           <div style={{ position: 'relative', zIndex: 101, width: 360, padding: 24, ...glass(t.modalGlass, `${t.red}30`, 60, 24), boxShadow: `${t.shadow}, inset 0 1px 0 rgba(255,255,255,0.06)` }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: t.red, fontFamily: ff.display, marginBottom: 4 }}>🚩 Interference</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: t.red, fontFamily: ff.display, marginBottom: 4 }}>Interference</div>
             <div style={{ fontSize: 13, color: t.textSec, marginBottom: 20 }}>{intModal.name}</div>
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 9, fontFamily: ff.mono, color: t.textMuted, letterSpacing: '0.08em', marginBottom: 6 }}>WAVE NUMBER</div>

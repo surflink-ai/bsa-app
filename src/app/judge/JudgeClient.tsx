@@ -31,13 +31,23 @@ const JERSEY: Record<string, string> = {
 }
 
 const ISA = [
-  { range: '0–1.9', label: 'Poor', color: '#F87171' },
-  { range: '2–3.9', label: 'Fair', color: '#FB923C' },
-  { range: '4–5.9', label: 'Average', color: '#FBBF24' },
-  { range: '6–7.9', label: 'Good', color: '#2DD4BF' },
-  { range: '8–9.9', label: 'Excellent', color: '#60A5FA' },
+  { range: '0 – 1.9', label: 'Poor', color: '#F87171' },
+  { range: '2 – 3.9', label: 'Fair', color: '#FB923C' },
+  { range: '4 – 5.9', label: 'Average', color: '#FBBF24' },
+  { range: '6 – 7.9', label: 'Good', color: '#2DD4BF' },
+  { range: '8 – 9.9', label: 'Excellent', color: '#60A5FA' },
   { range: '10', label: 'Perfect', color: '#FBBF24' },
 ]
+
+/* ─── Font loader (injected once) ─── */
+const FONT_LINK_ID = 'bsa-fonts'
+if (typeof document !== 'undefined' && !document.getElementById(FONT_LINK_ID)) {
+  const link = document.createElement('link')
+  link.id = FONT_LINK_ID
+  link.rel = 'stylesheet'
+  link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600;700;800&display=swap'
+  document.head.appendChild(link)
+}
 
 interface Judge { id: string; name: string; role: string }
 interface AthleteScore {
@@ -64,7 +74,7 @@ function getBest2(scores: { wave_number: number; score: number }[]): number[] {
 
 const MAX_WAVES = 10
 const SCORES = Array.from({ length: 20 }, (_, i) => (i + 1) * 0.5)
-const ff = { display: 'Space Grotesk, sans-serif', mono: 'JetBrains Mono, monospace', body: 'DM Sans, sans-serif' }
+const ff = { display: 'Inter, -apple-system, sans-serif', mono: 'Geist Mono, ui-monospace, monospace', body: 'Inter, -apple-system, sans-serif' }
 
 function useTimer(start: string | null, dur: number, status: string) {
   const [rem, setRem] = useState(dur * 60)
@@ -156,7 +166,7 @@ export function JudgeClient() {
     const res = await fetch('/api/judge/score-v2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ judge_id: judge.id, heat_athlete_id: numpad.athleteId, wave_number: numpad.wave, score: selectedScore }) })
     const d = await res.json()
     setSubmitting(false)
-    if (d.success) { showMsg(`${selectedScore.toFixed(1)} locked ✓`, true); setNumpad(null); setSelectedScore(null) }
+    if (d.success) { showMsg(`${selectedScore.toFixed(1)} locked`, true); setNumpad(null); setSelectedScore(null) }
     else showMsg(d.error || 'Error', false)
     loadHeatData()
   }
@@ -185,7 +195,7 @@ export function JudgeClient() {
   if (!heats.length) return (
     <div style={{ minHeight: '100dvh', background: t.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: t.text, textAlign: 'center', padding: 32 }}>
       <div style={{ padding: '40px 48px', ...glass(t.glass, t.glassBorder, 60, 28) }}>
-        <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.2 }}>🌊</div>
+        <div style={{ fontSize: 32, marginBottom: 16, opacity: 0.15, fontFamily: ff.mono, fontWeight: 800, letterSpacing: '0.1em', color: t.teal }}>/ / /</div>
         <div style={{ fontSize: 22, fontWeight: 700, fontFamily: ff.display, marginBottom: 6 }}>No Live Heats</div>
         <div style={{ fontSize: 14, color: t.textSec }}>Waiting for a heat to go live…</div>
         <div style={{ fontSize: 12, color: t.textMuted, marginTop: 32, fontFamily: ff.mono }}>{judge.name}</div>
@@ -216,7 +226,7 @@ export function JudgeClient() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={() => setShowISA(!showISA)} style={{ fontFamily: ff.mono, fontSize: 9, fontWeight: 600, color: t.teal, padding: '5px 10px', cursor: 'pointer', letterSpacing: '0.08em', ...glass('transparent', t.glassBorder, 20, 8) }}>ISA</button>
-          <button onClick={toggleTheme} style={{ fontSize: 13, padding: '4px 8px', cursor: 'pointer', ...glass('transparent', t.glassBorder, 20, 8) }}>{dark ? '☀️' : '🌙'}</button>
+          <button onClick={toggleTheme} style={{ fontFamily: ff.mono, fontSize: 9, fontWeight: 600, padding: '5px 10px', cursor: 'pointer', color: t.textSec, letterSpacing: '0.05em', ...glass('transparent', t.glassBorder, 20, 8) }}>{dark ? 'LIGHT' : 'DARK'}</button>
           <span style={{ fontFamily: ff.mono, fontSize: 10, color: t.textMuted }}>{judge.name}</span>
           <button onClick={logout} style={{ fontFamily: ff.mono, fontSize: 9, color: t.textMuted, background: 'none', border: 'none', cursor: 'pointer' }}>Exit</button>
         </div>

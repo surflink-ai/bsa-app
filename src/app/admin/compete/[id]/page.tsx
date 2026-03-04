@@ -15,9 +15,18 @@ interface EventDivision {
 interface Round { id: string; round_number: number; name: string; status: string; heats: Heat[] }
 interface Heat { id: string; heat_number: number; status: string; duration_minutes: number; athletes: HeatAthlete[] }
 interface HeatAthlete { id: string; athlete_name: string; jersey_color: string | null; seed_position: number | null; result_position: number | null }
+interface Registration {
+  id: string; athlete_name: string; athlete_id: string | null; seed_rank: number | null
+  status: string; payment_status: string; email: string | null; phone: string | null
+  created_at: string
+}
+interface EventDivisionWithRegs extends EventDivision {
+  registrations: Registration[]
+}
 interface CompEvent {
   id: string; name: string; location: string | null; event_date: string | null; status: string
-  event_divisions: EventDivision[]
+  registration_open: boolean; registration_fee: number | null
+  event_divisions: EventDivisionWithRegs[]
 }
 
 const JERSEY_COLORS = ['red', 'blue', 'white', 'yellow', 'green', 'black', 'pink', 'orange']
@@ -51,10 +60,15 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   const [athleteId, setAthleteId] = useState<string | null>(null)
   const [athleteJersey, setAthleteJersey] = useState('red')
   const [saving, setSaving] = useState(false)
+  // Registration state
+  const [regModal, setRegModal] = useState<EventDivisionWithRegs | null>(null)
+  const [regAthleteName, setRegAthleteName] = useState('')
+  const [regAthleteId, setRegAthleteId] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'brackets' | 'registrations'>('brackets')
 
   const load = async () => {
     const { data: ev } = await sb.from('comp_events').select(`
-      id, name, location, event_date, status,
+      id, name, location, event_date, status, registration_open, registration_fee,
       event_divisions:comp_event_divisions(
         id, division_id, max_athletes, waves_per_heat, ride_time_minutes, scoring_best_of, advances_per_heat,
         division:comp_divisions(id, name, short_name),
@@ -64,7 +78,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             id, heat_number, status, duration_minutes,
             athletes:comp_heat_athletes(id, athlete_name, jersey_color, seed_position, result_position)
           )
-        )
+        ),
+        registrations:comp_registrations(id, athlete_name, athlete_id, seed_rank, status, payment_status, email, phone, created_at)
       )
     `).eq('id', id).single()
 
@@ -162,6 +177,43 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  const addRegistration = async () => {
+    if (!regModal || !regAthleteName) return
+    setSaving(true)
+    // Check if already registered
+    const existing = regModal.registrations?.find(r => r.athlete_name.toLowerCase() === regAthleteName.toLowerCase())
+    if (existing) {
+      alert('This athlete is already registered for this division')
+      setSaving(false)
+      return
+    }
+    await sb.from('comp_registrations').insert({
+      event_division_id: regModal.id,
+      athlete_id: regAthleteId || null,
+      athlete_name: regAthleteName,
+      status: 'confirmed',
+      payment_status: event?.registration_fee ? 'pending' : 'free',
+    })
+    setSaving(false); setRegModal(null); setRegAthleteName(''); setRegAthleteId(null); load()
+  }
+
+  const updateRegStatus = async (regId: string, status: string) => {
+    await sb.from('comp_registrations').update({ status, updated_at: new Date().toISOString() }).eq('id', regId)
+    load()
+  }
+
+  const removeRegistration = async (regId: string) => {
+    if (!confirm('Remove this registration?')) return
+    await sb.from('comp_registrations').delete().eq('id', regId)
+    load()
+  }
+
+  const toggleRegistration = async () => {
+    if (!event) return
+    await sb.from('comp_events').update({ registration_open: !event.registration_open }).eq('id', id)
+    load()
+  }
+
   const removeAthlete = async (haId: string) => {
     await sb.from('comp_heat_athletes').delete().eq('id', haId)
     load()
@@ -231,6 +283,21 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         </div>
       )}
 
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--admin-border)', marginBottom: 24 }}>
+        {(['brackets', 'registrations'] as const).map(t => (
+          <button key={t} onClick={() => setActiveTab(t)} style={{
+            fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600,
+            padding: '10px 20px', border: 'none', cursor: 'pointer', backgroundColor: 'transparent',
+            color: activeTab === t ? 'var(--admin-navy)' : 'var(--admin-text-muted)',
+            borderBottom: activeTab === t ? '2px solid var(--admin-navy)' : '2px solid transparent',
+            marginBottom: -1, transition: 'all 0.15s', textTransform: 'capitalize',
+          }}>{t === 'brackets' ? `Brackets & Heats` : `Registrations (${event?.event_divisions?.reduce((s, ed) => s + (ed.registrations?.length || 0), 0) || 0})`}</button>
+        ))}
+      </div>
+
+      {/* BRACKETS TAB */}
+      {activeTab === 'brackets' && (<>
       {/* Divisions */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700, color: 'var(--admin-navy)', margin: 0 }}>Divisions</h2>
@@ -246,6 +313,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <div>
                   <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 600, color: 'var(--admin-navy)' }}>{ed.division?.name}</span>
+                  {ed.registrations?.length > 0 && (
+                    <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10, backgroundColor: 'rgba(43,165,160,0.08)', color: 'var(--admin-teal)', fontFamily: "'JetBrains Mono', monospace" }}>
+                      {ed.registrations.filter(r => r.status === 'confirmed').length} registered
+                    </span>
+                  )}
                   <MetaText style={{ marginLeft: 12 }}>{ed.ride_time_minutes}min heats — Best {ed.scoring_best_of} waves — Top {ed.advances_per_heat} advance</MetaText>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -329,6 +401,113 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
           ))}
         </div>
       )}
+
+      </>)}
+
+      {/* REGISTRATIONS TAB */}
+      {activeTab === 'registrations' && (
+        <div>
+          {/* Registration controls */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700, color: 'var(--admin-navy)', margin: 0 }}>Registrations</h2>
+              <StatusDot status={event.registration_open ? 'success' : 'muted'} label={event.registration_open ? 'Open' : 'Closed'} />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Button variant={event.registration_open ? 'danger' : 'primary'} onClick={toggleRegistration}>
+                {event.registration_open ? 'Close Registration' : 'Open Registration'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Per-division registration lists */}
+          {(!event.event_divisions || event.event_divisions.length === 0) ? (
+            <EmptyState message="Add divisions first before managing registrations" />
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {event.event_divisions.map(ed => {
+                const regs = ed.registrations || []
+                const confirmed = regs.filter(r => r.status === 'confirmed').length
+                const pending = regs.filter(r => r.status === 'pending').length
+                return (
+                  <Card key={ed.id}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 600, color: 'var(--admin-navy)' }}>{ed.division?.name}</span>
+                        <MetaText>{confirmed} confirmed{pending > 0 ? ` · ${pending} pending` : ''} / {ed.max_athletes} max</MetaText>
+                      </div>
+                      <Button variant="secondary" onClick={() => { setRegModal(ed); setRegAthleteName(''); setRegAthleteId(null) }}>+ Register Athlete</Button>
+                    </div>
+
+                    {regs.length === 0 ? (
+                      <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--admin-text-muted)', fontSize: 13 }}>No registrations yet</div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {/* Header */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr 100px 80px 100px 60px', gap: 8, padding: '8px 12px', borderBottom: '1px solid var(--admin-border)' }}>
+                          <MetaText>#</MetaText>
+                          <MetaText>Athlete</MetaText>
+                          <MetaText>Status</MetaText>
+                          <MetaText>Payment</MetaText>
+                          <MetaText>Registered</MetaText>
+                          <MetaText>{' '}</MetaText>
+                        </div>
+                        {regs.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).map((reg, i) => (
+                          <div key={reg.id} style={{ display: 'grid', gridTemplateColumns: '40px 1fr 100px 80px 100px 60px', gap: 8, padding: '10px 12px', alignItems: 'center', borderBottom: '1px solid var(--admin-border-subtle)', background: i % 2 === 1 ? 'rgba(10,37,64,0.012)' : 'transparent' }}>
+                            <span style={{ fontSize: 12, color: 'var(--admin-text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>{i + 1}</span>
+                            <div>
+                              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--admin-text)' }}>{reg.athlete_name}</span>
+                              {reg.email && <span style={{ fontSize: 10, color: 'var(--admin-text-muted)', marginLeft: 8 }}>{reg.email}</span>}
+                            </div>
+                            <div>
+                              <select
+                                value={reg.status}
+                                onChange={e => updateRegStatus(reg.id, e.target.value)}
+                                style={{ fontSize: 11, padding: '3px 6px', border: '1px solid var(--admin-border)', borderRadius: 4, background: '#fff', color: reg.status === 'confirmed' ? 'var(--admin-success)' : reg.status === 'pending' ? 'var(--admin-warning)' : 'var(--admin-text-muted)', cursor: 'pointer' }}
+                              >
+                                <option value="pending">Pending</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="waitlist">Waitlist</option>
+                                <option value="withdrawn">Withdrawn</option>
+                                <option value="dns">DNS</option>
+                              </select>
+                            </div>
+                            <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: reg.payment_status === 'paid' ? 'var(--admin-success)' : reg.payment_status === 'pending' ? 'var(--admin-warning)' : 'var(--admin-text-muted)' }}>
+                              {reg.payment_status}
+                            </span>
+                            <span style={{ fontSize: 11, color: 'var(--admin-text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
+                              {new Date(reg.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </span>
+                            <button onClick={() => removeRegistration(reg.id)} style={{ background: 'none', border: 'none', color: 'var(--admin-text-muted)', cursor: 'pointer', fontSize: 11, padding: '2px' }}>✕</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Register Athlete Modal */}
+      <Modal open={!!regModal} onClose={() => { setRegModal(null); setRegAthleteName(''); setRegAthleteId(null) }} title={`Register Athlete — ${regModal?.division?.name || ''}`}>
+        <FormField label="Athlete">
+          <AthleteSearch
+            value={regAthleteName}
+            onChange={(val) => { setRegAthleteName(val); setRegAthleteId(null) }}
+            onSelect={(athlete) => { setRegAthleteName(athlete.name); setRegAthleteId(athlete.id) }}
+            onCreateNew={(name) => { setRegAthleteName(name); setRegAthleteId(null) }}
+            placeholder="Search athlete..."
+            autoFocus
+          />
+        </FormField>
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <Button onClick={addRegistration} disabled={saving || !regAthleteName}>{saving ? 'Registering...' : 'Register'}</Button>
+          <Button variant="ghost" onClick={() => setRegModal(null)}>Cancel</Button>
+        </div>
+      </Modal>
 
       {/* Add Division Modal */}
       <Modal open={addDivModal} onClose={() => setAddDivModal(false)} title="Add Division">

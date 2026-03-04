@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { recalculateHeatTotals, recalculateWaveAverage } from '@/lib/recalc'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
   const athleteIds = athletes.map(a => a.id)
   const { data: allScores } = await supabase
     .from('comp_judge_scores')
-    .select('heat_athlete_id, wave_number, judge_id, score, is_override, override_reason')
+    .select('id, heat_athlete_id, wave_number, judge_id, score, is_override, override_reason')
     .in('heat_athlete_id', athleteIds)
     .order('wave_number')
 
@@ -111,6 +112,7 @@ export async function GET(request: NextRequest) {
         })
       }
       waveMap.get(js.wave_number)!.judge_scores.push({
+        score_id: js.id,
         judge_id: js.judge_id,
         judge_name: (() => { const j = (judges || []).find(j => j.judge_id === js.judge_id); const jd = j?.judge as any; return jd?.name || (Array.isArray(jd) ? jd[0]?.name : null) || 'Unknown' })(),
         judge_position: (judges || []).find(j => j.judge_id === js.judge_id)?.position || 0,
@@ -200,23 +202,40 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'override_score') {
-      const { score_id, new_score, reason } = body
-      if (!score_id || new_score === undefined || !reason) {
-        return NextResponse.json({ error: 'score_id, new_score, and reason required' }, { status: 400 })
+      const { score_id, heat_athlete_id, wave_number, target_judge_id, new_score, reason } = body
+      if (new_score === undefined || !reason) {
+        return NextResponse.json({ error: 'new_score and reason required' }, { status: 400 })
+      }
+
+      // Find score by ID or by athlete+wave+judge
+      let resolvedScoreId = score_id
+      if (!resolvedScoreId && heat_athlete_id && wave_number && target_judge_id) {
+        const { data: found } = await supabase
+          .from('comp_judge_scores')
+          .select('id')
+          .eq('heat_athlete_id', heat_athlete_id)
+          .eq('wave_number', wave_number)
+          .eq('judge_id', target_judge_id)
+          .single()
+        if (found) resolvedScoreId = found.id
+      }
+
+      if (!resolvedScoreId) {
+        return NextResponse.json({ error: 'Score not found. Provide score_id or heat_athlete_id+wave_number+target_judge_id' }, { status: 400 })
       }
 
       // Get original score
       const { data: original } = await supabase
         .from('comp_judge_scores')
         .select('score')
-        .eq('id', score_id)
+        .eq('id', resolvedScoreId)
         .single()
 
       if (!original) return NextResponse.json({ error: 'Score not found' }, { status: 404 })
 
       // Log override
       await supabase.from('comp_score_overrides').insert({
-        judge_score_id: score_id,
+        judge_score_id: resolvedScoreId,
         original_score: original.score,
         new_score,
         reason,
@@ -227,10 +246,9 @@ export async function POST(request: NextRequest) {
       await supabase
         .from('comp_judge_scores')
         .update({ score: new_score, is_override: true, override_reason: reason, override_by: judge_id, updated_at: new Date().toISOString() })
-        .eq('id', score_id)
+        .eq('id', resolvedScoreId)
 
-      // Trigger full recalculation cascade
-      // 1. Get the score's context
+      // Get score context for cascade
       const { data: scoreContext } = await supabase
         .from('comp_judge_scores')
         .select('heat_athlete_id, wave_number')
@@ -238,117 +256,11 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (scoreContext) {
-        // 2. Recalculate wave average
-        const { data: waveJudgeScores } = await supabase
-          .from('comp_judge_scores')
-          .select('score')
-          .eq('heat_athlete_id', scoreContext.heat_athlete_id)
-          .eq('wave_number', scoreContext.wave_number)
+        // Recalculate wave average (shared function — handles drop high/low properly)
+        await recalculateWaveAverage(scoreContext.heat_athlete_id, scoreContext.wave_number, heat_id)
 
-        if (waveJudgeScores && waveJudgeScores.length > 0) {
-          const scores = waveJudgeScores.map(s => Number(s.score))
-          const sorted = [...scores].sort((a, b) => a - b)
-          let avg: number
-          if (sorted.length >= 5) {
-            const middle = sorted.slice(1, -1)
-            avg = middle.reduce((s, v) => s + v, 0) / middle.length
-          } else {
-            avg = sorted.reduce((s, v) => s + v, 0) / sorted.length
-          }
-          avg = Math.round(avg * 100) / 100
-
-          // Check for interference
-          const { data: interference } = await supabase
-            .from('comp_interference')
-            .select('penalty_type')
-            .eq('athlete_id', scoreContext.heat_athlete_id)
-            .eq('wave_number', scoreContext.wave_number)
-            .single()
-
-          let finalScore = avg
-          if (interference) {
-            if (interference.penalty_type === 'interference_half') finalScore = Math.round(avg / 2 * 100) / 100
-            else if (interference.penalty_type === 'interference_zero' || interference.penalty_type === 'double_interference') finalScore = 0
-          }
-
-          await supabase
-            .from('comp_wave_scores')
-            .upsert({
-              heat_athlete_id: scoreContext.heat_athlete_id,
-              wave_number: scoreContext.wave_number,
-              score: finalScore,
-              is_override: true,
-              notes: `Override recalc. Original avg: ${avg}${interference ? `. Penalty: ${interference.penalty_type}` : ''}`,
-            }, { onConflict: 'heat_athlete_id,wave_number' })
-        }
-
-        // 3. Recalculate heat totals for all athletes
-        const { data: ha } = await supabase
-          .from('comp_heat_athletes')
-          .select('heat_id')
-          .eq('id', scoreContext.heat_athlete_id)
-          .single()
-
-        if (ha) {
-          // Get scoring config
-          const { data: heatData } = await supabase
-            .from('comp_heats')
-            .select('round_id')
-            .eq('id', ha.heat_id)
-            .single()
-          
-          let bestOf = 2
-          if (heatData) {
-            const { data: roundData } = await supabase
-              .from('comp_rounds')
-              .select('event_division:comp_event_divisions(scoring_best_of)')
-              .eq('id', heatData.round_id)
-              .single()
-            bestOf = (roundData?.event_division as any)?.scoring_best_of || 2
-          }
-
-          // Recalc all athletes in heat
-          const { data: allAthletes } = await supabase
-            .from('comp_heat_athletes')
-            .select('id')
-            .eq('heat_id', ha.heat_id)
-
-          for (const athlete of allAthletes || []) {
-            const { data: waves } = await supabase
-              .from('comp_wave_scores')
-              .select('score')
-              .eq('heat_athlete_id', athlete.id)
-              .order('score', { ascending: false })
-
-            const waveScores = (waves || []).map(w => Number(w.score))
-            const bestWaves = waveScores.slice(0, bestOf)
-            const total = Math.round(bestWaves.reduce((s, v) => s + v, 0) * 100) / 100
-
-            await supabase
-              .from('comp_heat_athletes')
-              .update({ total_score: total })
-              .eq('id', athlete.id)
-          }
-
-          // Recalculate positions + needs
-          const { data: updated } = await supabase
-            .from('comp_heat_athletes')
-            .select('id, total_score')
-            .eq('heat_id', ha.heat_id)
-            .order('total_score', { ascending: false })
-
-          if (updated) {
-            for (let i = 0; i < updated.length; i++) {
-              const needs = i > 0
-                ? Math.round((updated[i - 1].total_score - updated[i].total_score + 0.01) * 100) / 100
-                : null
-              await supabase
-                .from('comp_heat_athletes')
-                .update({ result_position: i + 1, needs_score: needs !== null && needs <= 10 ? needs : null })
-                .eq('id', updated[i].id)
-            }
-          }
-        }
+        // Recalculate heat totals (shared function — handles ISA interference penalties)
+        await recalculateHeatTotals(heat_id)
       }
 
       return NextResponse.json({ success: true, message: 'Score overridden and heat recalculated' })

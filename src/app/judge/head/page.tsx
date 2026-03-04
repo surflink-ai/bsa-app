@@ -29,7 +29,7 @@ const glass = (bg: string, border: string, blur = 40, radius = 16) => ({
   border: `1px solid ${border}`, borderRadius: radius,
 } as const)
 
-interface WaveJudgeScore { judge_id: string; judge_name: string; judge_position: number; score: number; is_override: boolean }
+interface WaveJudgeScore { score_id: string; judge_id: string; judge_name: string; judge_position: number; score: number; is_override: boolean; override_reason?: string }
 interface WaveData { wave_number: number; averaged_score: number | null; judge_scores: WaveJudgeScore[] }
 interface AthleteData {
   id: string; athlete_name: string; jersey_color: string | null; wave_count: number
@@ -70,6 +70,9 @@ function HeadJudgePage() {
   const [intModal, setIntModal] = useState<{ id: string; name: string } | null>(null)
   const [intWave, setIntWave] = useState('')
   const [intType, setIntType] = useState('interference_half')
+  const [overrideModal, setOverrideModal] = useState<{ scoreId: string; athleteName: string; judgeName: string; waveNumber: number; currentScore: number } | null>(null)
+  const [overrideScore, setOverrideScore] = useState('')
+  const [overrideReason, setOverrideReason] = useState('')
 
   const timer = useTimer(data?.heat?.actual_start || null, data?.heat?.duration_minutes || 20, data?.heat?.status || 'pending')
 
@@ -106,6 +109,23 @@ function HeadJudgePage() {
     if (!intModal || !intWave || !judge) return
     await fetch('/api/judge/interference', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ judge_id: judge.id, heat_id: heatId, athlete_id: intModal.id, wave_number: parseInt(intWave), penalty_type: intType }) })
     setIntModal(null); setIntWave(''); loadPanel()
+  }
+
+  const submitOverride = async () => {
+    if (!overrideModal || !overrideScore || !overrideReason || !judge) return
+    await fetch('/api/judge/head-panel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'override_score',
+        judge_id: judge.id,
+        heat_id: heatId,
+        score_id: overrideModal.scoreId,
+        new_score: parseFloat(overrideScore),
+        reason: overrideReason,
+      }),
+    })
+    setOverrideModal(null); setOverrideScore(''); setOverrideReason(''); loadPanel()
   }
 
   const certifyHeat = async () => {
@@ -260,7 +280,7 @@ function HeadJudgePage() {
                             if (!loD && s.score === lo) { dropped = true; loD = true }
                             else if (!hiD && s.score === hi) { dropped = true; hiD = true }
                           }
-                          return <span key={si} style={{ fontFamily: ff.mono, fontSize: 8, fontWeight: 600, color: dropped ? T.textMuted : T.textSec, textDecoration: dropped ? 'line-through' : 'none' }}>{s.score.toFixed(1)}</span>
+                          return <span key={si} onClick={() => setOverrideModal({ scoreId: s.score_id, athleteName: athlete.athlete_name, judgeName: s.judge_name, waveNumber: wave!.wave_number, currentScore: s.score })} style={{ fontFamily: ff.mono, fontSize: 8, fontWeight: 600, color: dropped ? T.textMuted : s.is_override ? '#D97706' : T.textSec, textDecoration: dropped ? 'line-through' : 'none', cursor: 'pointer', padding: '1px 2px', borderRadius: 3, background: s.is_override ? 'rgba(217,119,6,0.08)' : 'transparent' }}>{s.score.toFixed(1)}</span>
                         })}
                       </div>
                       {isBest && <span style={{ position: 'absolute', bottom: 4, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: jc }} />}
@@ -342,6 +362,31 @@ function HeadJudgePage() {
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setIntModal(null)} style={{ flex: 1, padding: 12, borderRadius: 12, border: `1px solid ${T.glassBorder}`, background: 'transparent', color: T.textSec, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
               <button onClick={callInterference} disabled={!intWave} style={{ flex: 1, padding: 12, borderRadius: 12, border: 'none', background: T.red, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: intWave ? 1 : 0.3 }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* OVERRIDE MODAL */}
+      {overrideModal && (
+        <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div style={{ position: 'absolute', inset: 0, background: T.scrim, backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} onClick={() => setOverrideModal(null)} />
+          <div style={{ position: 'relative', zIndex: 101, width: 360, padding: 24, ...glass(T.modalGlass, 'rgba(217,119,6,0.2)', 60, 24), boxShadow: T.shadow }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#D97706', fontFamily: ff.ui, marginBottom: 4 }}>Override Score</div>
+            <div style={{ fontSize: 13, color: T.textSec, marginBottom: 4 }}>{overrideModal.athleteName} — W{overrideModal.waveNumber}</div>
+            <div style={{ fontSize: 11, color: T.textMuted, marginBottom: 20 }}>{overrideModal.judgeName}: <span style={{ fontFamily: ff.mono, fontWeight: 700 }}>{overrideModal.currentScore.toFixed(1)}</span></div>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 9, fontFamily: ff.mono, color: T.textMuted, letterSpacing: '0.08em', marginBottom: 6 }}>NEW SCORE</div>
+              <input type="number" value={overrideScore} onChange={e => setOverrideScore(e.target.value)} min={0} max={10} step={0.1}
+                style={{ width: '100%', padding: '11px 14px', ...glass('rgba(0,0,0,0.03)', T.glassBorder, 10, 12), color: T.text, fontSize: 22, fontFamily: ff.mono, fontWeight: 700, outline: 'none', boxSizing: 'border-box', textAlign: 'center' }} />
+            </div>
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ fontSize: 9, fontFamily: ff.mono, color: T.textMuted, letterSpacing: '0.08em', marginBottom: 6 }}>REASON (REQUIRED)</div>
+              <input type="text" value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder="e.g. Scoring error, wrong athlete"
+                style={{ width: '100%', padding: '11px 14px', ...glass('rgba(0,0,0,0.03)', T.glassBorder, 10, 12), color: T.text, fontSize: 13, fontFamily: ff.ui, outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setOverrideModal(null)} style={{ flex: 1, padding: 12, borderRadius: 12, border: `1px solid ${T.glassBorder}`, background: 'transparent', color: T.textSec, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={submitOverride} disabled={!overrideScore || !overrideReason} style={{ flex: 1, padding: 12, borderRadius: 12, border: 'none', background: '#D97706', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: overrideScore && overrideReason ? 1 : 0.3 }}>Override</button>
             </div>
           </div>
         </div>

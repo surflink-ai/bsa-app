@@ -77,6 +77,13 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   const [csvText, setCsvText] = useState('')
   const [csvLoading, setCsvLoading] = useState(false)
 
+  // Judge panel state
+  const [judgePanel, setJudgePanel] = useState<{ edId: string; divName: string } | null>(null)
+  const [allJudges, setAllJudges] = useState<{ id: string; name: string; pin: string; role: string }[]>([])
+  const [panelAssignments, setPanelAssignments] = useState<{ judge_id: string; position: number; is_head_judge: boolean }[]>([])
+  const [panelLoading, setPanelLoading] = useState(false)
+  const [panelSaved, setPanelSaved] = useState(false)
+
   const load = async () => {
     const { data: ev } = await sb.from('comp_events').select(`
       id, name, location, event_date, status, registration_open, registration_fee,
@@ -106,6 +113,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
     const { data: divs } = await sb.from('comp_divisions').select('id, name, short_name').eq('active', true).order('sort_order')
     setAllDivisions(divs || [])
+
+    // Load judges for panel assignments
+    const { data: jdgs } = await sb.from('comp_judges').select('id, name, pin, role').eq('active', true).order('name')
+    setAllJudges(jdgs || [])
+
     setLoading(false)
   }
 
@@ -327,6 +339,74 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     setCsvLoading(false); setCsvModal(null); setCsvText(''); load()
   }
 
+  const openJudgePanel = async (edId: string, divName: string) => {
+    setJudgePanel({ edId, divName })
+    setPanelSaved(false)
+    // Load existing assignments for first heat in this division
+    const ed = event?.event_divisions.find(e => e.id === edId)
+    if (ed?.rounds?.[0]?.heats?.[0]) {
+      const res = await fetch(`/api/compete/judge-assignments?heat_id=${ed.rounds[0].heats[0].id}`)
+      const data = await res.json()
+      if (Array.isArray(data) && data.length > 0) {
+        setPanelAssignments(data.map((d: any) => ({ judge_id: d.judge_id, position: d.position, is_head_judge: d.is_head_judge })))
+      } else {
+        setPanelAssignments([])
+      }
+    } else {
+      setPanelAssignments([])
+    }
+  }
+
+  const addJudgeToPanel = (judgeId: string) => {
+    if (panelAssignments.find(p => p.judge_id === judgeId)) return
+    const nextPos = panelAssignments.length + 1
+    const judge = allJudges.find(j => j.id === judgeId)
+    setPanelAssignments([...panelAssignments, {
+      judge_id: judgeId,
+      position: nextPos,
+      is_head_judge: judge?.role === 'head_judge',
+    }])
+    setPanelSaved(false)
+  }
+
+  const removeJudgeFromPanel = (judgeId: string) => {
+    const filtered = panelAssignments.filter(p => p.judge_id !== judgeId)
+    // Reorder positions
+    filtered.forEach((p, i) => p.position = i + 1)
+    setPanelAssignments(filtered)
+    setPanelSaved(false)
+  }
+
+  const toggleHeadJudge = (judgeId: string) => {
+    setPanelAssignments(panelAssignments.map(p => ({
+      ...p,
+      is_head_judge: p.judge_id === judgeId ? !p.is_head_judge : p.is_head_judge,
+    })))
+    setPanelSaved(false)
+  }
+
+  const saveJudgePanel = async () => {
+    if (!judgePanel) return
+    setPanelLoading(true)
+    try {
+      const res = await fetch('/api/compete/judge-assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_division_id: judgePanel.edId,
+          judges: panelAssignments,
+        }),
+      })
+      const data = await res.json()
+      if (data.error) { alert(data.error) } else {
+        setPanelSaved(true)
+        setAdvanceMsg(`${panelAssignments.length} judges assigned to ${data.heats_updated} heats`)
+        setTimeout(() => setAdvanceMsg(null), 5000)
+      }
+    } catch (e: any) { alert(e.message) }
+    setPanelLoading(false)
+  }
+
   const removeAthlete = async (haId: string) => {
     await sb.from('comp_heat_athletes').delete().eq('id', haId)
     load()
@@ -383,6 +463,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 32 }}>
         <StatusDot status={statusMap[event.status] || 'muted'} label={event.status} />
         <div style={{ flex: 1 }} />
+        <Button variant="secondary" href={`/admin/compete/${id}/tabulation`}>Tabulation</Button>
         <Button variant="secondary" href={`/admin/compete/${id}/print`}>Print Heat Sheets</Button>
         {event.status === 'draft' && <Button variant="primary" onClick={() => updateEventStatus('active')}>Activate Event</Button>}
         {event.status === 'active' && <Button variant="secondary" onClick={() => updateEventStatus('complete')}>Mark Complete</Button>}
@@ -438,7 +519,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     <Button variant="primary" onClick={() => { setGenerateModal(ed); setNumAthletes(ed.registrations?.length || ed.max_athletes) }}>Generate Bracket</Button>
                   )}
                   {ed.rounds && ed.rounds.length > 0 && (
-                    <Button variant="secondary" onClick={() => { setWalkUpModal(ed); setWalkUpName(''); setWalkUpId(null) }}>Walk-Up Add</Button>
+                    <>
+                      <Button variant="secondary" onClick={() => openJudgePanel(ed.id, ed.division?.name || '')}>Assign Judges</Button>
+                      <Button variant="secondary" onClick={() => { setWalkUpModal(ed); setWalkUpName(''); setWalkUpId(null) }}>Walk-Up Add</Button>
+                    </>
                   )}
                   <Button variant="danger" onClick={() => removeDivision(ed.id)}>Remove</Button>
                 </div>
@@ -740,6 +824,75 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
           <Button onClick={addRegistration} disabled={saving || !regAthleteName}>{saving ? 'Registering...' : 'Register'}</Button>
           <Button variant="ghost" onClick={() => setRegModal(null)}>Cancel</Button>
+        </div>
+      </Modal>
+
+      {/* Judge Panel Modal */}
+      <Modal open={!!judgePanel} onClose={() => setJudgePanel(null)} title={`Judge Panel — ${judgePanel?.divName || ''}`} width={560}>
+        <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 16 }}>
+          Assign a judge panel for all heats in this division. Head judges observe and manage priority — they do not score.
+        </p>
+
+        {/* Current panel */}
+        {panelAssignments.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <SectionLabel>Panel ({panelAssignments.length} judges)</SectionLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {panelAssignments.map(pa => {
+                const judge = allJudges.find(j => j.id === pa.judge_id)
+                return (
+                  <div key={pa.judge_id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', border: '1px solid var(--admin-border)', borderRadius: 'var(--admin-radius)', background: pa.is_head_judge ? 'rgba(43,165,160,0.04)' : '#fff' }}>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 700, color: 'var(--admin-teal)', width: 24 }}>J{pa.position}</span>
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: 'var(--admin-navy)' }}>{judge?.name || 'Unknown'}</span>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'var(--admin-text-muted)', letterSpacing: '0.1em' }}>PIN {judge?.pin}</span>
+                    <button onClick={() => toggleHeadJudge(pa.judge_id)} style={{
+                      fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4, cursor: 'pointer', border: 'none',
+                      background: pa.is_head_judge ? 'rgba(43,165,160,0.1)' : 'rgba(0,0,0,0.04)',
+                      color: pa.is_head_judge ? 'var(--admin-teal)' : 'var(--admin-text-muted)',
+                    }}>
+                      {pa.is_head_judge ? 'HEAD' : 'Judge'}
+                    </button>
+                    <button onClick={() => removeJudgeFromPanel(pa.judge_id)} style={{ background: 'none', border: 'none', color: 'var(--admin-text-muted)', cursor: 'pointer', fontSize: 14, padding: '2px 4px' }}>✕</button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Available judges */}
+        {(() => {
+          const available = allJudges.filter(j => !panelAssignments.find(pa => pa.judge_id === j.id))
+          if (available.length === 0) return null
+          return (
+            <div style={{ marginBottom: 16 }}>
+              <SectionLabel>Available Judges</SectionLabel>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {available.map(j => (
+                  <button key={j.id} onClick={() => addJudgeToPanel(j.id)} style={{
+                    padding: '6px 12px', border: '1px solid var(--admin-border)', borderRadius: 'var(--admin-radius)',
+                    background: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 500, color: 'var(--admin-text)',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}>
+                    <span style={{ color: 'var(--admin-teal)', fontWeight: 700 }}>+</span>
+                    {j.name}
+                    {j.role === 'head_judge' && <span style={{ fontSize: 9, color: 'var(--admin-teal)', fontWeight: 700 }}>HEAD</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
+
+        {allJudges.length === 0 && (
+          <EmptyState message="No judges registered yet" action={{ label: 'Add Judges', onClick: () => window.location.href = '/admin/compete/judges' }} />
+        )}
+
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <Button onClick={saveJudgePanel} disabled={panelLoading || panelAssignments.length === 0}>
+            {panelLoading ? 'Saving...' : panelSaved ? 'Saved!' : 'Assign to All Heats'}
+          </Button>
+          <Button variant="ghost" onClick={() => setJudgePanel(null)}>Close</Button>
         </div>
       </Modal>
 

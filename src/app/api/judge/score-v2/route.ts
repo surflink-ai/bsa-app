@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { calculateWaveScore, applyPenalty } from '@/lib/scoring'
+import { calculateWaveScore } from '@/lib/scoring'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -145,27 +145,18 @@ export async function POST(request: NextRequest) {
       const { averaged } = calculateWaveScore(scores, dropHighLow)
       averagedScore = averaged
 
-      // Check for interference on this wave
-      const { data: interference } = await supabase
-        .from('comp_interference')
-        .select('penalty_type')
-        .eq('athlete_id', heat_athlete_id)
-        .eq('wave_number', wave_number)
-        .single()
-
-      const penalizedScore = interference
-        ? applyPenalty(averaged, interference.penalty_type as any)
-        : averaged
-
-      // Upsert into comp_wave_scores (cached averaged score)
+      // Upsert into comp_wave_scores (cached averaged score — raw, no penalty)
+      // ISA: interference penalty applies to the 2nd-best wave at heat level,
+      // NOT to the specific wave where interference occurred.
+      // The interference API handles penalty application separately.
       await supabase
         .from('comp_wave_scores')
         .upsert({
           heat_athlete_id,
           wave_number,
-          score: penalizedScore,
+          score: averaged,
           is_override: false,
-          notes: interference ? `Penalty: ${interference.penalty_type}. Original avg: ${averaged}` : null,
+          notes: null,
         }, { onConflict: 'heat_athlete_id,wave_number' })
 
       // Update wave count for athlete
@@ -276,16 +267,39 @@ async function recalculateHeatTotals(heatId: string) {
 
   if (!athletes) return
 
+  // Get all athletes with DQ status
+  const { data: fullAthletes } = await supabase
+    .from('comp_heat_athletes')
+    .select('id, is_disqualified, penalty, penalty_applied_to_wave')
+    .eq('heat_id', heatId)
+
   for (const athlete of athletes) {
+    const fullA = fullAthletes?.find(a => a.id === athlete.id)
+
+    // DQ'd athletes get 0
+    if (fullA?.is_disqualified) {
+      await supabase.from('comp_heat_athletes').update({ total_score: 0 }).eq('id', athlete.id)
+      continue
+    }
+
     const { data: waves } = await supabase
       .from('comp_wave_scores')
-      .select('score')
+      .select('wave_number, score')
       .eq('heat_athlete_id', athlete.id)
       .order('score', { ascending: false })
 
-    const waveScores = (waves || []).map(w => Number(w.score))
+    const waveScores = (waves || []).map(w => ({ wave_number: w.wave_number, score: Number(w.score) }))
+
+    // ISA: interference penalty halves the 2nd-best wave
+    // Check if this athlete has an active interference (not double/DQ)
+    if (fullA?.penalty && fullA.penalty !== 'none' && fullA.penalty !== 'double_interference' && waveScores.length > 0) {
+      // Find second-best wave (or only wave)
+      const penaltyIdx = waveScores.length >= 2 ? 1 : 0
+      waveScores[penaltyIdx].score = Math.round((waveScores[penaltyIdx].score / 2) * 100) / 100
+    }
+
     const bestWaves = waveScores.slice(0, scoringBestOf)
-    const total = Math.round(bestWaves.reduce((s, v) => s + v, 0) * 100) / 100
+    const total = Math.round(bestWaves.reduce((s, w) => s + w.score, 0) * 100) / 100
 
     await supabase
       .from('comp_heat_athletes')
@@ -293,17 +307,21 @@ async function recalculateHeatTotals(heatId: string) {
       .eq('id', athlete.id)
   }
 
-  // Calculate positions and needs
+  // Calculate positions and needs — DQ'd athletes last
   const { data: updated } = await supabase
     .from('comp_heat_athletes')
-    .select('id, total_score')
+    .select('id, total_score, is_disqualified')
     .eq('heat_id', heatId)
     .order('total_score', { ascending: false })
 
   if (updated) {
-    for (let i = 0; i < updated.length; i++) {
-      const needs = i > 0
-        ? Math.round((updated[i - 1].total_score - updated[i].total_score + 0.01) * 100) / 100
+    const active = updated.filter(a => !a.is_disqualified)
+    const dqd = updated.filter(a => a.is_disqualified)
+    const sorted = [...active, ...dqd]
+
+    for (let i = 0; i < sorted.length; i++) {
+      const needs = !sorted[i].is_disqualified && i > 0 && !sorted[i - 1].is_disqualified
+        ? Math.round((sorted[i - 1].total_score - sorted[i].total_score + 0.01) * 100) / 100
         : null
 
       await supabase
@@ -312,7 +330,7 @@ async function recalculateHeatTotals(heatId: string) {
           result_position: i + 1,
           needs_score: needs !== null && needs <= 10 ? needs : null,
         })
-        .eq('id', updated[i].id)
+        .eq('id', sorted[i].id)
     }
   }
 }

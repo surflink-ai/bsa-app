@@ -10,7 +10,7 @@ interface Athlete {
   id: string; athlete_name: string; jersey_color: string | null
   waves: { wave_number: number; score: number }[]
   total: number; position: number
-  needs_score: number | null; has_priority: boolean; penalty: string | null
+  needs_score: number | null; has_priority: boolean; penalty: string | null; is_disqualified: boolean
 }
 
 interface Heat {
@@ -51,7 +51,7 @@ export function LiveResultsClient({ eventId }: { eventId: string }) {
           heats:comp_heats(
             id, heat_number, status, priority_order,
             athletes:comp_heat_athletes(
-              id, athlete_name, jersey_color, seed_position, result_position, total_score, needs_score, has_priority, penalty,
+              id, athlete_name, jersey_color, seed_position, result_position, total_score, needs_score, has_priority, penalty, is_disqualified,
               waves:comp_wave_scores(wave_number, score)
             )
           )
@@ -85,6 +85,7 @@ export function LiveResultsClient({ eventId }: { eventId: string }) {
                 needs_score: (aTyped.needs_score as number) || null,
                 has_priority: (aTyped.has_priority as boolean) || false,
                 penalty: (aTyped.penalty as string) || null,
+                is_disqualified: (aTyped.is_disqualified as boolean) || false,
               }
             }).sort((a, b) => b.total - a.total)
             athletes.forEach((a, i) => { a.position = i + 1 })
@@ -246,9 +247,11 @@ export function LiveResultsClient({ eventId }: { eventId: string }) {
                   <div>
                     <span style={{ fontSize: 15, fontWeight: i === 0 ? 700 : 500, color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>
                       {a.athlete_name}
-                      {a.penalty && a.penalty !== 'none' && (
+                      {a.is_disqualified ? (
+                        <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 3, background: 'rgba(220,38,38,0.25)', color: '#EF4444', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>DQ</span>
+                      ) : a.penalty && a.penalty !== 'none' ? (
                         <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 3, background: 'rgba(220,38,38,0.15)', color: '#EF4444', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>INT</span>
-                      )}
+                      ) : null}
                     </span>
                     {a.needs_score !== null && i > 0 && (
                       <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)' }}>

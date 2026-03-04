@@ -117,22 +117,27 @@ function HeadJudgePage() {
     loadPanel()
   }
 
-  const rotatePriority = async (athleteId: string) => {
-    await fetch('/api/judge/priority', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'rotate', heat_id: heatId, athlete_id: athleteId }),
-    })
-    loadPanel()
-  }
+  const [priorityState, setPriorityState] = useState<any>(null)
+  const [priorityMenu, setPriorityMenu] = useState<string | null>(null) // athlete id for context menu
 
-  const initPriority = async () => {
+  const loadPriorityState = useCallback(async () => {
+    if (!heatId) return
+    const res = await fetch(`/api/judge/priority?heat_id=${heatId}`)
+    const json = await res.json()
+    if (!json.error) setPriorityState(json)
+  }, [heatId])
+
+  useEffect(() => { loadPriorityState() }, [loadPriorityState])
+
+  const priorityAction = async (action: string, athleteId?: string) => {
     await fetch('/api/judge/priority', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'init', heat_id: heatId }),
+      body: JSON.stringify({ action, heat_id: heatId, athlete_id: athleteId }),
     })
+    setPriorityMenu(null)
     loadPanel()
+    loadPriorityState()
   }
 
   if (!judge) return <div style={{ minHeight: '100vh', background: '#0A2540', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Please log in as a judge first at /judge</div>
@@ -162,32 +167,90 @@ function HeadJudgePage() {
         </div>
       </div>
 
-      {/* Priority bar */}
-      <div style={{ padding: '8px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Priority:</span>
-        {data.heat.priority_order && data.heat.priority_order.length > 0 ? (
-          data.heat.priority_order.map((id, i) => {
-            const a = data.athletes.find(a => a.id === id)
-            return (
-              <button key={id} onClick={() => rotatePriority(id)} style={{
-                display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6,
-                background: i === 0 ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.04)',
-                border: i === 0 ? '1px solid rgba(255,215,0,0.3)' : '1px solid rgba(255,255,255,0.06)',
-                color: i === 0 ? '#FFD700' : 'rgba(255,255,255,0.4)',
-                fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: "'Space Grotesk', sans-serif",
-              }}>
-                {a?.jersey_color && <span style={{ width: 8, height: 8, borderRadius: 2, background: JERSEY_HEX[a.jersey_color] || '#94A3B8' }} />}
-                {a?.athlete_name?.split(' ').pop() || '?'}
-              </button>
-            )
-          })
-        ) : (
-          <button onClick={initPriority} style={{
-            padding: '4px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600,
-            background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.2)',
-            color: '#FFD700', cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace",
-          }}>Initialize Priority</button>
-        )}
+      {/* Priority bar — ISA-compliant with establishment phase */}
+      <div style={{ padding: '8px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            Priority{priorityState?.phase === 'establishing' ? ' (establishing)' : ''}:
+          </span>
+
+          {priorityState?.phase === 'establishing' ? (
+            <>
+              {/* Establishment phase: show who has/hasn't ridden */}
+              {priorityState.athletes?.map((a: any) => (
+                <button key={a.heat_athlete_id} onClick={() => !a.has_ridden ? priorityAction('wave_ridden', a.heat_athlete_id) : null} style={{
+                  display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6,
+                  background: a.has_ridden ? 'rgba(255,255,255,0.02)' : 'rgba(43,165,160,0.1)',
+                  border: a.has_ridden ? '1px solid rgba(255,255,255,0.04)' : '1px solid rgba(43,165,160,0.2)',
+                  color: a.has_ridden ? 'rgba(255,255,255,0.25)' : '#2BA5A0',
+                  fontSize: 11, fontWeight: 600, cursor: a.has_ridden ? 'default' : 'pointer', fontFamily: "'Space Grotesk', sans-serif",
+                }}>
+                  {a.jersey_color && <span style={{ width: 8, height: 8, borderRadius: 2, background: JERSEY_HEX[a.jersey_color] || '#94A3B8' }} />}
+                  {a.athlete_name?.split(' ').pop() || '?'}
+                  {a.has_ridden && <span style={{ fontSize: 8, opacity: 0.4 }}>✓</span>}
+                </button>
+              ))}
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.2)' }}>
+                {priorityState.riders_count}/{priorityState.riders_needed} riders
+              </span>
+            </>
+          ) : data.heat.priority_order && data.heat.priority_order.length > 0 ? (
+            <>
+              {/* Established: show priority order with context menu */}
+              {data.heat.priority_order.map((id, i) => {
+                const a = data.athletes.find(a => a.id === id)
+                const pa = priorityState?.athletes?.find((pa: any) => pa.heat_athlete_id === id)
+                const isSuspended = pa?.priority_status === 'suspended'
+                return (
+                  <div key={id} style={{ position: 'relative' }}>
+                    <button onClick={() => setPriorityMenu(priorityMenu === id ? null : id)} style={{
+                      display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6,
+                      background: isSuspended ? 'rgba(234,179,8,0.08)' : i === 0 ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.04)',
+                      border: isSuspended ? '1px dashed rgba(234,179,8,0.3)' : i === 0 ? '1px solid rgba(255,215,0,0.3)' : '1px solid rgba(255,255,255,0.06)',
+                      color: isSuspended ? 'rgba(234,179,8,0.5)' : i === 0 ? '#FFD700' : 'rgba(255,255,255,0.4)',
+                      fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: "'Space Grotesk', sans-serif",
+                      opacity: isSuspended ? 0.6 : 1,
+                    }}>
+                      {a?.jersey_color && <span style={{ width: 8, height: 8, borderRadius: 2, background: JERSEY_HEX[a.jersey_color] || '#94A3B8' }} />}
+                      P{i + 1} {a?.athlete_name?.split(' ').pop() || '?'}
+                      {isSuspended && <span style={{ fontSize: 8 }}>⏸</span>}
+                    </button>
+                    {/* Context menu */}
+                    {priorityMenu === id && (
+                      <div style={{
+                        position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 50,
+                        background: '#0F2D4A', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+                        overflow: 'hidden', minWidth: 160, boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                      }}>
+                        <button onClick={() => priorityAction('wave_ridden', id)} style={menuBtnStyle}>
+                          🌊 Wave Ridden (rotate)
+                        </button>
+                        {!isSuspended ? (
+                          <button onClick={() => priorityAction('suspend', id)} style={menuBtnStyle}>
+                            ⏸ Suspend Priority
+                          </button>
+                        ) : (
+                          <button onClick={() => priorityAction('reinstate', id)} style={menuBtnStyle}>
+                            ▶ Reinstate Priority
+                          </button>
+                        )}
+                        <button onClick={() => priorityAction('block', id)} style={{ ...menuBtnStyle, color: '#EF4444' }}>
+                          🚫 Blocking (drop to last)
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </>
+          ) : (
+            <button onClick={() => priorityAction('start')} style={{
+              padding: '4px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600,
+              background: 'rgba(43,165,160,0.1)', border: '1px solid rgba(43,165,160,0.2)',
+              color: '#2BA5A0', cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace",
+            }}>Start Heat (ISA Priority)</button>
+          )}
+        </div>
       </div>
 
       {/* Athletes with full score breakdown */}
@@ -207,9 +270,11 @@ function HeadJudgePage() {
               {athlete.jersey_color && <span style={{ width: 14, height: 14, borderRadius: 3, background: JERSEY_HEX[athlete.jersey_color] || '#94A3B8', flexShrink: 0 }} />}
               {athlete.has_priority && <span style={{ fontSize: 8, color: '#FFD700', fontWeight: 700 }}>P</span>}
               <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{athlete.athlete_name}</span>
-              {athlete.penalty && athlete.penalty !== 'none' && (
+              {athlete.penalty === 'double_interference' ? (
+                <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(220,38,38,0.25)', color: '#EF4444', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>DQ</span>
+              ) : athlete.penalty && athlete.penalty !== 'none' ? (
                 <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(220,38,38,0.15)', color: '#EF4444', fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>INT</span>
-              )}
+              ) : null}
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 700, color: athlete.result_position === 1 ? '#2BA5A0' : '#fff' }}>
                 {athlete.total_score.toFixed(2)}
               </span>
@@ -341,6 +406,7 @@ function HeadJudgePage() {
   )
 }
 
+const menuBtnStyle: React.CSSProperties = { display: 'block', width: '100%', padding: '8px 12px', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'transparent', color: 'rgba(255,255,255,0.7)', fontSize: 11, textAlign: 'left', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }
 const thStyle: React.CSSProperties = { padding: '6px 8px', textAlign: 'center', fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500 }
 const tdStyle: React.CSSProperties = { padding: '8px', textAlign: 'center', fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 600 }
 const labelStyle: React.CSSProperties = { display: 'block', fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }

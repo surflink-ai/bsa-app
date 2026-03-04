@@ -1,13 +1,15 @@
 /**
  * ISA-Compliant Scoring Engine
  * 
- * Rules:
- * - Each judge scores every wave independently (0.0-10.0)
+ * Rules (ISA Rulebook April 2025 + ISA Judging Manual):
+ * - Each judge scores every wave independently (0.0-10.0, one-tenth increments)
  * - 5 judges: drop highest + lowest, average remaining 3
- * - 3 judges: straight average (no drop)
+ * - 3-4 judges: straight average (no drop)
  * - Best 2 waves count (configurable via scoring_best_of)
- * - Interference: half or zero the wave score
- * - Needs: what score would change position
+ * - Interference penalty: applied to SECOND-HIGHEST scoring wave (not the interference wave)
+ *   - If only 1 wave: that wave is halved
+ *   - If no waves yet: first wave scored gets halved
+ * - Double interference = disqualification (last place in heat)
  */
 
 export interface JudgeScore {
@@ -21,9 +23,15 @@ export interface WaveResult {
   averaged_score: number
   dropped_high: number | null
   dropped_low: number | null
-  is_counting: boolean // is this wave in the best N
-  interference_penalty: 'none' | 'interference_half' | 'interference_zero' | null
-  penalized_score: number // score after penalty applied
+  is_counting: boolean
+  is_penalty_wave: boolean // true if this is the wave where interference penalty is applied
+  original_score: number // score before any penalty
+  penalized_score: number // score after penalty (same as original if no penalty on this wave)
+}
+
+export interface InterferenceRecord {
+  wave_number: number
+  penalty_type: 'interference_half' | 'interference_zero' | 'double_interference'
 }
 
 export interface AthleteHeatResult {
@@ -32,11 +40,13 @@ export interface AthleteHeatResult {
   jersey_color: string | null
   waves: WaveResult[]
   wave_count: number
-  best_waves: number[] // the counting wave scores
-  total_score: number // sum of best N waves
+  best_waves: number[] // the counting wave scores (after penalties)
+  total_score: number
   position: number
-  needs_score: number | null // score needed to improve position
-  interference: { wave_number: number; penalty_type: string }[]
+  needs_score: number | null
+  interference: InterferenceRecord[]
+  is_disqualified: boolean
+  penalty_applied_to_wave: number | null // which wave number has the penalty
 }
 
 /**
@@ -50,12 +60,11 @@ export function calculateWaveScore(
   if (judgeScores.length === 0) return { averaged: 0, droppedHigh: null, droppedLow: null }
 
   const sorted = [...judgeScores].sort((a, b) => a - b)
-  
+
   let droppedHigh: number | null = null
   let droppedLow: number | null = null
   let scoresToAverage = sorted
 
-  // Drop high + low only if panel >= 5 and dropHighLow is enabled
   if (dropHighLow && sorted.length >= 5) {
     droppedLow = sorted[0]
     droppedHigh = sorted[sorted.length - 1]
@@ -69,20 +78,49 @@ export function calculateWaveScore(
 }
 
 /**
- * Apply interference penalty to a wave score
+ * Apply interference penalty at the HEAT level (ISA-compliant)
+ * 
+ * ISA Rule: The interference penalty halves the surfer's SECOND-HIGHEST scoring wave.
+ * - If only 1 wave scored: that wave is halved
+ * - If no waves scored: deferred (first wave scored will be halved)
+ * - Double interference in same heat = disqualification (last place)
+ * 
+ * Returns: which wave number gets the penalty, and updated wave scores
  */
-export function applyPenalty(
-  score: number,
-  penalty: 'none' | 'interference_half' | 'interference_zero' | 'double_interference'
-): number {
-  switch (penalty) {
-    case 'interference_half':
-      return Math.round((score / 2) * 100) / 100
-    case 'interference_zero':
-    case 'double_interference':
-      return 0
-    default:
-      return score
+export function applyInterferencePenalty(
+  waves: { wave_number: number; averaged_score: number }[],
+  interferences: InterferenceRecord[],
+  scoringBestOf: number
+): {
+  penaltyWaveNumber: number | null
+  isDisqualified: boolean
+  waveAdjustments: Map<number, number> // wave_number → penalized score
+} {
+  const adjustments = new Map<number, number>()
+
+  // Double interference = DQ
+  if (interferences.length >= 2) {
+    return { penaltyWaveNumber: null, isDisqualified: true, waveAdjustments: adjustments }
+  }
+
+  if (interferences.length === 0 || waves.length === 0) {
+    return { penaltyWaveNumber: null, isDisqualified: false, waveAdjustments: adjustments }
+  }
+
+  // Sort waves by score descending
+  const sorted = [...waves].sort((a, b) => b.averaged_score - a.averaged_score)
+
+  // Penalty goes on SECOND-highest wave
+  // If only 1 wave, penalty goes on that wave
+  const penaltyWave = sorted.length >= 2 ? sorted[1] : sorted[0]
+  const penaltyScore = Math.round((penaltyWave.averaged_score / 2) * 100) / 100
+
+  adjustments.set(penaltyWave.wave_number, penaltyScore)
+
+  return {
+    penaltyWaveNumber: penaltyWave.wave_number,
+    isDisqualified: false,
+    waveAdjustments: adjustments,
   }
 }
 
@@ -98,20 +136,18 @@ export function calculateHeatResults(
     waves: {
       wave_number: number
       judge_scores: { judge_id: string; score: number }[]
-      interference_penalty?: 'none' | 'interference_half' | 'interference_zero' | null
     }[]
+    interferences: InterferenceRecord[]
   }[],
   panelSize: number,
   dropHighLow: boolean,
   scoringBestOf: number
 ): AthleteHeatResult[] {
   const results: AthleteHeatResult[] = athletes.map(athlete => {
-    // Calculate each wave's averaged score
+    // Step 1: Calculate each wave's averaged score (no penalties yet)
     const waveResults: WaveResult[] = athlete.waves.map(wave => {
       const scores = wave.judge_scores.map(js => js.score)
       const { averaged, droppedHigh, droppedLow } = calculateWaveScore(scores, dropHighLow)
-      const penalty = wave.interference_penalty || 'none'
-      const penalized = applyPenalty(averaged, penalty as any)
 
       return {
         wave_number: wave.wave_number,
@@ -119,26 +155,41 @@ export function calculateHeatResults(
         averaged_score: averaged,
         dropped_high: droppedHigh,
         dropped_low: droppedLow,
-        is_counting: false, // set below
-        interference_penalty: penalty,
-        penalized_score: penalized,
+        is_counting: false,
+        is_penalty_wave: false,
+        original_score: averaged,
+        penalized_score: averaged,
       }
     })
 
-    // Sort waves by penalized score descending to find best N
+    // Step 2: Apply interference penalty at heat level (on second-best wave)
+    const { penaltyWaveNumber, isDisqualified, waveAdjustments } = applyInterferencePenalty(
+      waveResults.map(w => ({ wave_number: w.wave_number, averaged_score: w.averaged_score })),
+      athlete.interferences,
+      scoringBestOf
+    )
+
+    // Apply adjustments
+    for (const wr of waveResults) {
+      if (waveAdjustments.has(wr.wave_number)) {
+        wr.penalized_score = waveAdjustments.get(wr.wave_number)!
+        wr.is_penalty_wave = true
+      }
+    }
+
+    // Step 3: Select best N waves (using penalized scores)
     const sortedWaves = [...waveResults].sort((a, b) => b.penalized_score - a.penalized_score)
     const bestWaves = sortedWaves.slice(0, scoringBestOf)
-    
-    // Mark counting waves
+
     const countingWaveNumbers = new Set(bestWaves.map(w => w.wave_number))
     for (const wr of waveResults) {
       wr.is_counting = countingWaveNumbers.has(wr.wave_number)
     }
 
-    const total = Math.round(bestWaves.reduce((s, w) => s + w.penalized_score, 0) * 100) / 100
-    const interferences = waveResults
-      .filter(w => w.interference_penalty && w.interference_penalty !== 'none')
-      .map(w => ({ wave_number: w.wave_number, penalty_type: w.interference_penalty! }))
+    // DQ = last place with 0 total
+    const total = isDisqualified
+      ? 0
+      : Math.round(bestWaves.reduce((s, w) => s + w.penalized_score, 0) * 100) / 100
 
     return {
       heat_athlete_id: athlete.heat_athlete_id,
@@ -148,32 +199,36 @@ export function calculateHeatResults(
       wave_count: waveResults.length,
       best_waves: bestWaves.map(w => w.penalized_score),
       total_score: total,
-      position: 0, // set below
-      needs_score: null, // set below
-      interference: interferences,
+      position: 0,
+      needs_score: null,
+      interference: athlete.interferences,
+      is_disqualified: isDisqualified,
+      penalty_applied_to_wave: penaltyWaveNumber,
     }
   })
 
-  // Sort by total score descending → assign positions
-  results.sort((a, b) => b.total_score - a.total_score)
+  // Sort: DQ'd athletes always last, then by total_score descending
+  results.sort((a, b) => {
+    if (a.is_disqualified && !b.is_disqualified) return 1
+    if (!a.is_disqualified && b.is_disqualified) return -1
+    return b.total_score - a.total_score
+  })
   results.forEach((r, i) => { r.position = i + 1 })
 
   // Calculate needs scores
-  // For each athlete: what score on their next wave (replacing their lowest counting wave)
-  // would move them up one position?
   for (let i = 1; i < results.length; i++) {
     const athlete = results[i]
+    if (athlete.is_disqualified) { athlete.needs_score = null; continue }
+
     const above = results[i - 1]
-    const targetTotal = above.total_score + 0.01 // need to beat by 0.01
+    const targetTotal = above.total_score + 0.01
 
     if (athlete.best_waves.length >= scoringBestOf) {
-      // Would replace lowest counting wave
       const lowestCounting = Math.min(...athlete.best_waves)
       const otherWavesTotal = athlete.total_score - lowestCounting
       const needed = Math.round((targetTotal - otherWavesTotal) * 100) / 100
       athlete.needs_score = needed > 10 ? null : Math.max(0, needed)
     } else {
-      // Still have counting wave slots available
       const needed = Math.round((targetTotal - athlete.total_score) * 100) / 100
       athlete.needs_score = needed > 10 ? null : Math.max(0, needed)
     }
@@ -202,10 +257,10 @@ export function detectOutliers(
   threshold: number = 1.5
 ): { judge_id: string; score: number; deviation: number }[] {
   if (judgeScores.length < 3) return []
-  
+
   const scores = judgeScores.map(s => s.score)
   const avg = scores.reduce((s, v) => s + v, 0) / scores.length
-  
+
   return judgeScores
     .map(s => ({ ...s, deviation: Math.abs(s.score - avg) }))
     .filter(s => s.deviation > threshold)

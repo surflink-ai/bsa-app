@@ -10,13 +10,14 @@ export async function POST(req: NextRequest) {
   const { pin } = await req.json()
   if (!pin) return NextResponse.json({ error: 'PIN required' }, { status: 400 })
 
-  const { data: judge } = await supabase
+  const { data: judges } = await supabase
     .from('comp_judges')
     .select('id, name, role')
     .eq('pin', pin)
     .eq('active', true)
-    .single()
+    .limit(1)
 
+  const judge = judges?.[0]
   if (!judge) return NextResponse.json({ error: 'Invalid PIN' }, { status: 401 })
 
   // Return judge info (no JWT needed — PIN is the auth for beach use)

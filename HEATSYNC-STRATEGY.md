@@ -1,4 +1,4 @@
-# SurfVision AI — Strategy & Go-to-Market Plan
+# HeatSync — Strategy & Go-to-Market Plan
 ## The World's First End-to-End AI-Assisted Surf Competition Platform
 ### Prepared March 4, 2026
 
@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-SurfVision AI combines ISA-compliant competition management, multi-judge blind scoring, Apple Watch athlete telemetry, computer vision analysis, and livestream broadcast into a single unified platform. No competitor offers all five. The $8.92B AI in sports market is growing at 21%+ CAGR to $60.78B by 2034. ISA has no technology partner — Refresh Technology (est. 1996) provides legacy hardware scoring. We replace them.
+HeatSync combines ISA-compliant competition management, multi-judge blind scoring, Apple Watch athlete telemetry, computer vision analysis, and livestream broadcast into a single unified platform. No competitor offers all five. The $8.92B AI in sports market is growing at 21%+ CAGR to $60.78B by 2034. ISA has no technology partner — Refresh Technology (est. 1996) provides legacy hardware scoring. We replace them.
 
 ---
 
@@ -30,7 +30,7 @@ SurfVision AI combines ISA-compliant competition management, multi-judge blind s
 
 ### What Each Competitor Has (and Doesn't)
 
-| Capability | SurfVision | WSL/AWS | Flowstate | LiveHeats | Refresh | STACT | Kazo |
+| Capability | HeatSync | WSL/AWS | Flowstate | LiveHeats | Refresh | STACT | Kazo |
 |-----------|-----------|---------|-----------|-----------|---------|-------|------|
 | Competition management | YES | - | - | YES | Partial | YES | - |
 | ISA-compliant blind judging | YES | - | - | YES | YES | YES | YES |
@@ -85,7 +85,7 @@ Frame AI as assisting judges with objective data (speed, rotation, spray height,
 
 ---
 
-## 4. The SurfVision AI Platform
+## 4. The HeatSync Platform
 
 ### Layer 1: Competition Management (BUILT)
 - Full event lifecycle: registration → seeding → draw → heats → scoring → results → season points
@@ -201,7 +201,7 @@ Frame AI as assisting judges with objective data (speed, rotation, spray height,
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     SURFVISION AI PLATFORM                   │
+│                     HEATSYNC PLATFORM                   │
 ├──────────┬──────────┬──────────┬──────────┬─────────────────┤
 │  JUDGE   │  WATCH   │  CAMERA  │ BROADCAST│   ADMIN/PUBLIC  │
 │  iPAD    │  ULTRA   │  FEED    │  OBS     │   WEB APP       │
@@ -274,7 +274,7 @@ Every BSA event generates labeled training data:
 1. **March 14:** Flawless BSA Compete demo at Drill Hall
 2. **March 15-31:** Build watch telemetry (auto wave counting)
 3. **April:** Approach Barbados Surfing Association about official adoption
-4. **April:** Register SurfVision AI brand/domain
+4. **April:** Register HeatSync brand/domain
 5. **May:** CV POC — feed livestream frames to Gemini 3.1 Pro for maneuver detection
 6. **June:** ISA pitch deck + demo video
 7. **June:** Contact ISA Technical Committee

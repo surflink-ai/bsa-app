@@ -20,8 +20,9 @@ export async function GET() {
           event:comp_events(name)
         )
       ),
+      priority_order,
       athletes:comp_heat_athletes(
-        id, athlete_name, jersey_color, has_priority, interference,
+        id, athlete_name, jersey_color, has_priority, penalty, total_score, needs_score,
         waves:comp_wave_scores(wave_number, score)
       )
     `)
@@ -43,12 +44,15 @@ export async function GET() {
     const at = a as Record<string, unknown>
     const waves = ((at.waves || []) as { wave_number: number; score: number }[]).sort((x, y) => x.wave_number - y.wave_number)
     const topScores = [...waves].sort((x, y) => y.score - x.score).slice(0, bestOf)
-    const total = topScores.reduce((s, w) => s + w.score, 0)
+    const cachedTotal = at.total_score as number
+    const total = cachedTotal || topScores.reduce((s, w) => s + w.score, 0)
     return {
+      id: at.id as string,
       name: at.athlete_name as string,
       jersey: at.jersey_color as string | null,
       priority: at.has_priority as boolean,
-      interference: at.interference as boolean,
+      penalty: (at.penalty as string) || 'none',
+      needs: (at.needs_score as number) || null,
       waves: waves.map(w => w.score),
       bestWaves: topScores.map(w => w.score),
       total,

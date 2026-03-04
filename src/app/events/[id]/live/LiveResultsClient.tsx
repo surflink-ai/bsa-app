@@ -10,10 +10,12 @@ interface Athlete {
   id: string; athlete_name: string; jersey_color: string | null
   waves: { wave_number: number; score: number }[]
   total: number; position: number
+  needs_score: number | null; has_priority: boolean; penalty: string | null
 }
 
 interface Heat {
   id: string; heat_number: number; status: string
+  priority_order: string[]
   athletes: Athlete[]
 }
 
@@ -47,9 +49,9 @@ export function LiveResultsClient({ eventId }: { eventId: string }) {
         rounds:comp_rounds(
           id, round_number, name, status,
           heats:comp_heats(
-            id, heat_number, status,
+            id, heat_number, status, priority_order,
             athletes:comp_heat_athletes(
-              id, athlete_name, jersey_color, seed_position, result_position,
+              id, athlete_name, jersey_color, seed_position, result_position, total_score, needs_score, has_priority, penalty,
               waves:comp_wave_scores(wave_number, score)
             )
           )
@@ -70,8 +72,9 @@ export function LiveResultsClient({ eventId }: { eventId: string }) {
             const athletes: Athlete[] = ((hTyped.athletes || []) as unknown[]).map((a: unknown) => {
               const aTyped = a as Record<string, unknown>
               const waves = ((aTyped.waves || []) as { wave_number: number; score: number }[]).sort((x, y) => x.wave_number - y.wave_number)
+              const cachedTotal = aTyped.total_score as number
               const topScores = [...waves].sort((x, y) => y.score - x.score).slice(0, bestOf)
-              const total = topScores.reduce((s, w) => s + w.score, 0)
+              const total = cachedTotal || topScores.reduce((s, w) => s + w.score, 0)
               return {
                 id: aTyped.id as string,
                 athlete_name: aTyped.athlete_name as string,
@@ -79,6 +82,9 @@ export function LiveResultsClient({ eventId }: { eventId: string }) {
                 waves,
                 total,
                 position: 0,
+                needs_score: (aTyped.needs_score as number) || null,
+                has_priority: (aTyped.has_priority as boolean) || false,
+                penalty: (aTyped.penalty as string) || null,
               }
             }).sort((a, b) => b.total - a.total)
             athletes.forEach((a, i) => { a.position = i + 1 })
@@ -87,6 +93,7 @@ export function LiveResultsClient({ eventId }: { eventId: string }) {
               id: hTyped.id as string,
               heat_number: hTyped.heat_number as number,
               status: hTyped.status as string,
+              priority_order: (hTyped.priority_order as string[]) || [],
               athletes,
             }
           }).sort((a, b) => a.heat_number - b.heat_number)
@@ -216,41 +223,61 @@ export function LiveResultsClient({ eventId }: { eventId: string }) {
               <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 15, fontWeight: 700, color: '#fff' }}>Heat {liveHeat.heat_number}</span>
             </div>
 
-            {liveHeat.athletes.map((a, i) => (
-              <div key={a.id} style={{
-                display: 'grid', gridTemplateColumns: '36px 16px 1fr auto 80px',
-                alignItems: 'center', gap: 12, padding: '14px 20px',
-                borderBottom: i < liveHeat.athletes.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                background: i === 0 ? 'rgba(43,165,160,0.04)' : 'transparent',
-              }}>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 700, color: i === 0 ? '#2BA5A0' : 'rgba(255,255,255,0.3)' }}>
-                  {a.position}
-                </span>
-                {a.jersey_color && (
-                  <span style={{ width: 12, height: 12, borderRadius: 3, background: JERSEY_HEX[a.jersey_color], border: a.jersey_color === 'white' ? '1px solid rgba(255,255,255,0.3)' : 'none' }} />
-                )}
-                <span style={{ fontSize: 15, fontWeight: i === 0 ? 700 : 500, color: '#fff' }}>{a.athlete_name}</span>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  {a.waves.map((w, wi) => {
-                    const sorted = [...a.waves].sort((x, y) => y.score - x.score)
-                    const isCounting = sorted.slice(0, 2).some(s => s.wave_number === w.wave_number)
-                    return (
-                      <span key={wi} style={{
-                        fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
-                        padding: '3px 8px', borderRadius: 4,
-                        color: isCounting ? '#2BA5A0' : 'rgba(255,255,255,0.4)',
-                        background: isCounting ? 'rgba(43,165,160,0.12)' : 'rgba(255,255,255,0.04)',
-                      }}>
-                        {w.score.toFixed(1)}
+            {liveHeat.athletes.map((a, i) => {
+              const priorityPos = liveHeat.priority_order.indexOf(a.id)
+              return (
+                <div key={a.id} style={{
+                  display: 'grid', gridTemplateColumns: '36px 16px 1fr auto 80px',
+                  alignItems: 'center', gap: 12, padding: '14px 20px',
+                  borderBottom: i < liveHeat.athletes.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  background: i === 0 ? 'rgba(43,165,160,0.04)' : 'transparent',
+                }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 20, fontWeight: 700, color: i === 0 ? '#2BA5A0' : 'rgba(255,255,255,0.3)' }}>
+                    {a.position}
+                  </span>
+                  <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    {a.jersey_color && (
+                      <span style={{ width: 12, height: 12, borderRadius: 3, background: JERSEY_HEX[a.jersey_color], border: a.jersey_color === 'white' ? '1px solid rgba(255,255,255,0.3)' : 'none' }} />
+                    )}
+                    {priorityPos === 0 && (
+                      <span style={{ fontSize: 7, fontWeight: 700, color: '#FFD700', fontFamily: "'JetBrains Mono', monospace" }}>P</span>
+                    )}
+                  </span>
+                  <div>
+                    <span style={{ fontSize: 15, fontWeight: i === 0 ? 700 : 500, color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {a.athlete_name}
+                      {a.penalty && a.penalty !== 'none' && (
+                        <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 3, background: 'rgba(220,38,38,0.15)', color: '#EF4444', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>INT</span>
+                      )}
+                    </span>
+                    {a.needs_score !== null && i > 0 && (
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)' }}>
+                        needs {a.needs_score.toFixed(2)}
                       </span>
-                    )
-                  })}
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    {a.waves.map((w, wi) => {
+                      const sorted = [...a.waves].sort((x, y) => y.score - x.score)
+                      const isCounting = sorted.slice(0, 2).some(s => s.wave_number === w.wave_number)
+                      return (
+                        <span key={wi} style={{
+                          fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
+                          padding: '3px 8px', borderRadius: 4,
+                          color: isCounting ? '#2BA5A0' : 'rgba(255,255,255,0.4)',
+                          background: isCounting ? 'rgba(43,165,160,0.12)' : 'rgba(255,255,255,0.04)',
+                        }}>
+                          {w.score.toFixed(1)}
+                        </span>
+                      )
+                    })}
+                  </div>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 22, fontWeight: 700, color: i === 0 ? '#2BA5A0' : '#fff', textAlign: 'right' }}>
+                    {a.total.toFixed(2)}
+                  </span>
                 </div>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 22, fontWeight: 700, color: i === 0 ? '#2BA5A0' : '#fff', textAlign: 'right' }}>
-                  {a.total.toFixed(2)}
-                </span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}

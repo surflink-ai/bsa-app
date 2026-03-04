@@ -77,11 +77,23 @@ function WaveScoreDistribution({ heats }: { heats: HeatEntry[] }) {
   )
 }
 
-export function AthleteDetailClient({ athlete, results, heats, rivals }: {
+interface CompResult {
+  event_name: string; event_date: string; division: string; round: string
+  heat_number: number; result_position: number | null
+  waves: { wave_number: number; score: number }[]
+}
+interface SeasonPoint {
+  season_name: string; division: string; total_points: number
+  events_counted: number; best_result: number | null
+}
+
+export function AthleteDetailClient({ athlete, results, heats, rivals, compResults = [], seasonPoints = [] }: {
   athlete: { id: string; name: string; image: string | null }
   results: ResultEntry[]
   heats: HeatEntry[]
   rivals: Rival[]
+  compResults?: CompResult[]
+  seasonPoints?: SeasonPoint[]
 }) {
   const [tab, setTab] = useState<'overview' | 'heats' | 'rivals'>('overview')
 
@@ -208,6 +220,69 @@ export function AthleteDetailClient({ athlete, results, heats, rivals }: {
                   </div>
                 </ScrollReveal>
               </div>
+
+              {/* BSA Compete Section */}
+              {(compResults.length > 0 || seasonPoints.length > 0) && (
+                <div style={{ marginTop: 32 }}>
+                  <ScrollReveal>
+                    <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 16, color: '#0A2540', marginBottom: 4 }}>BSA Compete</h2>
+                    <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(26,26,26,0.3)', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Results from BSA&apos;s competition system</p>
+                  </ScrollReveal>
+
+                  {/* Season Points */}
+                  {seasonPoints.length > 0 && (
+                    <ScrollReveal>
+                      <div style={{ border: '1px solid rgba(10,37,64,0.06)', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+                        <h3 style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(26,26,26,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Season Rankings</h3>
+                        {seasonPoints.map((sp, i) => (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: i < seasonPoints.length - 1 ? '1px solid rgba(10,37,64,0.04)' : 'none' }}>
+                            <div>
+                              <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 13, color: '#0A2540' }}>{sp.season_name}</span>
+                              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(26,26,26,0.3)', marginLeft: 8 }}>{sp.division}</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: 'rgba(26,26,26,0.4)' }}>{sp.events_counted} events</span>
+                              {sp.best_result && <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: sp.best_result <= 3 ? '#FFD700' : 'rgba(26,26,26,0.4)' }}>Best: #{sp.best_result}</span>}
+                              <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 14, color: '#2BA5A0' }}>{sp.total_points} pts</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollReveal>
+                  )}
+
+                  {/* Comp Heat Results */}
+                  {compResults.length > 0 && (
+                    <ScrollReveal delay={100}>
+                      <div style={{ border: '1px solid rgba(10,37,64,0.06)', borderRadius: 12, padding: 20 }}>
+                        <h3 style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(26,26,26,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Competition Heats</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {compResults.map((cr, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: i < compResults.length - 1 ? '1px solid rgba(10,37,64,0.04)' : 'none' }}>
+                              <div>
+                                <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 500, fontSize: 13, color: '#0A2540' }}>{cr.round} · Heat {cr.heat_number}</div>
+                                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(26,26,26,0.3)' }}>{cr.event_name} · {cr.division}</div>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                {cr.waves.length > 0 && (
+                                  <div style={{ display: 'flex', gap: 3 }}>
+                                    {cr.waves.slice(0, 3).map((w, wi) => (
+                                      <span key={wi} style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, fontWeight: 600, padding: '2px 5px', borderRadius: 3, backgroundColor: wi < 2 ? 'rgba(20,120,181,0.08)' : 'rgba(10,37,64,0.03)', color: wi < 2 ? '#1478B5' : 'rgba(26,26,26,0.3)' }}>{w.score.toFixed(1)}</span>
+                                    ))}
+                                  </div>
+                                )}
+                                {cr.result_position && (
+                                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 8, backgroundColor: cr.result_position <= 2 ? 'rgba(43,165,160,0.08)' : 'rgba(26,26,26,0.04)', color: cr.result_position <= 2 ? '#2BA5A0' : 'rgba(26,26,26,0.3)', fontFamily: "'JetBrains Mono',monospace" }}>#{cr.result_position}</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </ScrollReveal>
+                  )}
+                </div>
+              )}
             </>
           )}
 

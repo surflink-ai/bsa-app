@@ -1,4 +1,5 @@
 import { getOrg, getEvent } from '@/lib/liveheats'
+import { createClient } from '@/lib/supabase/server'
 import { AthleteDetailClient } from './AthleteDetailClient'
 export const revalidate = 300
 
@@ -95,6 +96,81 @@ export default async function AthleteDetailPage({ params }: { params: Promise<{ 
     }
   } catch {}
 
+  // Also fetch BSA Compete results if this athlete has a local record
+  let compResults: { event_name: string; event_date: string; division: string; round: string; heat_number: number; result_position: number | null; waves: { wave_number: number; score: number }[] }[] = []
+  let seasonPoints: { season_name: string; division: string; total_points: number; events_counted: number; best_result: number | null }[] = []
+
+  try {
+    const supabase = await createClient()
+
+    // Find local athlete by liveheats_id or by name
+    const { data: localAthlete } = await supabase
+      .from('athletes')
+      .select('id, name, image_url')
+      .eq('liveheats_id', id)
+      .single()
+
+    if (localAthlete) {
+      if (!img && localAthlete.image_url) img = localAthlete.image_url
+
+      // Get comp heat results
+      const { data: heatAthletes } = await supabase
+        .from('comp_heat_athletes')
+        .select(`
+          athlete_name, jersey_color, result_position, seed_position,
+          heat:comp_heats(
+            heat_number, status,
+            round:comp_rounds(
+              name,
+              event_division:comp_event_divisions(
+                division:comp_divisions(name),
+                event:comp_events(name, event_date)
+              )
+            )
+          ),
+          waves:comp_wave_scores(wave_number, score)
+        `)
+        .eq('athlete_id', localAthlete.id)
+
+      if (heatAthletes) {
+        for (const ha of heatAthletes) {
+          const heat = ha.heat as any
+          if (!heat?.round?.event_division?.event) continue
+          compResults.push({
+            event_name: heat.round.event_division.event.name,
+            event_date: heat.round.event_division.event.event_date || '',
+            division: heat.round.event_division.division?.name || '',
+            round: heat.round.name,
+            heat_number: heat.heat_number,
+            result_position: ha.result_position,
+            waves: ((ha.waves as any[]) || []).map(w => ({ wave_number: w.wave_number, score: Number(w.score) })).sort((a, b) => b.score - a.score),
+          })
+        }
+      }
+
+      // Get season points
+      const { data: points } = await supabase
+        .from('comp_season_points')
+        .select(`
+          total_points, events_counted, best_result,
+          season:comp_seasons(name),
+          division:comp_divisions(name)
+        `)
+        .eq('athlete_id', localAthlete.id)
+        .order('total_points', { ascending: false })
+
+      if (points) {
+        seasonPoints = points.map(p => ({
+          season_name: (p.season as any)?.name || '',
+          division: (p.division as any)?.name || '',
+          total_points: p.total_points,
+          events_counted: p.events_counted,
+          best_result: p.best_result,
+        }))
+      }
+    }
+  } catch {}
+
   if (!name) return <div style={{ paddingTop: '8rem', textAlign: 'center', color: 'rgba(26,26,26,0.4)' }}>Athlete not found.</div>
 
   // Top rivals (min 2 heats together)
@@ -109,6 +185,8 @@ export default async function AthleteDetailPage({ params }: { params: Promise<{ 
       results={results}
       heats={heats}
       rivals={topRivals}
+      compResults={compResults}
+      seasonPoints={seasonPoints}
     />
   )
 }

@@ -1,14 +1,8 @@
 import SwiftUI
 
-// BSA Priority Watch — Apple Watch Ultra
-// Connects DIRECTLY to Supabase Realtime over internet (Starlink + UniFi AP).
-// No relay server. No iPhone. Just WiFi.
-
 @main
 struct BSAPriorityWatchApp: App {
     @State private var relay = RelayConnection()
-    @State private var heatId = ""
-    @State private var athleteId = ""
     @State private var isConnected = false
     
     var body: some Scene {
@@ -29,10 +23,8 @@ struct BSAPriorityWatchApp: App {
                     }
             } else {
                 ConnectView(
-                    heatId: $heatId,
-                    athleteId: $athleteId,
                     connectionState: relay.connectionState,
-                    onConnect: {
+                    onConnect: { heatId, athleteId in
                         relay.connect(heatId: heatId, athleteId: athleteId)
                         isConnected = true
                     }

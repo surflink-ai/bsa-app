@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BSA Judge Interface — iPad Pro 13" Mockup</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0A1628;
+    color: #fff;
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    gap: 48px;
+  }
+
+  h1 { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; color: #2BA5A0; text-align: center; }
+  .subtitle { font-size: 14px; color: rgba(255,255,255,0.35); text-align: center; margin-top: 4px; }
+
+  .mockups { display: flex; flex-direction: column; gap: 64px; align-items: center; }
+
+  .state-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: rgba(255,255,255,0.25); text-align: center; margin-bottom: 16px;
+  }
+
+  /* iPad Pro shell */
+  .ipad-shell {
+    width: 900px; height: 620px;
+    border-radius: 24px;
+    background: #1C1C1E;
+    border: 3px solid #3A3A3C;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 12px 48px rgba(0,0,0,0.6);
+  }
+
+  /* Camera notch */
+  .ipad-shell::before {
+    content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    width: 8px; height: 8px; border-radius: 50%; background: #2C2C2E; z-index: 10;
+  }
+
+  .ipad-screen {
+    position: absolute; inset: 8px; border-radius: 16px; overflow: hidden;
+    background: #0A2540; display: flex; flex-direction: column;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    padding: 14px 24px; border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .bsa-logo { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: #fff; }
+  .judge-badge {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.3); text-transform: uppercase;
+  }
+  .header-right { display: flex; gap: 16px; align-items: center; }
+  .isa-btn {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #2BA5A0;
+    letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+  }
+  .exit-btn { font-size: 11px; color: rgba(255,255,255,0.3); cursor: pointer; }
+
+  /* ─── Heat Info Bar ─── */
+  .heat-bar {
+    padding: 14px 24px 10px; flex-shrink: 0;
+  }
+  .heat-title { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; }
+  .heat-meta {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: rgba(255,255,255,0.3); letter-spacing: 0.06em; margin-top: 2px;
+  }
+  .blind-notice {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    color: rgba(255,255,255,0.15); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 4px;
+  }
+
+  /* ─── Main Content: iPad landscape = 2-column layout ─── */
+  .content {
+    flex: 1; display: flex; overflow: hidden;
+  }
+
+  /* Left: athlete list */
+  .athlete-list {
+    width: 340px; border-right: 1px solid rgba(255,255,255,0.06);
+    overflow-y: auto; flex-shrink: 0;
+  }
+  .athlete-card {
+    display: flex; align-items: center; gap: 12px; padding: 16px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer;
+    transition: background 0.15s;
+  }
+  .athlete-card:hover { background: rgba(255,255,255,0.02); }
+  .athlete-card.selected { background: rgba(43,165,160,0.08); border-left: 3px solid #2BA5A0; }
+  .athlete-card.selected .athlete-name { color: #2BA5A0; }
+
+  .priority-badge {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700;
+    padding: 2px 7px; border-radius: 4px; letter-spacing: 0.05em; flex-shrink: 0;
+  }
+  .priority-badge.p1 { background: rgba(255,215,0,0.15); color: #FFD700; }
+  .priority-badge.p2 { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.25); }
+  .priority-badge.p3 { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.2); }
+  .priority-badge.p4 { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.15); }
+
+  .jersey-dot { width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0; }
+  .athlete-name { flex: 1; font-size: 15px; font-weight: 600; color: #fff; }
+  .wave-count {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.25);
+  }
+
+  /* Right: scoring panel */
+  .scoring-panel {
+    flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;
+  }
+
+  .scoring-athlete {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 4px;
+  }
+  .scoring-athlete-jersey { width: 24px; height: 24px; border-radius: 6px; }
+  .scoring-athlete-name { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; }
+
+  /* My previous scores */
+  .my-scores { display: flex; gap: 8px; flex-wrap: wrap; }
+  .score-chip {
+    padding: 8px 16px; border-radius: 8px; text-align: center;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+  }
+  .score-chip-wave {
+    font-family: 'JetBrains Mono', monospace; font-size: 8px;
+    color: rgba(255,255,255,0.3); letter-spacing: 0.08em;
+  }
+  .score-chip-value {
+    font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700;
+    color: rgba(255,255,255,0.6);
+  }
+  .score-chip-lock {
+    font-family: 'JetBrains Mono', monospace; font-size: 7px;
+    color: rgba(255,255,255,0.15); margin-top: 2px;
+  }
+
+  /* Wave label */
+  .wave-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: rgba(255,255,255,0.3); letter-spacing: 0.06em;
+  }
+
+  /* Quick score grid — bigger on iPad */
+  .quick-scores {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+  }
+  .quick-btn {
+    padding: 18px 0; border-radius: 10px; border: none;
+    background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.5);
+    font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .quick-btn:hover { background: rgba(255,255,255,0.08); }
+  .quick-btn.selected { background: rgba(43,165,160,0.2); color: #2BA5A0; border: 1px solid rgba(43,165,160,0.3); }
+
+  /* Score range labels below grid */
+  .range-labels {
+    display: flex; justify-content: space-between; padding: 0 4px;
+  }
+  .range-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 8px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  /* Input row */
+  .input-row { display: flex; gap: 12px; align-items: center; }
+  .score-input {
+    flex: 1; padding: 18px; font-size: 28px; text-align: center;
+    font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px; color: #fff; outline: none;
+  }
+  .submit-btn {
+    padding: 18px 40px; border-radius: 12px; border: none;
+    background: #2BA5A0; color: #fff; font-size: 18px; font-weight: 700;
+    font-family: 'Space Grotesk', sans-serif; cursor: pointer;
+  }
+  .submit-btn.disabled { background: rgba(255,255,255,0.06); opacity: 0.4; cursor: default; }
+
+  /* ─── Confirmation Modal ─── */
+  .confirm-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center; z-index: 20;
+    border-radius: 16px;
+  }
+  .confirm-modal {
+    background: #0A2540; border-radius: 20px; padding: 40px; max-width: 360px; width: 100%;
+    border: 1px solid rgba(255,255,255,0.1); text-align: center;
+  }
+  .confirm-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: rgba(255,255,255,0.3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px;
+  }
+  .confirm-score {
+    font-family: 'JetBrains Mono', monospace; font-size: 56px; font-weight: 700; color: #2BA5A0;
+  }
+  .confirm-wave {
+    font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: rgba(255,255,255,0.5); margin: 4px 0;
+  }
+  .confirm-warning {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: rgba(255,255,255,0.2); letter-spacing: 0.06em; margin-bottom: 28px;
+  }
+  .confirm-btns { display: flex; gap: 12px; }
+  .confirm-cancel {
+    flex: 1; padding: 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+    background: transparent; color: rgba(255,255,255,0.5); font-size: 15px; font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif; cursor: pointer;
+  }
+  .confirm-submit {
+    flex: 1; padding: 16px; border-radius: 12px; border: none;
+    background: #2BA5A0; color: #fff; font-size: 15px; font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif; cursor: pointer;
+  }
+
+  /* ─── ISA Criteria panel ─── */
+  .isa-panel {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 15;
+    background: #0A2540; border-radius: 20px 20px 0 0; padding: 24px;
+    border: 1px solid rgba(255,255,255,0.1); border-bottom: none;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+  }
+  .isa-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .isa-title { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; }
+  .isa-close { background: none; border: none; color: rgba(255,255,255,0.4); font-size: 20px; cursor: pointer; }
+  .isa-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .isa-item { padding: 12px 14px; border-radius: 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .isa-range { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; }
+  .isa-label-text { font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 600; margin-top: 2px; }
+  .isa-desc { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 3px; line-height: 1.4; }
+  .isa-footer {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    color: rgba(255,255,255,0.15); text-align: center; margin-top: 14px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  /* Head Judge link */
+  .head-link {
+    margin: 0 24px; padding: 14px; border-radius: 10px;
+    background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.2);
+    text-align: center; flex-shrink: 0;
+  }
+  .head-link a {
+    color: #FFD700; font-size: 14px; font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif; text-decoration: none;
+  }
+
+  .note {
+    font-size: 12px; color: rgba(255,255,255,0.15); text-align: center;
+    max-width: 900px; line-height: 1.6; margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div>
+  <h1>BSA Judge Interface</h1>
+  <div class="subtitle">iPad Pro 13" — Scoring Judge View (Blind)</div>
+</div>
+
+<div class="mockups">
+
+  <!-- ═══ STATE 1: Active scoring — athlete selected, mid-heat ═══ -->
+  <div>
+    <div class="state-label">Active Scoring — Wave 4 for Red Jersey</div>
+    <div class="ipad-shell">
+      <div class="ipad-screen">
+        <!-- Header -->
+        <div class="header">
+          <div class="header-left">
+            <span class="bsa-logo">BSA</span>
+            <span class="judge-badge">Marcus Chen · Judge 3</span>
+          </div>
+          <div class="header-right">
+            <span class="isa-btn">ISA Scale</span>
+            <span class="exit-btn">Exit</span>
+          </div>
+        </div>
+
+        <!-- Heat info -->
+        <div class="heat-bar">
+          <div class="heat-title">Heat 3</div>
+          <div class="heat-meta">Open Men — Round 1</div>
+          <div class="blind-notice">Blind Judging · Your Scores Only</div>
+        </div>
+
+        <!-- Main content: 2-column -->
+        <div class="content">
+          <!-- Left: athlete list -->
+          <div class="athlete-list">
+            <div class="athlete-card selected">
+              <span class="priority-badge p1">P1</span>
+              <span class="jersey-dot" style="background: #DC2626;"></span>
+              <span class="athlete-name">Dario Blackman</span>
+              <span class="wave-count">3 waves</span>
+            </div>
+            <div class="athlete-card">
+              <span class="priority-badge p2">P2</span>
+              <span class="jersey-dot" style="background: #2563EB;"></span>
+              <span class="athlete-name">Che Allan</span>
+              <span class="wave-count">4 waves</span>
+            </div>
+            <div class="athlete-card">
+              <span class="priority-badge p3">P3</span>
+              <span class="jersey-dot" style="background: #E2E8F0; border: 1px solid rgba(255,255,255,0.3);"></span>
+              <span class="athlete-name">Joshua Burke</span>
+              <span class="wave-count">3 waves</span>
+            </div>
+            <div class="athlete-card">
+              <span class="priority-badge p4">P4</span>
+              <span class="jersey-dot" style="background: #EAB308;"></span>
+              <span class="athlete-name">Dylan Maycock</span>
+              <span class="wave-count">2 waves</span>
+            </div>
+          </div>
+
+          <!-- Right: scoring panel -->
+          <div class="scoring-panel">
+            <!-- Selected athlete -->
+            <div class="scoring-athlete">
+              <div class="scoring-athlete-jersey" style="background: #DC2626;"></div>
+              <div class="scoring-athlete-name">Dario Blackman</div>
+              <span class="priority-badge p1" style="margin-left: 8px;">P1</span>
+            </div>
+
+            <!-- My previous scores (locked) -->
+            <div class="my-scores">
+              <div class="score-chip">
+                <div class="score-chip-wave">W1</div>
+                <div class="score-chip-value">6.5</div>
+                <div class="score-chip-lock">LOCKED</div>
+              </div>
+              <div class="score-chip">
+                <div class="score-chip-wave">W2</div>
+                <div class="score-chip-value">7.0</div>
+                <div class="score-chip-lock">LOCKED</div>
+              </div>
+              <div class="score-chip">
+                <div class="score-chip-wave">W3</div>
+                <div class="score-chip-value">5.5</div>
+                <div class="score-chip-lock">LOCKED</div>
+              </div>
+            </div>
+
+            <!-- New wave -->
+            <div class="wave-label">WAVE 4</div>
+
+            <!-- Quick score grid -->
+            <div class="quick-scores">
+              <div class="quick-btn">0.5</div>
+              <div class="quick-btn">1.0</div>
+              <div class="quick-btn">2.0</div>
+              <div class="quick-btn">3.0</div>
+              <div class="quick-btn">4.0</div>
+              <div class="quick-btn">5.0</div>
+              <div class="quick-btn">6.0</div>
+              <div class="quick-btn selected">7.5</div>
+              <div class="quick-btn">8.0</div>
+              <div class="quick-btn">9.0</div>
+              <div class="quick-btn">9.5</div>
+              <div class="quick-btn">10.0</div>
+            </div>
+
+            <!-- Range labels -->
+            <div class="range-labels">
+              <span class="range-label" style="color: #DC2626;">Poor 0–1.9</span>
+              <span class="range-label" style="color: #EA580C;">Fair 2–3.9</span>
+              <span class="range-label" style="color: #EAB308;">Avg 4–5.9</span>
+              <span class="range-label" style="color: #2BA5A0;">Good 6–7.9</span>
+              <span class="range-label" style="color: #2563EB;">Exc 8–9.9</span>
+              <span class="range-label" style="color: #FFD700;">10</span>
+            </div>
+
+            <!-- Input + submit -->
+            <div class="input-row">
+              <input class="score-input" value="7.5" readonly />
+              <button class="submit-btn">Submit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STATE 2: Score confirmation modal ═══ -->
+  <div>
+    <div class="state-label">Score Confirmation — Lock Warning</div>
+    <div class="ipad-shell">
+      <div class="ipad-screen">
+        <!-- Header (dimmed) -->
+        <div class="header" style="opacity: 0.3;">
+          <div class="header-left">
+            <span class="bsa-logo">BSA</span>
+            <span class="judge-badge">Marcus Chen · Judge 3</span>
+          </div>
+          <div class="header-right">
+            <span class="isa-btn">ISA Scale</span>
+            <span class="exit-btn">Exit</span>
+          </div>
+        </div>
+
+        <!-- Dimmed content -->
+        <div style="flex: 1; opacity: 0.15;">
+          <div class="heat-bar">
+            <div class="heat-title">Heat 3</div>
+          </div>
+        </div>
+
+        <!-- Confirmation modal -->
+        <div class="confirm-overlay">
+          <div class="confirm-modal">
+            <div class="confirm-label">Confirm Score</div>
+            <div class="confirm-score">7.5</div>
+            <div class="confirm-wave">Wave 4 · Dario Blackman</div>
+            <div class="confirm-warning">Score will be locked after submission</div>
+            <div class="confirm-btns">
+              <button class="confirm-cancel">Cancel</button>
+              <button class="confirm-submit">Confirm</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STATE 3: ISA Criteria reference panel ═══ -->
+  <div>
+    <div class="state-label">ISA Judging Scale — Reference Panel</div>
+    <div class="ipad-shell">
+      <div class="ipad-screen" style="position: relative;">
+        <!-- Header -->
+        <div class="header">
+          <div class="header-left">
+            <span class="bsa-logo">BSA</span>
+            <span class="judge-badge">Marcus Chen · Judge 3</span>
+          </div>
+          <div class="header-right">
+            <span class="isa-btn" style="color: #FFD700;">ISA Scale ▲</span>
+            <span class="exit-btn">Exit</span>
+          </div>
+        </div>
+
+        <div style="flex: 1; opacity: 0.1;">
+          <div class="heat-bar"><div class="heat-title">Heat 3</div></div>
+        </div>
+
+        <!-- ISA panel slide-up -->
+        <div class="isa-panel">
+          <div class="isa-header">
+            <span class="isa-title">ISA Judging Scale</span>
+            <button class="isa-close">✕</button>
+          </div>
+          <div class="isa-grid">
+            <div class="isa-item">
+              <div class="isa-range" style="color: #DC2626;">0.0 – 1.9</div>
+              <div class="isa-label-text" style="color: #DC2626;">Poor</div>
+              <div class="isa-desc">Minimal commitment, no completed maneuvers</div>
+            </div>
+            <div class="isa-item">
+              <div class="isa-range" style="color: #EA580C;">2.0 – 3.9</div>
+              <div class="isa-label-text" style="color: #EA580C;">Fair</div>
+              <div class="isa-desc">Minor maneuvers with limited execution</div>
+            </div>
+            <div class="isa-item">
+              <div class="isa-range" style="color: #EAB308;">4.0 – 5.9</div>
+              <div class="isa-label-text" style="color: #EAB308;">Average</div>
+              <div class="isa-desc">Competent surfing, moderate variety</div>
+            </div>
+            <div class="isa-item">
+              <div class="isa-range" style="color: #2BA5A0;">6.0 – 7.9</div>
+              <div class="isa-label-text" style="color: #2BA5A0;">Good</div>
+              <div class="isa-desc">Strong maneuvers with power, speed and flow</div>
+            </div>
+            <div class="isa-item">
+              <div class="isa-range" style="color: #2563EB;">8.0 – 9.9</div>
+              <div class="isa-label-text" style="color: #2563EB;">Excellent</div>
+              <div class="isa-desc">Exceptional, innovative surfing with high risk</div>
+            </div>
+            <div class="isa-item">
+              <div class="isa-range" style="color: #FFD700;">10.0</div>
+              <div class="isa-label-text" style="color: #FFD700;">Perfect</div>
+              <div class="isa-desc">Flawless execution, maximum commitment</div>
+            </div>
+          </div>
+          <div class="isa-footer">Commitment · Difficulty · Variety · Speed · Power · Flow</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STATE 4: Head Judge view with link ═══ -->
+  <div>
+    <div class="state-label">Head Judge — Panel Access + No Scoring</div>
+    <div class="ipad-shell">
+      <div class="ipad-screen">
+        <div class="header">
+          <div class="header-left">
+            <span class="bsa-logo">BSA</span>
+            <span class="judge-badge">Kevin Cooper · <span style="color: #FFD700;">Head Judge</span></span>
+          </div>
+          <div class="header-right">
+            <span class="isa-btn">ISA Scale</span>
+            <span class="exit-btn">Exit</span>
+          </div>
+        </div>
+
+        <div class="heat-bar">
+          <div class="heat-title">Heat 3</div>
+          <div class="heat-meta">Open Men — Round 1</div>
+          <div class="blind-notice" style="color: #FFD700;">Head Judge · Oversee panel, no scoring</div>
+        </div>
+
+        <div class="content">
+          <div class="athlete-list" style="width: 100%; border-right: none;">
+            <div class="athlete-card">
+              <span class="priority-badge p1">P1</span>
+              <span class="jersey-dot" style="background: #DC2626;"></span>
+              <span class="athlete-name">Dario Blackman</span>
+              <span class="wave-count">3 waves</span>
+            </div>
+            <div class="athlete-card">
+              <span class="priority-badge p2">P2</span>
+              <span class="jersey-dot" style="background: #2563EB;"></span>
+              <span class="athlete-name">Che Allan</span>
+              <span class="wave-count">4 waves</span>
+            </div>
+            <div class="athlete-card">
+              <span class="priority-badge p3">P3</span>
+              <span class="jersey-dot" style="background: #E2E8F0; border: 1px solid rgba(255,255,255,0.3);"></span>
+              <span class="athlete-name">Joshua Burke</span>
+              <span class="wave-count">3 waves</span>
+            </div>
+            <div class="athlete-card">
+              <span class="priority-badge p4">P4</span>
+              <span class="jersey-dot" style="background: #EAB308;"></span>
+              <span class="athlete-name">Dylan Maycock</span>
+              <span class="wave-count">2 waves</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Head judge panel link -->
+        <div class="head-link" style="margin-bottom: 16px;">
+          <a href="#">Open Head Judge Panel →</a>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: rgba(255,215,0,0.4); margin-top: 4px; letter-spacing: 0.05em;">
+            All judge scores · Override · Interference · Priority · Certification
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="note">
+  iPad Pro 13" (landscape) · 4 states shown<br>
+  Judges see ONLY their own scores (blind). No totals, positions, or other judge data.<br>
+  Head Judge does NOT score — oversees panel via separate Head Judge Panel.<br>
+  Quick-tap grid for fast scoring during live heats. Score locks on confirmation.
+</div>
+
+</body>
+</html>

@@ -12,13 +12,13 @@ if (typeof document !== 'undefined' && !document.getElementById(FONT_ID)) {
 }
 
 const T = {
-  bg: 'linear-gradient(145deg, #EEF2F6 0%, #F6F8FB 40%, #EDF1F5 100%)',
-  glass: 'rgba(255,255,255,0.6)', glassStrong: 'rgba(255,255,255,0.7)',
-  glassBorder: 'rgba(0,0,0,0.06)',
-  text: '#0F172A', textSec: 'rgba(15,23,42,0.45)', textMuted: 'rgba(15,23,42,0.12)',
-  scrim: 'rgba(0,0,0,0.15)', modalGlass: 'rgba(255,255,255,0.92)',
-  shadow: '0 8px 32px rgba(0,0,0,0.06)',
-  scoreBg: 'rgba(0,0,0,0.03)', scoreBgBest: 'rgba(0,0,0,0.06)',
+  bg: 'linear-gradient(145deg, #E4E9EF 0%, #EDF1F5 40%, #E6EBF0 100%)',
+  glass: 'rgba(255,255,255,0.55)', glassStrong: 'rgba(255,255,255,0.65)',
+  glassBorder: 'rgba(0,0,0,0.08)',
+  text: '#0F172A', textSec: 'rgba(15,23,42,0.55)', textMuted: 'rgba(15,23,42,0.25)',
+  scrim: 'rgba(0,0,0,0.2)', modalGlass: 'rgba(255,255,255,0.92)',
+  shadow: '0 8px 32px rgba(0,0,0,0.08)',
+  scoreBg: 'rgba(0,0,0,0.04)', scoreBgBest: 'rgba(0,0,0,0.07)',
   red: '#DC2626',
 }
 const JERSEY: Record<string, string> = { red: '#DC2626', blue: '#2563EB', white: '#CBD5E1', yellow: '#EAB308', green: '#16A34A', black: '#1E293B', pink: '#EC4899', orange: '#EA580C' }
@@ -149,7 +149,7 @@ function HeadJudgePage() {
             return (
               <button key={a.heat_athlete_id} onClick={() => !a.has_ridden ? priorityAction('wave_ridden', a.heat_athlete_id) : null}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', fontSize: 10, fontWeight: 700, fontFamily: ff.ui, cursor: a.has_ridden ? 'default' : 'pointer', color: a.has_ridden ? T.textMuted : T.textSec, ...glass(a.has_ridden ? 'transparent' : `${jc}08`, a.has_ridden ? T.glassBorder : `${jc}20`, 20, 8) }}>
-                <span style={{ width: 6, height: 6, borderRadius: 3, background: jc }} />
+                <span style={{ width: 8, height: 8, borderRadius: 4, background: jc }} />
                 {a.athlete_name?.split(' ').pop()}{a.has_ridden && ' done'}
               </button>
             )
@@ -163,8 +163,8 @@ function HeadJudgePage() {
             return (
               <div key={id} style={{ position: 'relative' }}>
                 <button onClick={() => setPriorityMenu(priorityMenu === id ? null : id)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', fontSize: 10, fontWeight: 700, fontFamily: ff.ui, cursor: 'pointer', color: susp ? T.textMuted : T.textSec, opacity: susp ? 0.5 : 1, ...glass(i === 0 ? `${jc}08` : 'transparent', i === 0 ? `${jc}15` : T.glassBorder, 20, 8) }}>
-                  <span style={{ width: 6, height: 6, borderRadius: 3, background: jc }} />
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 12px', fontSize: 11, fontWeight: 700, fontFamily: ff.ui, cursor: 'pointer', color: susp ? T.textMuted : T.text, opacity: susp ? 0.5 : 1, ...glass(i === 0 ? `${jc}12` : 'rgba(0,0,0,0.02)', i === 0 ? `${jc}25` : T.glassBorder, 20, 8) }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 4, background: jc }} />
                   P{i + 1} {a?.athlete_name?.split(' ').pop()}
                 </button>
                 {priorityMenu === id && (
@@ -280,27 +280,38 @@ function HeadJudgePage() {
               </div>
 
               <div style={{ width: 40, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <button onClick={() => setIntModal({ id: athlete.id, name: athlete.athlete_name })} style={{ fontFamily: ff.mono, fontSize: 8, fontWeight: 700, background: 'none', border: `1px solid ${T.red}15`, borderRadius: 6, cursor: 'pointer', color: T.red, opacity: 0.35, padding: '3px 6px', letterSpacing: '0.05em' }}>INT</button>
+                <button onClick={() => setIntModal({ id: athlete.id, name: athlete.athlete_name })} style={{ fontFamily: ff.mono, fontSize: 8, fontWeight: 700, background: `${T.red}08`, border: `1px solid ${T.red}20`, borderRadius: 6, cursor: 'pointer', color: T.red, opacity: 0.6, padding: '4px 8px', letterSpacing: '0.05em' }}>INT</button>
               </div>
             </div>
           )
         })}
       </div>
 
-      {/* JUDGE STATS */}
-      <div style={{ padding: '6px 20px 8px', margin: '0 12px', display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0, flexWrap: 'wrap' }}>
-        <span style={{ fontFamily: ff.mono, fontSize: 8, color: T.textMuted, letterSpacing: '0.1em' }}>JUDGES</span>
-        {data.judge_performance.map(jp => {
-          const dev = Math.abs(jp.average_score - data.heat_average)
-          const outlier = dev > 1.5 && jp.scores_submitted > 2
-          return (
-            <span key={jp.judge_id} style={{ fontFamily: ff.mono, fontSize: 10, color: outlier ? T.red : T.textSec }}>
-              J{jp.position} {jp.judge_name.split(' ').pop()} / {jp.average_score.toFixed(1)} / {jp.scores_submitted}
-            </span>
-          )
-        })}
-        <span style={{ fontFamily: ff.mono, fontSize: 10, color: T.textSec, marginLeft: 'auto' }}>Heat avg {data.heat_average.toFixed(2)}</span>
-        <span style={{ fontFamily: ff.mono, fontSize: 8, color: T.textMuted }}>HEAD JUDGE / ALL SCORES</span>
+      {/* FOOTER — ISA guide + judge stats */}
+      <div style={{ padding: '8px 20px', margin: '0 12px 8px', flexShrink: 0, ...glass(T.glassStrong, T.glassBorder, 30, 12) }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            {[
+              { r: '0–1.9', l: 'Poor' }, { r: '2–3.9', l: 'Fair' }, { r: '4–5.9', l: 'Average' },
+              { r: '6–7.9', l: 'Good' }, { r: '8–9.9', l: 'Excellent' }, { r: '10', l: 'Perfect' },
+            ].map(c => (
+              <span key={c.r} style={{ fontFamily: ff.mono, fontSize: 9, color: T.textSec }}>
+                <span style={{ fontWeight: 700 }}>{c.r}</span> {c.l}
+              </span>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {data.judge_performance.map(jp => {
+              const outlier = Math.abs(jp.average_score - data.heat_average) > 1.5 && jp.scores_submitted > 2
+              return (
+                <span key={jp.judge_id} style={{ fontFamily: ff.mono, fontSize: 9, color: outlier ? T.red : T.textSec }}>
+                  J{jp.position} {jp.average_score.toFixed(1)}
+                </span>
+              )
+            })}
+            <span style={{ fontFamily: ff.mono, fontSize: 9, fontWeight: 700, color: T.text }}>Avg {data.heat_average.toFixed(2)}</span>
+          </div>
+        </div>
       </div>
 
       {/* INTERFERENCE MODAL */}

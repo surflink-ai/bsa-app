@@ -13,14 +13,24 @@ if (typeof document !== 'undefined' && !document.getElementById(FONT_ID)) {
 
 /* ─── Theme — light only ─── */
 const T = {
-  bg: 'linear-gradient(145deg, #EEF2F6 0%, #F6F8FB 40%, #EDF1F5 100%)',
-  glass: 'rgba(255,255,255,0.6)', glassStrong: 'rgba(255,255,255,0.7)',
-  glassBorder: 'rgba(0,0,0,0.06)',
-  text: '#0F172A', textSec: 'rgba(15,23,42,0.45)', textMuted: 'rgba(15,23,42,0.12)',
-  scrim: 'rgba(0,0,0,0.15)', numpadGlass: 'rgba(255,255,255,0.92)',
-  shadow: '0 8px 32px rgba(0,0,0,0.06)',
-  scoreBg: 'rgba(0,0,0,0.03)', scoreBgBest: 'rgba(0,0,0,0.06)',
+  bg: 'linear-gradient(145deg, #E4E9EF 0%, #EDF1F5 40%, #E6EBF0 100%)',
+  glass: 'rgba(255,255,255,0.55)', glassStrong: 'rgba(255,255,255,0.65)',
+  glassBorder: 'rgba(0,0,0,0.08)',
+  text: '#0F172A', textSec: 'rgba(15,23,42,0.55)', textMuted: 'rgba(15,23,42,0.25)',
+  scrim: 'rgba(0,0,0,0.2)', numpadGlass: 'rgba(255,255,255,0.92)',
+  shadow: '0 8px 32px rgba(0,0,0,0.08)',
+  scoreBg: 'rgba(0,0,0,0.04)', scoreBgBest: 'rgba(0,0,0,0.07)',
+  red: '#DC2626',
 }
+
+const ISA_FOOTER = [
+  { range: '0–1.9', label: 'Poor' },
+  { range: '2–3.9', label: 'Fair' },
+  { range: '4–5.9', label: 'Average' },
+  { range: '6–7.9', label: 'Good' },
+  { range: '8–9.9', label: 'Excellent' },
+  { range: '10', label: 'Perfect' },
+]
 
 const JERSEY: Record<string, string> = {
   red: '#DC2626', blue: '#2563EB', white: '#CBD5E1', yellow: '#EAB308',
@@ -200,8 +210,8 @@ export function JudgeClient() {
           const a = athletes.find(x => x.heat_athlete_id === id)
           const jc = JERSEY[a?.jersey_color || ''] || '#94A3B8'
           return (
-            <span key={id} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', fontSize: 10, fontFamily: ff.mono, fontWeight: 600, color: T.textSec, ...glass(i === 0 ? `${jc}10` : 'transparent', i === 0 ? `${jc}20` : T.glassBorder, 20, 8) }}>
-              <span style={{ width: 6, height: 6, borderRadius: 3, background: jc }} />
+            <span key={id} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 12px', fontSize: 11, fontFamily: ff.mono, fontWeight: 700, color: T.text, ...glass(i === 0 ? `${jc}12` : 'rgba(0,0,0,0.02)', i === 0 ? `${jc}25` : T.glassBorder, 20, 8) }}>
+              <span style={{ width: 8, height: 8, borderRadius: 4, background: jc }} />
               P{i + 1} {a?.athlete_name?.split(' ').pop()}
             </span>
           )
@@ -298,11 +308,19 @@ export function JudgeClient() {
         })}
       </div>
 
-      {/* ═══ FOOTER ═══ */}
-      <div style={{ padding: '6px 24px 8px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontFamily: ff.mono, fontSize: 8, color: T.textMuted, letterSpacing: '0.12em' }}>BLIND JUDGING</span>
-        {heat?.is_head_judge && <a href={`/judge/head?heat_id=${heat.id}`} style={{ fontFamily: ff.mono, fontSize: 9, color: T.textSec, textDecoration: 'none', letterSpacing: '0.05em', fontWeight: 600 }}>HEAD JUDGE</a>}
-        <span style={{ fontFamily: ff.mono, fontSize: 8, color: T.textMuted, letterSpacing: '0.08em' }}>BSA COMPETE</span>
+      {/* ═══ FOOTER — ISA Guide always visible ═══ */}
+      <div style={{ padding: '8px 20px', margin: '0 12px 8px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', ...glass(T.glassStrong, T.glassBorder, 30, 12) }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          {ISA_FOOTER.map(c => (
+            <span key={c.range} style={{ fontFamily: ff.mono, fontSize: 9, color: T.textSec }}>
+              <span style={{ fontWeight: 700 }}>{c.range}</span> {c.label}
+            </span>
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {heat?.is_head_judge && <a href={`/judge/head?heat_id=${heat.id}`} style={{ fontFamily: ff.mono, fontSize: 10, color: T.text, textDecoration: 'none', letterSpacing: '0.04em', fontWeight: 700, padding: '4px 12px', ...glass('rgba(0,0,0,0.04)', T.glassBorder, 20, 8) }}>HEAD JUDGE</a>}
+          <span style={{ fontFamily: ff.mono, fontSize: 8, color: T.textMuted, letterSpacing: '0.08em' }}>BSA COMPETE</span>
+        </div>
       </div>
 
       {/* ═══ NUMPAD ═══ */}

@@ -46,6 +46,8 @@ const heatCache = new Map()
 const activeChannels = new Map()
 // Timer intervals per heat
 const timerIntervals = new Map()
+// Last broadcast hash per heat — skip if data unchanged
+const lastBroadcastHash = new Map()
 
 let clientIdCounter = 0
 
@@ -376,7 +378,12 @@ async function onAthleteChange(heatId, payload) {
   const data = await fetchHeatData(heatId)
   if (!data.heat) return
 
-  // Broadcast updated priority + scores
+  // Deduplicate: hash the scoring-relevant fields. Skip if unchanged.
+  const hash = data.athletes.map(a => `${a.id}:${a.total_score}:${a.needs_score}:${a.wave_count}:${a.priority_position}:${a.penalty}:${a.is_disqualified}:${a.result_position}`).join('|')
+  if (lastBroadcastHash.get(heatId) === hash) return
+  lastBroadcastHash.set(heatId, hash)
+
+  console.log(`[DEDUP] Broadcasting update for heat ${heatId}`)
   broadcastToHeat(heatId, (athleteId) => buildPriorityMessage(data, athleteId))
 }
 
@@ -452,6 +459,9 @@ function cleanupHeat(heatId) {
     clearInterval(timer)
     timerIntervals.delete(heatId)
   }
+
+  // Clear dedup hash
+  lastBroadcastHash.delete(heatId)
 
   // Clear cache
   heatCache.delete(heatId)

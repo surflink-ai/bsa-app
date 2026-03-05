@@ -114,7 +114,7 @@ async function clean() {
     ['comp_wave_scores', ALL_IDS],
     ['comp_interference', ALL_IDS],
     ['comp_score_overrides', ALL_IDS],
-    ['comp_heat_judges', [ID.hj1, ID.hj2, ID.hj3, ID.hj4, ID.hj5, ID.hj6]],
+    ['comp_heat_judges', [ID.hj1, ID.hj2, ID.hj3, ID.hj4, ID.hj5, ID.hj6, ID.hj7, ID.hj8, ID.hj9, ID.hj10]],
     ['comp_heat_athletes', [ID.ha1, ID.ha2, ID.ha3, ID.ha4, ID.ha5, ID.ha6, ID.ha7, ID.ha8]],
     ['comp_heats', [ID.heat1, ID.heat2]],
     ['comp_rounds', [ID.round]],
@@ -122,7 +122,7 @@ async function clean() {
     ['comp_events', [ID.event]],
     ['comp_divisions', [ID.div]],
     ['athletes', [ID.ath1, ID.ath2, ID.ath3, ID.ath4, ID.ath5, ID.ath6, ID.ath7, ID.ath8]],
-    ['comp_judges', [ID.j1, ID.j2, ID.j3]],
+    ['comp_judges', [ID.j1, ID.j2, ID.j3, ID.j4, ID.j5]],
   ]
   
   for (const [table, ids] of ops) {

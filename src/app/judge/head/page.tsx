@@ -73,6 +73,33 @@ function HeadJudgePage() {
   const [overrideModal, setOverrideModal] = useState<{ scoreId: string; athleteName: string; judgeName: string; waveNumber: number; currentScore: number } | null>(null)
   const [overrideScore, setOverrideScore] = useState('')
   const [overrideReason, setOverrideReason] = useState('')
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  // Horn/buzzer via Web Audio API
+  const playHorn = (blasts: number) => {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const playBlast = (startTime: number) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'square'
+      osc.frequency.setValueAtTime(440, startTime)
+      osc.frequency.linearRampToValueAtTime(220, startTime + 0.8)
+      gain.gain.setValueAtTime(0.5, startTime)
+      gain.gain.linearRampToValueAtTime(0, startTime + 0.8)
+      osc.connect(gain).connect(ctx.destination)
+      osc.start(startTime)
+      osc.stop(startTime + 0.8)
+    }
+    for (let i = 0; i < blasts; i++) playBlast(ctx.currentTime + i * 1.0)
+  }
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {})
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {})
+    }
+  }
 
   const timer = useTimer(data?.heat?.actual_start || null, data?.heat?.duration_minutes || 20, data?.heat?.status || 'pending')
 
@@ -153,8 +180,11 @@ function HeadJudgePage() {
         </div>
         <div style={{ fontFamily: ff.mono, fontSize: 40, fontWeight: 800, letterSpacing: '0.04em', lineHeight: 1, color: timer.warn ? T.red : T.text }}>{timer.fmt}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button onClick={() => playHorn(3)} title="3 blasts — Start" style={{ padding: '6px 10px', border: `1px solid ${T.glassBorder}`, background: 'rgba(22,163,74,0.06)', color: '#16A34A', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: ff.mono, borderRadius: 8 }}>START</button>
+          <button onClick={() => playHorn(1)} title="1 blast — End" style={{ padding: '6px 10px', border: `1px solid ${T.glassBorder}`, background: 'rgba(220,38,38,0.06)', color: '#DC2626', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: ff.mono, borderRadius: 8 }}>END</button>
           {data.heat.status === 'live' && !data.heat.certified && <button onClick={certifyHeat} style={{ padding: '7px 16px', border: 'none', background: T.text, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: ff.ui, borderRadius: 10 }}>Certify</button>}
           {data.heat.certified && <span style={{ fontSize: 10, fontFamily: ff.mono, color: T.textSec, fontWeight: 700, letterSpacing: '0.05em' }}>CERTIFIED</span>}
+          <button onClick={toggleFullscreen} style={{ padding: '6px 10px', border: `1px solid ${T.glassBorder}`, background: 'transparent', color: T.textMuted, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: ff.mono, borderRadius: 8 }}>{isFullscreen ? 'EXIT' : 'FULL'}</button>
           <a href="/judge" style={{ fontSize: 10, color: T.textMuted, textDecoration: 'none', fontFamily: ff.mono }}>Back</a>
         </div>
       </div>

@@ -60,6 +60,8 @@ const ID = {
   j1:      'de000000-0000-0000-0000-000000000031',
   j2:      'de000000-0000-0000-0000-000000000032',
   j3:      'de000000-0000-0000-0000-000000000033',
+  j4:      'de000000-0000-0000-0000-000000000034',
+  j5:      'de000000-0000-0000-0000-000000000035',
   // Heat judges
   hj1:     'de000000-0000-0000-0000-000000000051',
   hj2:     'de000000-0000-0000-0000-000000000052',
@@ -67,6 +69,10 @@ const ID = {
   hj4:     'de000000-0000-0000-0000-000000000054',
   hj5:     'de000000-0000-0000-0000-000000000055',
   hj6:     'de000000-0000-0000-0000-000000000056',
+  hj7:     'de000000-0000-0000-0000-000000000057',
+  hj8:     'de000000-0000-0000-0000-000000000058',
+  hj9:     'de000000-0000-0000-0000-000000000059',
+  hj10:    'de000000-0000-0000-0000-000000000060',
 }
 
 const ALL_IDS = Object.values(ID)
@@ -160,7 +166,7 @@ async function seed() {
   
   await ins('comp_event_divisions', {
     id: ID.evtDiv, event_id: ID.event, division_id: ID.div,
-    panel_size: 3, drop_high_low: false, scoring_best_of: 2,
+    panel_size: 5, drop_high_low: true, scoring_best_of: 2,
   }, 'Event Division (3 judges, best 2 waves)')
   
   await ins('comp_rounds', {
@@ -222,6 +228,8 @@ async function seed() {
   await ins('comp_judges', { id: ID.j1, name: 'Head Judge Adams', pin: '1111', role: 'head_judge', active: true }, 'Head Judge Adams (PIN: 1111)')
   await ins('comp_judges', { id: ID.j2, name: 'Judge Williams',   pin: '2222', role: 'judge',      active: true }, 'Judge Williams (PIN: 2222)')
   await ins('comp_judges', { id: ID.j3, name: 'Judge Thompson',   pin: '3333', role: 'judge',      active: true }, 'Judge Thompson (PIN: 3333)')
+  await ins('comp_judges', { id: ID.j4, name: 'Judge Martinez',   pin: '4444', role: 'judge',      active: true }, 'Judge Martinez (PIN: 4444)')
+  await ins('comp_judges', { id: ID.j5, name: 'Judge Patel',      pin: '5555', role: 'judge',      active: true }, 'Judge Patel (PIN: 5555)')
   
   // Assign judges to Heat 1
   console.log('\n📋 Assigning judges to heats...')
@@ -229,11 +237,15 @@ async function seed() {
   await ins('comp_heat_judges', { id: ID.hj1, heat_id: ID.heat1, judge_id: ID.j1, position: 1, is_head_judge: true },  'Heat 1 ← Head Judge Adams')
   await ins('comp_heat_judges', { id: ID.hj2, heat_id: ID.heat1, judge_id: ID.j2, position: 2, is_head_judge: false }, 'Heat 1 ← Judge Williams')
   await ins('comp_heat_judges', { id: ID.hj3, heat_id: ID.heat1, judge_id: ID.j3, position: 3, is_head_judge: false }, 'Heat 1 ← Judge Thompson')
+  await ins('comp_heat_judges', { id: ID.hj7, heat_id: ID.heat1, judge_id: ID.j4, position: 4, is_head_judge: false }, 'Heat 1 ← Judge Martinez')
+  await ins('comp_heat_judges', { id: ID.hj8, heat_id: ID.heat1, judge_id: ID.j5, position: 5, is_head_judge: false }, 'Heat 1 ← Judge Patel')
   
   // Assign judges to Heat 2 as well
   await ins('comp_heat_judges', { id: ID.hj4, heat_id: ID.heat2, judge_id: ID.j1, position: 1, is_head_judge: true },  'Heat 2 ← Head Judge Adams')
   await ins('comp_heat_judges', { id: ID.hj5, heat_id: ID.heat2, judge_id: ID.j2, position: 2, is_head_judge: false }, 'Heat 2 ← Judge Williams')
   await ins('comp_heat_judges', { id: ID.hj6, heat_id: ID.heat2, judge_id: ID.j3, position: 3, is_head_judge: false }, 'Heat 2 ← Judge Thompson')
+  await ins('comp_heat_judges', { id: ID.hj9, heat_id: ID.heat2, judge_id: ID.j4, position: 4, is_head_judge: false }, 'Heat 2 ← Judge Martinez')
+  await ins('comp_heat_judges', { id: ID.hj10, heat_id: ID.heat2, judge_id: ID.j5, position: 5, is_head_judge: false }, 'Heat 2 ← Judge Patel')
   
   // ─── Done ───
   console.log('\n' + '═'.repeat(55))
@@ -246,6 +258,8 @@ async function seed() {
   console.log('  Head: PIN 1111 (Head Judge Adams)')
   console.log('  J2:   PIN 2222 (Judge Williams)')
   console.log('  J3:   PIN 3333 (Judge Thompson)')
+  console.log('  J4:   PIN 4444 (Judge Martinez)')
+  console.log('  J5:   PIN 5555 (Judge Patel)')
   
   console.log('\n  👨‍⚖️ HEAD JUDGE PANEL')
   console.log('  ─────────────────')

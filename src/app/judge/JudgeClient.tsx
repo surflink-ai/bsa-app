@@ -71,7 +71,23 @@ function useTimer(start: string | null, dur: number, status: string) {
     tick(); const i = setInterval(tick, 1000); return () => clearInterval(i)
   }, [start, dur, status])
   const m = Math.floor(rem / 60), s = rem % 60
-  return { rem, fmt: `${m}:${s.toString().padStart(2, '0')}`, warn: rem <= 30 }
+  const total = dur * 60
+  const pct = total > 0 ? rem / total : 1
+  return { rem, fmt: `${m}:${s.toString().padStart(2, '0')}`, warn: rem <= 30, pct }
+}
+
+function playScoreLockSound() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(880, ctx.currentTime)
+    gain.gain.setValueAtTime(0.15, ctx.currentTime)
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.12)
+    osc.connect(gain).connect(ctx.destination)
+    osc.start(); osc.stop(ctx.currentTime + 0.12)
+  } catch {}
 }
 
 export function JudgeClient() {
@@ -87,7 +103,16 @@ export function JudgeClient() {
   const [customInput, setCustomInput] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
+  const [lastScored, setLastScored] = useState<string | null>(null) // "athleteId-wave" key
   const [connected, setConnected] = useState(true)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {})
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {})
+    }
+  }
 
   const sb = createClient()
   const timer = useTimer(heat?.actual_start || null, heat?.duration_minutes || 20, heat?.status || 'pending')
@@ -100,7 +125,24 @@ export function JudgeClient() {
     else setPinError('Invalid PIN')
   }
   const logout = () => { setJudge(null); localStorage.removeItem('bsa_judge') }
-  useEffect(() => { const s = localStorage.getItem('bsa_judge'); if (s) setJudge(JSON.parse(s)) }, [])
+  useEffect(() => {
+    const s = localStorage.getItem('bsa_judge')
+    if (s) { setJudge(JSON.parse(s)); return }
+    // Auto-login from URL params (QR code flow)
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const urlPin = params.get('pin')
+      const urlHeat = params.get('heat_id')
+      if (urlPin) {
+        setPin(urlPin)
+        fetch('/api/judge/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: urlPin }) })
+          .then(r => r.json())
+          .then(d => {
+            if (d.judge) { setJudge(d.judge); localStorage.setItem('bsa_judge', JSON.stringify(d.judge)); if (urlHeat) setSelectedHeatId(urlHeat) }
+          })
+      }
+    }
+  }, [])
 
   const loadHeats = useCallback(async () => {
     if (!judge) return
@@ -144,7 +186,10 @@ export function JudgeClient() {
     const d = await res.json()
     setSubmitting(false)
     if (d.success) {
+      playScoreLockSound()
       showMsg(`${selectedScore.toFixed(1)} locked`, true)
+      setLastScored(`${numpad.athleteId}-${numpad.wave}`)
+      setTimeout(() => setLastScored(null), 1500)
       setNumpad(null); setSelectedScore(null); setCustomInput('')
     } else showMsg(d.error || 'Error', false)
     loadHeatData()
@@ -218,8 +263,14 @@ export function JudgeClient() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ width: 6, height: 6, borderRadius: 3, background: connected ? '#16A34A' : '#DC2626' }} title={connected ? 'Connected' : 'Reconnecting'} />
           <span style={{ fontFamily: ff.mono, fontSize: 10, color: T.textMuted }}>{judge.name}</span>
+          <button onClick={toggleFullscreen} style={{ fontFamily: ff.mono, fontSize: 9, color: T.textMuted, background: 'none', border: `1px solid ${T.glassBorder}`, cursor: 'pointer', padding: '3px 8px', borderRadius: 6 }}>{isFullscreen ? 'Exit' : 'Full'}</button>
           <button onClick={logout} style={{ fontFamily: ff.mono, fontSize: 9, color: T.textMuted, background: 'none', border: 'none', cursor: 'pointer' }}>Exit</button>
         </div>
+      </div>
+
+      {/* ═══ PROGRESS BAR ═══ */}
+      <div style={{ height: 3, margin: '0 12px', borderRadius: 2, background: 'rgba(0,0,0,0.04)', overflow: 'hidden', flexShrink: 0 }}>
+        <div style={{ height: '100%', width: `${timer.pct * 100}%`, borderRadius: 2, transition: 'width 1s linear', background: timer.warn ? '#DC2626' : timer.pct < 0.15 ? '#EAB308' : '#2BA5A0' }} />
       </div>
 
       {/* ═══ PRIORITY ═══ */}
@@ -288,8 +339,9 @@ export function JudgeClient() {
                   const isBest = athlete.best2.includes(wn)
 
                   if (score !== undefined) {
+                    const isJustScored = lastScored === `${athlete.heat_athlete_id}-${wn}`
                     return (
-                      <div key={wi} style={{ flex: 1, minWidth: 72, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12, background: isBest ? T.scoreBgBest : T.scoreBg, boxShadow: isBest ? `inset 0 0 0 2px ${jc}25` : 'none', position: 'relative' }}>
+                      <div key={wi} style={{ flex: 1, minWidth: 72, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12, background: isBest ? T.scoreBgBest : T.scoreBg, boxShadow: isBest ? `inset 0 0 0 2px ${jc}25` : 'none', position: 'relative', animation: isJustScored ? 'scoreFlash 1.5s ease-out' : undefined }}>
                         <span style={{ fontFamily: ff.mono, fontWeight: 700, fontSize: isBest ? 22 : 18, color: T.text }}>{score.toFixed(1)}</span>
                         {isBest && <span style={{ position: 'absolute', bottom: 5, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: jc }} />}
                       </div>
@@ -416,7 +468,7 @@ export function JudgeClient() {
         </div>
       )}
 
-      <style>{`@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }`}</style>
+      <style>{`@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } } @keyframes scoreFlash { 0% { background: rgba(43,165,160,0.2); transform: scale(1.03); } 100% { background: transparent; transform: scale(1); } }`}</style>
     </div>
   )
 }

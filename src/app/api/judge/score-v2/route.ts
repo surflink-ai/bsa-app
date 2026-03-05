@@ -53,12 +53,17 @@ export async function POST(request: NextRequest) {
 
     const { data: heat } = await supabase
       .from('comp_heats')
-      .select('id, status, round_id')
+      .select('id, status, round_id, certified')
       .eq('id', heatAthlete.heat_id)
       .single()
 
-    if (!heat || heat.status !== 'live') {
-      return NextResponse.json({ error: 'Heat is not live. Cannot submit scores.' }, { status: 400 })
+    if (!heat || (heat.status !== 'live' && heat.status !== 'complete')) {
+      return NextResponse.json({ error: 'Heat is not active. Cannot submit scores.' }, { status: 400 })
+    }
+
+    // Block submissions if heat is certified (protest window / finalized)
+    if ((heat as any).certified) {
+      return NextResponse.json({ error: 'Heat is certified. Scores are locked.' }, { status: 403 })
     }
 
     // Verify judge is assigned to this heat

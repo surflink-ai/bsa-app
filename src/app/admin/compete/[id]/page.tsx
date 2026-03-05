@@ -441,9 +441,24 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
   const updateHeatStatus = async (heatId: string, status: string) => {
     const update: Record<string, unknown> = { status }
-    if (status === 'live') update.actual_start = new Date().toISOString()
+    if (status === 'live') {
+      update.actual_start = new Date().toISOString()
+      update.priority_established = false
+      update.priority_riders = []
+    }
     if (status === 'complete') update.actual_end = new Date().toISOString()
     await sb.from('comp_heats').update(update).eq('id', heatId)
+
+    // Initialize priority when heat goes live
+    if (status === 'live') {
+      try {
+        await fetch('/api/judge/priority', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'start', heat_id: heatId }),
+        })
+      } catch {}
+    }
 
     // Auto-advance when completing a heat
     if (status === 'complete') {
@@ -602,7 +617,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                 </button>
                               )}
                               {heat.status === 'live' && (
-                                <button onClick={() => updateHeatStatus(heat.id, 'complete')} style={{ fontSize: 11, fontWeight: 500, color: 'var(--admin-warning)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 8 }}>
+                                <button onClick={() => {
+                                  if (confirm('End this heat? Head judge will need to certify results.')) updateHeatStatus(heat.id, 'complete')
+                                }} style={{ fontSize: 11, fontWeight: 500, color: 'var(--admin-warning)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 8 }}>
                                   End
                                 </button>
                               )}

@@ -59,6 +59,9 @@ export default async function PrintHeatSheets({ params }: { params: Promise<{ id
           .judge-tag { font-size: 9px; font-family: 'Geist Mono', monospace; color: #64748B; }
           .judge-tag-head { color: #2BA5A0; font-weight: 700; }
           .isa-footer { margin-top: 8px; padding-top: 6px; border-top: 1px solid #E2E8F0; font-size: 8px; font-family: 'Geist Mono', monospace; color: #94A3B8; display: flex; justify-content: space-between; }
+          .qr-section { margin-top: 8px; display: flex; gap: 10px; flex-wrap: wrap; }
+          .qr-item { display: flex; align-items: center; gap: 6px; font-size: 8px; font-family: 'Geist Mono', monospace; color: #64748B; }
+          .qr-item img { width: 48px; height: 48px; }
           .print-btn { padding: 10px 20px; background: #0A2540; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'Inter', sans-serif; }
           .print-btn:hover { background: #0E3A5C; }
         `}} />
@@ -168,8 +171,25 @@ export default async function PrintHeatSheets({ params }: { params: Promise<{ id
                             )}
                           </div>
 
+                          {/* QR codes for judges */}
+                          {judges.length > 0 && (
+                            <div className="qr-section">
+                              {judges.map((j, i) => {
+                                const judgeData = j.judge as any
+                                const qrUrl = `https://bsa.surf/judge?pin=${judgeData?.pin || ''}&heat_id=${heat.id}`
+                                return (
+                                  <div key={i} className="qr-item">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=96x96&data=${encodeURIComponent(qrUrl)}`} alt="QR" />
+                                    <span>{(j.is_head_judge as boolean) ? 'HJ' : `J${j.position as number}`}: {judgeData?.name}</span>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+
                           <div className="isa-footer">
-                            <span>ISA 5-Judge Panel — Drop High/Low — Best {bestOf} Waves</span>
+                            <span>ISA {panelSize}-Judge Panel — Drop High/Low — Best {bestOf} Waves</span>
                             <span>Head Judge Signature: _______________</span>
                           </div>
                         </div>

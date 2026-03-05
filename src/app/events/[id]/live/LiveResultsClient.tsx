@@ -72,23 +72,32 @@ export function LiveResultsClient({ eventId }: { eventId: string }) {
             const athletes: Athlete[] = ((hTyped.athletes || []) as unknown[]).map((a: unknown) => {
               const aTyped = a as Record<string, unknown>
               const waves = ((aTyped.waves || []) as { wave_number: number; score: number }[]).sort((x, y) => x.wave_number - y.wave_number)
+              const isDQ = (aTyped.is_disqualified as boolean) || (aTyped.penalty as string) === 'double_interference'
               const cachedTotal = aTyped.total_score as number
               const topScores = [...waves].sort((x, y) => y.score - x.score).slice(0, bestOf)
-              const total = cachedTotal || topScores.reduce((s, w) => s + w.score, 0)
+              const total = isDQ ? 0 : (cachedTotal || topScores.reduce((s, w) => s + w.score, 0))
+              const dbPosition = aTyped.result_position as number
               return {
                 id: aTyped.id as string,
                 athlete_name: aTyped.athlete_name as string,
                 jersey_color: aTyped.jersey_color as string | null,
                 waves,
                 total,
-                position: 0,
-                needs_score: (aTyped.needs_score as number) || null,
+                position: dbPosition || 0,
+                needs_score: isDQ ? null : ((aTyped.needs_score as number) || null),
                 has_priority: (aTyped.has_priority as boolean) || false,
                 penalty: (aTyped.penalty as string) || null,
-                is_disqualified: (aTyped.is_disqualified as boolean) || false,
+                is_disqualified: isDQ,
               }
-            }).sort((a, b) => b.total - a.total)
-            athletes.forEach((a, i) => { a.position = i + 1 })
+            }).sort((a, b) => {
+              // Use DB positions if available, otherwise sort by total
+              if (a.position && b.position) return a.position - b.position
+              if (a.is_disqualified && !b.is_disqualified) return 1
+              if (!a.is_disqualified && b.is_disqualified) return -1
+              return b.total - a.total
+            })
+            // Assign positions if not from DB
+            athletes.forEach((a, i) => { if (!a.position) a.position = i + 1 })
 
             return {
               id: hTyped.id as string,

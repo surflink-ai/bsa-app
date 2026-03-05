@@ -414,6 +414,20 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
   const updateEventStatus = async (status: string) => {
     await sb.from('comp_events').update({ status }).eq('id', id)
+
+    // Calculate season points when event completes
+    if (status === 'complete') {
+      try {
+        const res = await fetch('/api/compete/season-points', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ event_id: id }),
+        })
+        const data = await res.json()
+        if (data.message) { setAdvanceMsg(data.message); setTimeout(() => setAdvanceMsg(null), 5000) }
+      } catch {}
+    }
+
     load()
   }
 
@@ -426,7 +440,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   const [advanceMsg, setAdvanceMsg] = useState<string | null>(null)
 
   const updateHeatStatus = async (heatId: string, status: string) => {
-    await sb.from('comp_heats').update({ status }).eq('id', heatId)
+    const update: Record<string, unknown> = { status }
+    if (status === 'live') update.actual_start = new Date().toISOString()
+    if (status === 'complete') update.actual_end = new Date().toISOString()
+    await sb.from('comp_heats').update(update).eq('id', heatId)
 
     // Auto-advance when completing a heat
     if (status === 'complete') {

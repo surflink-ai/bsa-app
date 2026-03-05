@@ -44,21 +44,29 @@ export async function GET() {
     const at = a as Record<string, unknown>
     const waves = ((at.waves || []) as { wave_number: number; score: number }[]).sort((x, y) => x.wave_number - y.wave_number)
     const topScores = [...waves].sort((x, y) => y.score - x.score).slice(0, bestOf)
+    const penalty = (at.penalty as string) || 'none'
+    const isDQ = penalty === 'double_interference'
     const cachedTotal = at.total_score as number
-    const total = cachedTotal || topScores.reduce((s, w) => s + w.score, 0)
+    const total = isDQ ? 0 : (cachedTotal || topScores.reduce((s, w) => s + w.score, 0))
     return {
       id: at.id as string,
       name: at.athlete_name as string,
       jersey: at.jersey_color as string | null,
       priority: at.has_priority as boolean,
-      penalty: (at.penalty as string) || 'none',
-      needs: (at.needs_score as number) || null,
+      penalty,
+      needs: isDQ ? null : ((at.needs_score as number) || null),
       waves: waves.map(w => w.score),
-      bestWaves: topScores.map(w => w.score),
+      bestWaves: isDQ ? [] : topScores.map(w => w.score),
       total,
       position: 0,
+      is_disqualified: isDQ,
     }
-  }).sort((a, b) => b.total - a.total)
+  }).sort((a, b) => {
+    // DQ'd athletes always last
+    if (a.is_disqualified && !b.is_disqualified) return 1
+    if (!a.is_disqualified && b.is_disqualified) return -1
+    return b.total - a.total
+  })
 
   athletes.forEach((a, i) => { a.position = i + 1 })
 

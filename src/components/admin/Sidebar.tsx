@@ -12,6 +12,7 @@ const NAV: { section?: string; label: string; href: string }[] = [
   { section: 'Content', label: 'Photos', href: '/admin/photos' },
   { section: 'Events', label: 'Competitions', href: '/admin/compete' },
   { section: 'Events', label: 'Judges', href: '/admin/compete/judges' },
+  { section: 'Events', label: 'Check-in Scanner', href: '/admin/checkin' },
   { section: 'Events', label: 'Live Stream', href: '/admin/stream' },
   { section: 'Events', label: 'Polls', href: '/admin/polls' },
   { section: 'Comms', label: 'WhatsApp Blasts', href: '/admin/blasts' },

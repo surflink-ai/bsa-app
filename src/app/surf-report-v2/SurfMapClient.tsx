@@ -5,32 +5,32 @@ import Link from 'next/link'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ''
 
-// All 21 Barbados spots with coordinates and metadata
+// All 21 Barbados spots — coordinates placed at the actual breaking wave, in the water
 const SPOTS = [
   // EAST COAST
-  { id: '5842041f4e65fad6a7708b48', name: 'Soup Bowl', coast: 'East', lat: 13.2117, lon: -59.5233, type: 'reef', bestSwell: 'N-NE', bestSize: '4-10ft', offshoreWind: 'W-SW' },
-  { id: '5842041f4e65fad6a7708c7e', name: 'Parlour', coast: 'East', lat: 13.2050, lon: -59.5200, type: 'point', bestSwell: 'N-NE', bestSize: '3-6ft', offshoreWind: 'W-SW' },
-  { id: '640a28064519059fe096b71e', name: 'Crane Bay', coast: 'East', lat: 13.1036, lon: -59.4421, type: 'reef', bestSwell: 'E-NE', bestSize: '3-6ft', offshoreWind: 'W' },
-  { id: '640a2802b6d769e2d74b3d07', name: 'Ragged Point', coast: 'East', lat: 13.1603, lon: -59.4270, type: 'reef', bestSwell: 'E-NE', bestSize: '3-8ft', offshoreWind: 'W' },
-  { id: '640a280199dd447996fd3885', name: 'Conset Point', coast: 'East', lat: 13.1800, lon: -59.4450, type: 'reef', bestSwell: 'NE', bestSize: '3-6ft', offshoreWind: 'W' },
-  { id: '640a27ffb6d769a0e34b3c63', name: 'Sand Bank', coast: 'East', lat: 13.1930, lon: -59.5100, type: 'beach', bestSwell: 'NE', bestSize: '3-6ft', offshoreWind: 'W-SW' },
-  { id: '640a27fee92030d47097e32b', name: 'Tent Bay', coast: 'East', lat: 13.2100, lon: -59.5220, type: 'reef', bestSwell: 'N-NE', bestSize: '3-6ft', offshoreWind: 'W-SW' },
-  { id: '5842041f4e65fad6a7708c7f', name: 'Cattle Wash', coast: 'East', lat: 13.2200, lon: -59.5250, type: 'beach', bestSwell: 'N-NE', bestSize: '2-5ft', offshoreWind: 'W-SW' },
-  { id: '67f94aeca64db676f445bef3', name: 'Tabletop', coast: 'East', lat: 13.2300, lon: -59.5260, type: 'reef', bestSwell: 'N-NE', bestSize: '2-4ft', offshoreWind: 'W-SW' },
+  { id: '5842041f4e65fad6a7708b48', name: 'Soup Bowl', coast: 'East', lat: 13.2119, lon: -59.5215, type: 'reef', bestSwell: 'N-NE', bestSize: '4-10ft', offshoreWind: 'W-SW' },
+  { id: '5842041f4e65fad6a7708c7e', name: 'Parlour', coast: 'East', lat: 13.2045, lon: -59.5180, type: 'point', bestSwell: 'N-NE', bestSize: '3-6ft', offshoreWind: 'W-SW' },
+  { id: '640a28064519059fe096b71e', name: 'Crane Bay', coast: 'East', lat: 13.1028, lon: -59.4405, type: 'reef', bestSwell: 'E-NE', bestSize: '3-6ft', offshoreWind: 'W' },
+  { id: '640a2802b6d769e2d74b3d07', name: 'Ragged Point', coast: 'East', lat: 13.1595, lon: -59.4248, type: 'reef', bestSwell: 'E-NE', bestSize: '3-8ft', offshoreWind: 'W' },
+  { id: '640a280199dd447996fd3885', name: 'Conset Point', coast: 'East', lat: 13.1790, lon: -59.4425, type: 'reef', bestSwell: 'NE', bestSize: '3-6ft', offshoreWind: 'W' },
+  { id: '640a27ffb6d769a0e34b3c63', name: 'Sand Bank', coast: 'East', lat: 13.1920, lon: -59.5075, type: 'beach', bestSwell: 'NE', bestSize: '3-6ft', offshoreWind: 'W-SW' },
+  { id: '640a27fee92030d47097e32b', name: 'Tent Bay', coast: 'East', lat: 13.2095, lon: -59.5200, type: 'reef', bestSwell: 'N-NE', bestSize: '3-6ft', offshoreWind: 'W-SW' },
+  { id: '5842041f4e65fad6a7708c7f', name: 'Cattle Wash', coast: 'East', lat: 13.2210, lon: -59.5230, type: 'beach', bestSwell: 'N-NE', bestSize: '2-5ft', offshoreWind: 'W-SW' },
+  { id: '67f94aeca64db676f445bef3', name: 'Tabletop', coast: 'East', lat: 13.2305, lon: -59.5240, type: 'reef', bestSwell: 'N-NE', bestSize: '2-4ft', offshoreWind: 'W-SW' },
   // SOUTH COAST
-  { id: '5842041f4e65fad6a7708c81', name: "Brandon's", coast: 'South', lat: 13.0750, lon: -59.6300, type: 'beach', bestSwell: 'S-SE', bestSize: '3-6ft', offshoreWind: 'N-NE' },
-  { id: '584204204e65fad6a77099c0', name: 'Freights Bay', coast: 'South', lat: 13.0656, lon: -59.5492, type: 'reef', bestSwell: 'S-SW', bestSize: '3-8ft', offshoreWind: 'N-NE' },
-  { id: '584204204e65fad6a77099c5', name: 'South Point', coast: 'South', lat: 13.0542, lon: -59.5289, type: 'point', bestSwell: 'S-SE', bestSize: '3-8ft', offshoreWind: 'N' },
-  { id: '584204204e65fad6a77099c4', name: "Surfer's Point", coast: 'South', lat: 13.0600, lon: -59.5350, type: 'reef', bestSwell: 'S-SE', bestSize: '3-6ft', offshoreWind: 'N' },
-  { id: '584204214e65fad6a7709cea', name: 'Hastings', coast: 'South', lat: 13.0730, lon: -59.6100, type: 'reef', bestSwell: 'S', bestSize: '2-4ft', offshoreWind: 'N' },
-  { id: '640a27fc606c45138daaa78c', name: 'Silver Sands', coast: 'South', lat: 13.0480, lon: -59.5230, type: 'beach', bestSwell: 'S-SE', bestSize: '2-4ft', offshoreWind: 'N-NW' },
-  { id: '640a2804b6d76970754b3d90', name: 'Long Beach', coast: 'South', lat: 13.0560, lon: -59.5150, type: 'beach', bestSwell: 'S-SE', bestSize: '2-5ft', offshoreWind: 'N' },
+  { id: '5842041f4e65fad6a7708c81', name: "Brandon's", coast: 'South', lat: 13.0730, lon: -59.6310, type: 'beach', bestSwell: 'S-SE', bestSize: '3-6ft', offshoreWind: 'N-NE' },
+  { id: '584204204e65fad6a77099c0', name: 'Freights Bay', coast: 'South', lat: 13.0640, lon: -59.5500, type: 'reef', bestSwell: 'S-SW', bestSize: '3-8ft', offshoreWind: 'N-NE' },
+  { id: '584204204e65fad6a77099c5', name: 'South Point', coast: 'South', lat: 13.0530, lon: -59.5300, type: 'point', bestSwell: 'S-SE', bestSize: '3-8ft', offshoreWind: 'N' },
+  { id: '584204204e65fad6a77099c4', name: "Surfer's Point", coast: 'South', lat: 13.0585, lon: -59.5360, type: 'reef', bestSwell: 'S-SE', bestSize: '3-6ft', offshoreWind: 'N' },
+  { id: '584204214e65fad6a7709cea', name: 'Hastings', coast: 'South', lat: 13.0715, lon: -59.6110, type: 'reef', bestSwell: 'S', bestSize: '2-4ft', offshoreWind: 'N' },
+  { id: '640a27fc606c45138daaa78c', name: 'Silver Sands', coast: 'South', lat: 13.0465, lon: -59.5240, type: 'beach', bestSwell: 'S-SE', bestSize: '2-4ft', offshoreWind: 'N-NW' },
+  { id: '640a2804b6d76970754b3d90', name: 'Long Beach', coast: 'South', lat: 13.0545, lon: -59.5130, type: 'beach', bestSwell: 'S-SE', bestSize: '2-5ft', offshoreWind: 'N' },
   // WEST COAST
-  { id: '5842041f4e65fad6a7708c80', name: 'Duppies', coast: 'West', lat: 13.2500, lon: -59.6400, type: 'reef', bestSwell: 'N-NW', bestSize: '2-4ft', offshoreWind: 'E' },
-  { id: '584204204e65fad6a77099c8', name: 'Maycocks', coast: 'West', lat: 13.2800, lon: -59.6500, type: 'beach', bestSwell: 'N-NW', bestSize: '2-5ft', offshoreWind: 'E' },
-  { id: '584204204e65fad6a77099c3', name: 'Tropicana', coast: 'West', lat: 13.1900, lon: -59.6400, type: 'beach', bestSwell: 'NW', bestSize: '2-4ft', offshoreWind: 'E' },
-  { id: '640a27f94519050e0a96b45a', name: 'Sandy Lane', coast: 'West', lat: 13.1700, lon: -59.6380, type: 'beach', bestSwell: 'NW', bestSize: '2-4ft', offshoreWind: 'E' },
-  { id: '640a27fb451905b3a196b4bb', name: 'Batts Rock', coast: 'West', lat: 13.1300, lon: -59.6350, type: 'reef', bestSwell: 'NW-N', bestSize: '2-4ft', offshoreWind: 'E-SE' },
+  { id: '5842041f4e65fad6a7708c80', name: 'Duppies', coast: 'West', lat: 13.2510, lon: -59.6430, type: 'reef', bestSwell: 'N-NW', bestSize: '2-4ft', offshoreWind: 'E' },
+  { id: '584204204e65fad6a77099c8', name: 'Maycocks', coast: 'West', lat: 13.2810, lon: -59.6530, type: 'beach', bestSwell: 'N-NW', bestSize: '2-5ft', offshoreWind: 'E' },
+  { id: '584204204e65fad6a77099c3', name: 'Tropicana', coast: 'West', lat: 13.1910, lon: -59.6430, type: 'beach', bestSwell: 'NW', bestSize: '2-4ft', offshoreWind: 'E' },
+  { id: '640a27f94519050e0a96b45a', name: 'Sandy Lane', coast: 'West', lat: 13.1710, lon: -59.6410, type: 'beach', bestSwell: 'NW', bestSize: '2-4ft', offshoreWind: 'E' },
+  { id: '640a27fb451905b3a196b4bb', name: 'Batts Rock', coast: 'West', lat: 13.1310, lon: -59.6380, type: 'reef', bestSwell: 'NW-N', bestSize: '2-4ft', offshoreWind: 'E-SE' },
 ]
 
 interface SpotCondition {
@@ -176,7 +176,7 @@ export default function SurfMapClient() {
       const waveMax = cond?.waveMax || 0
       const score = conditionScore[condKey] || 0
       const isGood = score >= 4
-      const size = Math.max(12, Math.min(28, 10 + waveMax * 2))
+      const size = 16
 
       // Create marker element
       const el = document.createElement('div')
@@ -186,12 +186,9 @@ export default function SurfMapClient() {
         border: 2px solid rgba(255,255,255,0.9);
         border-radius: 50%;
         cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 ${isGood ? '12px' : '0px'} ${color};
-        transition: transform 0.2s;
-        ${isGood ? 'animation: pulse-marker 2s infinite;' : ''}
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4)${isGood ? `, 0 0 12px ${color}` : ''};
+        pointer-events: auto;
       `
-      el.onmouseenter = () => { el.style.transform = 'scale(1.4)'; el.style.zIndex = '10' }
-      el.onmouseleave = () => { el.style.transform = 'scale(1)'; el.style.zIndex = '1' }
 
       // Popup content
       const popupHTML = `
@@ -232,7 +229,7 @@ export default function SurfMapClient() {
         maxWidth: '280px',
       }).setHTML(popupHTML)
 
-      const marker = new mapboxgl.Marker({ element: el })
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
         .setLngLat([spot.lon, spot.lat])
         .setPopup(popup)
         .addTo(map)
@@ -284,13 +281,11 @@ export default function SurfMapClient() {
     <div className="pb-20 md:pb-0" style={{ minHeight: '100vh', background: '#0A2540' }}>
       {/* Inject pulse animation */}
       <style>{`
-        @keyframes pulse-marker {
-          0%, 100% { box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 12px var(--glow-color, #22c55e); }
-          50% { box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 24px var(--glow-color, #22c55e); }
-        }
         .mapboxgl-popup-content { border-radius: 12px !important; padding: 16px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.2) !important; }
         .mapboxgl-popup-close-button { font-size: 18px; padding: 4px 8px; color: #94A3B8; }
         .mapboxgl-ctrl-group { border-radius: 10px !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3) !important; }
+        .mapboxgl-canvas { cursor: grab; }
+        .mapboxgl-canvas:active { cursor: grabbing; }
       `}</style>
 
       {/* Header bar */}

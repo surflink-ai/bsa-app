@@ -169,6 +169,15 @@ export default function SurfMapClient() {
     const mapboxgl = (window as any).mapboxgl
     const map = mapInstance.current
 
+    // Flatten map in edit mode for accurate marker placement
+    if (editMode) {
+      map.setTerrain(null)
+      map.easeTo({ pitch: 0, bearing: 0, duration: 500 })
+    } else {
+      map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.8 })
+      map.easeTo({ pitch: 45, bearing: -10, duration: 500 })
+    }
+
     // Clear existing markers
     markersRef.current.forEach(m => m.remove())
     markersRef.current = []

@@ -21,6 +21,7 @@ const NAV: { section?: string; label: string; href: string }[] = [
   { section: 'People', label: 'Users', href: '/admin/users' },
   { section: 'Data', label: 'Surf Spots', href: '/admin/spots' },
   { section: 'Data', label: 'Sponsors', href: '/admin/sponsors' },
+  { section: 'System', label: 'Activity Log', href: '/admin/activity' },
   { section: 'System', label: 'Notifications', href: '/admin/notifications' },
   { section: 'System', label: 'Settings', href: '/admin/settings' },
 ]

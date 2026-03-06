@@ -116,7 +116,7 @@ export default function JuniorsPage() {
             <p style={{ fontSize: "1rem", lineHeight: 1.7, color: "rgba(26,26,26,0.5)", marginBottom: 32 }}>
               We're building structured coaching pathways, competition programmes, and development squads for Barbados' next generation of surfers. Get in touch to register your interest.
             </p>
-            <a href="mailto:barbadossurfingassociation@gmail.com" style={{ fontSize: 14, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register Interest</a>
+            <a href="mailto:admin@bsa.surf" style={{ fontSize: 14, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register Interest</a>
           </ScrollReveal>
         </div>
       </section>

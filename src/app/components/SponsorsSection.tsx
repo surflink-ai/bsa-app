@@ -27,7 +27,7 @@ export async function SponsorsSection() {
         </div>
       ))}
       <div style={{ textAlign: "center", marginTop: 32 }}>
-        <a href="mailto:barbadossurfingassociation@gmail.com" style={{ fontSize: 14, fontWeight: 600, color: "#1478B5", textDecoration: "none" }}>Become a Sponsor →</a>
+        <a href="mailto:admin@bsa.surf" style={{ fontSize: 14, fontWeight: 600, color: "#1478B5", textDecoration: "none" }}>Become a Sponsor →</a>
       </div>
     </div>
   )

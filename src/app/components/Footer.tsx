@@ -25,7 +25,7 @@ const footerLinks = [
     links: [
       { href: 'https://www.instagram.com/barbadossurfingassociation/', label: 'Instagram', external: true },
       { href: 'https://www.facebook.com/bsasurf/', label: 'Facebook', external: true },
-      { href: 'mailto:barbadossurfingassociation@gmail.com', label: 'Email', external: true },
+      { href: 'mailto:admin@bsa.surf', label: 'Email', external: true },
     ],
   },
 ]

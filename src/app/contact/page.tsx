@@ -32,7 +32,7 @@ export default function ContactPage() {
               <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 24, color: '#0A2540', marginBottom: 32 }}>Reach Us</h2>
               
               {[
-                { label: 'EMAIL', value: 'barbadossurfingassociation@gmail.com', href: 'mailto:barbadossurfingassociation@gmail.com' },
+                { label: 'EMAIL', value: 'admin@bsa.surf', href: 'mailto:admin@bsa.surf' },
                 { label: 'INSTAGRAM', value: '@barbadossurfingassociation', href: 'https://www.instagram.com/barbadossurfingassociation/' },
                 { label: 'FACEBOOK', value: 'BSA Surf', href: 'https://www.facebook.com/bsasurf/' },
               ].map(item => (
@@ -63,10 +63,10 @@ export default function ContactPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {[
                   { title: 'Compete', desc: 'Register for upcoming BSA-sanctioned events and get on the competitive pathway. All skill levels welcome from groms to open division.', link: '/events', linkText: 'View Events' },
-                  { title: 'Sponsorship', desc: 'Partner with the BSA to reach the Barbados surf community. Event naming rights, athlete sponsorship, and brand visibility opportunities.', link: 'mailto:barbadossurfingassociation@gmail.com?subject=Sponsorship%20Inquiry', linkText: 'Email Us' },
-                  { title: 'Coaching', desc: 'Interested in coaching with the BSA or getting your athletes into our development programme? We work with coaches at all levels.', link: 'mailto:barbadossurfingassociation@gmail.com?subject=Coaching%20Inquiry', linkText: 'Email Us' },
-                  { title: 'Membership', desc: 'Become a BSA member to receive event discounts, voting rights at the AGM, and eligibility for national team selection.', link: 'mailto:barbadossurfingassociation@gmail.com?subject=Membership%20Inquiry', linkText: 'Email Us' },
-                  { title: 'Media', desc: 'Press inquiries, photo/video usage requests, and interview requests for BSA athletes or events.', link: 'mailto:barbadossurfingassociation@gmail.com?subject=Media%20Inquiry', linkText: 'Email Us' },
+                  { title: 'Sponsorship', desc: 'Partner with the BSA to reach the Barbados surf community. Event naming rights, athlete sponsorship, and brand visibility opportunities.', link: 'mailto:admin@bsa.surf?subject=Sponsorship%20Inquiry', linkText: 'Email Us' },
+                  { title: 'Coaching', desc: 'Interested in coaching with the BSA or getting your athletes into our development programme? We work with coaches at all levels.', link: 'mailto:admin@bsa.surf?subject=Coaching%20Inquiry', linkText: 'Email Us' },
+                  { title: 'Membership', desc: 'Become a BSA member to receive event discounts, voting rights at the AGM, and eligibility for national team selection.', link: 'mailto:admin@bsa.surf?subject=Membership%20Inquiry', linkText: 'Email Us' },
+                  { title: 'Media', desc: 'Press inquiries, photo/video usage requests, and interview requests for BSA athletes or events.', link: 'mailto:admin@bsa.surf?subject=Media%20Inquiry', linkText: 'Email Us' },
                 ].map(item => (
                   <div key={item.title} style={{ borderLeft: '2px solid #2BA5A0', paddingLeft: 20, paddingBottom: 4 }}>
                     <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 16, color: '#0A2540', marginBottom: 6 }}>{item.title}</h3>

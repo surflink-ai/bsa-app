@@ -111,14 +111,12 @@ export default function JuniorsPage() {
       <section style={{ backgroundColor: "#FFFFFF", padding: "80px 24px" }}>
         <div style={{ maxWidth: 640, margin: "0 auto", textAlign: "center" }}>
           <ScrollReveal>
-            <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem,4vw,2.5rem)", color: "#0A2540", marginBottom: 16 }}>Ready to Start?</h2>
+            <span style={{ display: "inline-block", fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 600, padding: "6px 16px", borderRadius: 100, backgroundColor: "rgba(43,165,160,0.1)", color: "#2BA5A0", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 20 }}>Coming Soon</span>
+            <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem,4vw,2.5rem)", color: "#0A2540", marginBottom: 16 }}>Junior Programme Launching Soon</h2>
             <p style={{ fontSize: "1rem", lineHeight: 1.7, color: "rgba(26,26,26,0.5)", marginBottom: 32 }}>
-              Whether your child is a complete beginner or an aspiring competitor, the BSA has a programme for them. Contact us to learn more or register for the next intake.
+              We're building structured coaching pathways, competition programmes, and development squads for Barbados' next generation of surfers. Get in touch to register your interest.
             </p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-              <a href="/contact" style={{ fontSize: 14, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register</a>
-              <a href="mailto:barbadossurfingassociation@gmail.com" style={{ fontSize: 14, fontWeight: 600, color: "#1478B5", backgroundColor: "transparent", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em", border: "1px solid rgba(20,120,181,0.2)" }}>Contact Us</a>
-            </div>
+            <a href="mailto:barbadossurfingassociation@gmail.com" style={{ fontSize: 14, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register Interest</a>
           </ScrollReveal>
         </div>
       </section>

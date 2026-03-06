@@ -18,11 +18,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body style={{ backgroundColor: "#FFFFFF", color: "#1A1A1A" }}>
+      <body style={{ backgroundColor: "#0A2540", color: "#1A1A1A" }}>
         <PublicShell>
           <Navigation />
         </PublicShell>
-        <main style={{ paddingBottom: 80 }} className="md:pb-0">{children}</main>
+        <main className="pb-20 md:pb-0">{children}</main>
         <PublicShell>
           <Footer />
           <NotificationBanner />

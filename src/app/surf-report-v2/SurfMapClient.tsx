@@ -55,10 +55,10 @@ const conditionScore: Record<string, number> = {
 }
 
 const coastViews: Record<string, { center: [number, number]; zoom: number; bearing: number; pitch: number }> = {
-  all: { center: [-59.55, 13.16], zoom: 10.8, bearing: -10, pitch: 45 },
-  East: { center: [-59.49, 13.19], zoom: 12, bearing: -20, pitch: 50 },
-  South: { center: [-59.56, 13.06], zoom: 12.5, bearing: 10, pitch: 45 },
-  West: { center: [-59.64, 13.21], zoom: 11.8, bearing: 20, pitch: 50 },
+  all: { center: [-59.55, 13.16], zoom: 10.8, bearing: 0, pitch: 0 },
+  East: { center: [-59.49, 13.19], zoom: 12, bearing: 0, pitch: 0 },
+  South: { center: [-59.56, 13.06], zoom: 12.5, bearing: 0, pitch: 0 },
+  West: { center: [-59.64, 13.21], zoom: 11.8, bearing: 0, pitch: 0 },
 }
 
 type CoastFilter = 'all' | 'East' | 'South' | 'West'
@@ -119,8 +119,8 @@ export default function SurfMapClient() {
         style: 'mapbox://styles/mapbox/satellite-streets-v12',
         center: [-59.55, 13.16],
         zoom: 10.8,
-        pitch: 45,
-        bearing: -10,
+        pitch: 0,
+        bearing: 0,
         antialias: true,
         maxBounds: [[-59.9, 12.9], [-59.3, 13.45]],
       })
@@ -128,26 +128,6 @@ export default function SurfMapClient() {
       map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-right')
 
       map.on('style.load', () => {
-        // Enable 3D terrain
-        map.addSource('mapbox-dem', {
-          type: 'raster-dem',
-          url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
-          tileSize: 512,
-          maxzoom: 14,
-        })
-        map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.8 })
-
-        // Sky atmosphere
-        map.addLayer({
-          id: 'sky',
-          type: 'sky',
-          paint: {
-            'sky-type': 'atmosphere',
-            'sky-atmosphere-sun': [0.0, 45.0],
-            'sky-atmosphere-sun-intensity': 8,
-          },
-        })
-
         setMapLoaded(true)
       })
 
@@ -168,15 +148,6 @@ export default function SurfMapClient() {
     if (!mapLoaded || !mapInstance.current) return
     const mapboxgl = (window as any).mapboxgl
     const map = mapInstance.current
-
-    // Flatten map in edit mode for accurate marker placement
-    if (editMode) {
-      map.setTerrain(null)
-      map.easeTo({ pitch: 0, bearing: 0, duration: 500 })
-    } else {
-      map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.8 })
-      map.easeTo({ pitch: 45, bearing: -10, duration: 500 })
-    }
 
     // Clear existing markers
     markersRef.current.forEach(m => m.remove())

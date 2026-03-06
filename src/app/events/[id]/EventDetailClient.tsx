@@ -37,7 +37,7 @@ export function EventDetailClient({ event, photos }: { event: { id: string; name
       <section style={{ backgroundColor: '#0A2540', padding: '120px 24px 48px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <Link href="/events" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: 'rgba(255,255,255,0.3)', textDecoration: 'none', marginBottom: 20, display: 'inline-block', letterSpacing: '0.08em' }}>← EVENTS</Link>
-          <h1 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 'clamp(1.5rem,4vw,2.5rem)', color: '#fff', marginBottom: 6 }}>{event.name}</h1>
+          <h1 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 'clamp(1.5rem,4vw,2.5rem)', color: '#fff', marginBottom: 6 }}>{event.name.replace(/\s*\(SOTY\s*#\d+\s*\([^)]*\)\)/gi, '').replace(/\s*\(Nationals only\)/gi, '').trim()}</h1>
           <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 32 }}>{new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
           {/* Stats row */}

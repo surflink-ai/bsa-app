@@ -72,7 +72,7 @@ export function EventsClient({ upcoming, past }: { upcoming: BSAEvent[]; past: B
               <div className="grid-responsive-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'center' }}>
                 <div>
                   <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#2BA5A0', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 8 }}>Next Up</div>
-                  <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 'clamp(1.25rem,3vw,2rem)', color: '#fff', marginBottom: 8 }}>{nextEvent.name}</h2>
+                  <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 'clamp(1.25rem,3vw,2rem)', color: '#fff', marginBottom: 8 }}>{nextEvent.name.replace(/\s*\(SOTY\s*#\d+\s*\([^)]*\)\)/gi, '').replace(/\s*\(Nationals only\)/gi, '').trim()}</h2>
                   <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 16 }}>{new Date(nextEvent.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                   {nextEvent.eventDivisions.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 20 }}>
@@ -125,7 +125,7 @@ export function EventsClient({ upcoming, past }: { upcoming: BSAEvent[]; past: B
                     </div>
                     {/* Event info */}
                     <div>
-                      <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 15, color: '#0A2540', marginBottom: 4 }}>{event.name}</div>
+                      <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 15, color: '#0A2540', marginBottom: 4 }}>{event.name.replace(/\s*\(SOTY\s*#\d+\s*\([^)]*\)\)/gi, '').replace(/\s*\(Nationals only\)/gi, '').trim()}</div>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: 'rgba(26,26,26,0.35)' }}>{divCount} division{divCount !== 1 ? 's' : ''}</span>
                         <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 10, backgroundColor: 'rgba(20,120,181,0.08)', color: '#1478B5', textTransform: 'uppercase', fontFamily: "'JetBrains Mono',monospace", letterSpacing: '0.04em' }}>Results</span>

@@ -72,6 +72,9 @@ export default function SurfMapClient() {
   const [selectedSpot, setSelectedSpot] = useState<string | null>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [lastUpdate, setLastUpdate] = useState('')
+  const [editMode, setEditMode] = useState(false)
+  const [editedCoords, setEditedCoords] = useState<Record<string, { lat: number; lon: number }>>({})
+  const [showExport, setShowExport] = useState(false)
 
   // Fetch conditions
   useEffect(() => {
@@ -159,7 +162,7 @@ export default function SurfMapClient() {
     }
   }, [])
 
-  // Update markers when conditions change
+  // Update markers when conditions or edit mode change
   useEffect(() => {
     if (!mapLoaded || !mapInstance.current) return
     const mapboxgl = (window as any).mapboxgl
@@ -176,19 +179,37 @@ export default function SurfMapClient() {
       const waveMax = cond?.waveMax || 0
       const score = conditionScore[condKey] || 0
       const isGood = score >= 4
-      const size = 16
+      const size = editMode ? 20 : 16
+
+      // Use edited coordinates if available
+      const coords = editedCoords[spot.id] || { lat: spot.lat, lon: spot.lon }
 
       // Create marker element
       const el = document.createElement('div')
       el.style.cssText = `
         width: ${size}px; height: ${size}px;
-        background: ${color};
-        border: 2px solid rgba(255,255,255,0.9);
+        background: ${editMode ? '#FF3B30' : color};
+        border: 2px solid ${editMode ? '#fff' : 'rgba(255,255,255,0.9)'};
         border-radius: 50%;
-        cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.4)${isGood ? `, 0 0 12px ${color}` : ''};
+        cursor: ${editMode ? 'grab' : 'pointer'};
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4)${isGood && !editMode ? `, 0 0 12px ${color}` : ''};
         pointer-events: auto;
+        ${editMode ? 'z-index: 100;' : ''}
       `
+
+      // Add label in edit mode
+      if (editMode) {
+        const label = document.createElement('div')
+        label.style.cssText = `
+          position: absolute; top: -28px; left: 50%; transform: translateX(-50%);
+          background: rgba(0,0,0,0.85); color: #fff; padding: 2px 8px; border-radius: 4px;
+          font-size: 10px; font-family: 'JetBrains Mono', monospace; white-space: nowrap;
+          pointer-events: none;
+        `
+        label.textContent = spot.name
+        el.style.position = 'relative'
+        el.appendChild(label)
+      }
 
       // Popup content
       const popupHTML = `
@@ -229,26 +250,36 @@ export default function SurfMapClient() {
         maxWidth: '280px',
       }).setHTML(popupHTML)
 
-      const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
-        .setLngLat([spot.lon, spot.lat])
-        .setPopup(popup)
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'center', draggable: editMode })
+        .setLngLat([coords.lon, coords.lat])
+        .setPopup(editMode ? undefined : popup)
         .addTo(map)
 
-      el.addEventListener('click', () => {
-        setSelectedSpot(spot.id)
-        map.flyTo({
-          center: [spot.lon, spot.lat],
-          zoom: 14,
-          pitch: 55,
-          bearing: map.getBearing(),
-          duration: 1500,
-          essential: true,
+      if (editMode) {
+        marker.on('dragend', () => {
+          const lngLat = marker.getLngLat()
+          setEditedCoords(prev => ({
+            ...prev,
+            [spot.id]: { lat: Math.round(lngLat.lat * 10000) / 10000, lon: Math.round(lngLat.lng * 10000) / 10000 },
+          }))
         })
-      })
+      } else {
+        el.addEventListener('click', () => {
+          setSelectedSpot(spot.id)
+          map.flyTo({
+            center: [coords.lon, coords.lat],
+            zoom: 14,
+            pitch: 55,
+            bearing: map.getBearing(),
+            duration: 1500,
+            essential: true,
+          })
+        })
+      }
 
       markersRef.current.push(marker)
     })
-  }, [mapLoaded, conditions])
+  }, [mapLoaded, conditions, editMode, editedCoords])
 
   // Coast filter → fly camera
   const flyToCoast = useCallback((coast: CoastFilter) => {
@@ -305,13 +336,105 @@ export default function SurfMapClient() {
             </Link>
             <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#2BA5A0', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Surf Report</span>
           </div>
-          {lastUpdate && (
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>
-              Updated {lastUpdate}
-            </span>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {lastUpdate && (
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>
+                Updated {lastUpdate}
+              </span>
+            )}
+            <button
+              onClick={() => { setEditMode(!editMode); setShowExport(false) }}
+              style={{
+                padding: '6px 14px', border: 'none', borderRadius: 6, cursor: 'pointer',
+                fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600,
+                background: editMode ? '#FF3B30' : 'rgba(255,255,255,0.08)',
+                color: editMode ? '#fff' : 'rgba(255,255,255,0.5)',
+                letterSpacing: '0.06em',
+              }}
+            >
+              {editMode ? 'EXIT EDIT' : 'EDIT SPOTS'}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Edit mode banner */}
+      {editMode && (
+        <div style={{
+          background: '#FF3B30', padding: '10px 24px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, color: '#fff' }}>
+            Edit Mode — Drag markers to the exact break location. {Object.keys(editedCoords).length} spot{Object.keys(editedCoords).length !== 1 ? 's' : ''} moved.
+          </span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => setShowExport(!showExport)}
+              disabled={Object.keys(editedCoords).length === 0}
+              style={{
+                padding: '6px 14px', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 6,
+                cursor: Object.keys(editedCoords).length > 0 ? 'pointer' : 'default',
+                fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600,
+                background: 'rgba(255,255,255,0.15)', color: '#fff',
+                opacity: Object.keys(editedCoords).length > 0 ? 1 : 0.4,
+              }}
+            >
+              {showExport ? 'HIDE' : 'SHOW'} COORDINATES
+            </button>
+            <button
+              onClick={() => { setEditedCoords({}); setEditMode(false); setShowExport(false) }}
+              style={{
+                padding: '6px 14px', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 6,
+                cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
+                fontWeight: 600, background: 'rgba(255,255,255,0.15)', color: '#fff',
+              }}
+            >
+              RESET ALL
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Export panel */}
+      {showExport && Object.keys(editedCoords).length > 0 && (
+        <div style={{
+          background: '#1a1a1a', padding: '16px 24px', maxHeight: 300, overflow: 'auto',
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#2BA5A0' }}>Updated coordinates — copy and send to Aimi</span>
+            <button
+              onClick={() => {
+                const text = SPOTS.map(s => {
+                  const c = editedCoords[s.id]
+                  if (!c) return null
+                  return `${s.name}: lat ${c.lat}, lon ${c.lon}`
+                }).filter(Boolean).join('\n')
+                navigator.clipboard.writeText(text)
+              }}
+              style={{
+                padding: '4px 12px', border: '1px solid #2BA5A0', borderRadius: 4,
+                cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
+                background: 'transparent', color: '#2BA5A0',
+              }}
+            >
+              COPY ALL
+            </button>
+          </div>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#ccc', lineHeight: 1.8 }}>
+            {SPOTS.map(s => {
+              const c = editedCoords[s.id]
+              if (!c) return null
+              return (
+                <div key={s.id}>
+                  <span style={{ color: '#F59E0B' }}>{s.name}</span>: lat <span style={{ color: '#2BA5A0' }}>{c.lat}</span>, lon <span style={{ color: '#2BA5A0' }}>{c.lon}</span>
+                  <span style={{ color: '#666', marginLeft: 8 }}>(was {s.lat}, {s.lon})</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Map container */}
       <div style={{ position: 'relative' }}>

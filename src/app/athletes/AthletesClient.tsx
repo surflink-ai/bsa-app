@@ -66,20 +66,18 @@ export function AthletesClient({ athletes }: { athletes: Athlete[] }) {
           </ScrollReveal>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {list.map((a, i) => (
-              <ScrollReveal key={a.id} delay={Math.min(i * 20, 200)}>
-                <Link href={`/athletes/${a.id}`} style={{ display: 'block', textDecoration: 'none' }}>
-                  <div style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(10,37,64,0.06)', transition: 'box-shadow 0.2s' }}>
-                    <div style={{ aspectRatio: '1', overflow: 'hidden', backgroundColor: '#0A2540' }}>
-                      {a.image ? <img src={a.image} alt={a.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.08)', fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 28 }}>{a.name.split(' ').map((n: string) => n[0]).join('')}</div>}
-                    </div>
-                    <div style={{ padding: '10px 12px' }}>
-                      <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 12, color: '#0A2540', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.name}</div>
-                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(26,26,26,0.3)' }}>{a.count} events</div>
-                    </div>
+            {list.map((a) => (
+              <Link key={a.id} href={`/athletes/${a.id}`} style={{ display: 'block', textDecoration: 'none' }}>
+                <div style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(10,37,64,0.06)', transition: 'box-shadow 0.2s' }}>
+                  <div style={{ aspectRatio: '1', overflow: 'hidden', backgroundColor: '#0A2540' }}>
+                    {a.image ? <img src={a.image} alt={a.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.08)', fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 28 }}>{a.name.split(' ').map((n: string) => n[0]).join('')}</div>}
                   </div>
-                </Link>
-              </ScrollReveal>
+                  <div style={{ padding: '10px 12px' }}>
+                    <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 12, color: '#0A2540', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.name}</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(26,26,26,0.3)' }}>{a.count} events</div>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
           {list.length === 0 && <p style={{ textAlign: 'center', color: 'rgba(26,26,26,0.3)', padding: '3rem 0' }}>{q ? 'No results.' : 'No data.'}</p>}

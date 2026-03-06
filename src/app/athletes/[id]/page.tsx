@@ -1,6 +1,7 @@
 import { getOrg, getEvent } from '@/lib/liveheats'
 import { createClient } from '@/lib/supabase/server'
 import { AthleteDetailClient } from './AthleteDetailClient'
+import type { Metadata } from 'next'
 export const revalidate = 300
 
 interface HeatEntry {
@@ -24,6 +25,42 @@ interface ResultEntry {
   place: number
   total: number
   fieldSize: number
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  // Quick fetch for name only
+  try {
+    const org = await getOrg()
+    const past = org.events.filter(e => e.status === 'results_published')
+    for (const ev of past.slice(0, 5)) {
+      const event = await getEvent(ev.id)
+      for (const d of event.eventDivisions) {
+        const rk = (d.ranking || []).find(r => r.competitor.athlete.id === id)
+        if (rk) {
+          const name = rk.competitor.athlete.name
+          const cardUrl = `https://bsa.surf/api/athletes/${id}/card`
+          return {
+            title: `${name} — BSA Athlete Profile`,
+            description: `${name}'s competition stats, results, and rankings from the Barbados Surfing Association.`,
+            openGraph: {
+              title: `${name} — BSA Athlete`,
+              description: `Competition stats and rankings for ${name}`,
+              images: [{ url: cardUrl, width: 1200, height: 630, alt: `${name} stat card` }],
+              type: 'profile',
+              siteName: 'Barbados Surfing Association',
+            },
+            twitter: {
+              card: 'summary_large_image',
+              title: `${name} — BSA Athlete`,
+              images: [cardUrl],
+            },
+          }
+        }
+      }
+    }
+  } catch {}
+  return { title: 'Athlete — BSA' }
 }
 
 export default async function AthleteDetailPage({ params }: { params: Promise<{ id: string }> }) {

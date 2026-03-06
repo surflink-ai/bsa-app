@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { ScrollReveal } from '../../components/ScrollReveal'
 import { WaveDivider } from '../../components/WaveDivider'
@@ -130,6 +130,34 @@ export function AthleteDetailClient({ athlete, results, heats, rivals, compResul
                 {stats.divisions.map(d => (
                   <span key={d} style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, padding: '2px 8px', borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>{d}</span>
                 ))}
+              </div>
+              {/* Share buttons */}
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <button
+                  onClick={() => {
+                    const url = `https://bsa.surf/athletes/${athlete.id}`
+                    navigator.clipboard?.writeText(url)
+                    alert('Profile link copied!')
+                  }}
+                  style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, padding: '6px 14px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em' }}
+                >
+                  Share Profile
+                </button>
+                <a
+                  href={`/api/athletes/${athlete.id}/card`}
+                  download={`${athlete.name.replace(/\s+/g, '-').toLowerCase()}-bsa-card.png`}
+                  style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, padding: '6px 14px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.08em' }}
+                >
+                  Download Card
+                </a>
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(`Check out ${athlete.name}'s stats on BSA!\nhttps://bsa.surf/athletes/${athlete.id}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, padding: '6px 14px', borderRadius: 6, border: '1px solid rgba(43,165,160,0.2)', backgroundColor: 'rgba(43,165,160,0.08)', color: '#2BA5A0', cursor: 'pointer', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.08em' }}
+                >
+                  WhatsApp
+                </a>
               </div>
             </div>
           </div>

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { PageHeader, DataTable, Modal, FormField, Button, StatusDot, MetaText, ActionLinks, inputStyle, selectStyle } from '@/components/admin/ui'
+import { PageHeader, Modal, FormField, Button, StatusDot, MetaText, inputStyle, selectStyle } from '@/components/admin/ui'
 
 interface Contact {
   id: string; name: string; phone: string | null; email: string | null
@@ -100,17 +100,18 @@ export default function ContactsPage() {
       <PageHeader
         title="Contacts"
         subtitle={`${contacts.filter(c => c.active).length} contacts · ${withPhone} with phone`}
-        actions={
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Button onClick={handleImport} variant="secondary" disabled={importing}>
-              {importing ? 'Importing...' : 'Import Athletes'}
-            </Button>
-            <Button onClick={() => { setEditing(null); setForm({ name: '', phone: '', email: '', type: 'athlete', notes: '', tags: '' }); setShowModal(true) }}>
-              Add Contact
-            </Button>
-          </div>
-        }
+        action={{ label: 'Add Contact', onClick: () => { setEditing(null); setForm({ name: '', phone: '', email: '', type: 'athlete', notes: '', tags: '' }); setShowModal(true) } }}
       />
+
+      {/* Import button */}
+      <div style={{ marginBottom: 16 }}>
+        <button onClick={handleImport} disabled={importing} style={{
+          padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(10,37,64,0.08)',
+          backgroundColor: '#fff', cursor: importing ? 'wait' : 'pointer', fontSize: 12, fontWeight: 500, color: '#0A2540',
+        }}>
+          {importing ? 'Importing...' : 'Import Athletes from Database'}
+        </button>
+      </div>
 
       {/* Type filter pills */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
@@ -130,30 +131,33 @@ export default function ContactsPage() {
         style={{ ...inputStyle, marginBottom: 16, maxWidth: 400 }}
       />
 
-      <DataTable
-        columns={['Name', 'Phone', 'Email', 'Type', 'Tags', '']}
-        rows={filtered.map(c => [
-          <div key="n">
-            <span style={{ fontWeight: 600 }}>{c.name}</span>
-            {c.opted_out && <StatusDot color="red" label="Opted out" />}
-          </div>,
-          c.phone ? <MetaText key="p">{c.phone}</MetaText> : <MetaText key="p" style={{ color: 'rgba(26,26,26,0.2)' }}>No phone</MetaText>,
-          c.email ? <MetaText key="e">{c.email}</MetaText> : <MetaText key="e" style={{ color: 'rgba(26,26,26,0.2)' }}>—</MetaText>,
-          <span key="t" style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, backgroundColor: 'rgba(43,165,160,0.08)', color: '#2BA5A0', textTransform: 'capitalize', fontWeight: 500 }}>{c.type}</span>,
-          <div key="tags" style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {(c.tags || []).map(t => <span key={t} style={{ fontSize: 10, padding: '1px 6px', borderRadius: 8, backgroundColor: 'rgba(10,37,64,0.04)', color: 'rgba(26,26,26,0.4)' }}>{t}</span>)}
-          </div>,
-          <ActionLinks key="a" actions={[
-            { label: 'Edit', onClick: () => openEdit(c) },
-            { label: 'Remove', onClick: () => handleDelete(c.id), destructive: true },
-          ]} />,
-        ])}
-        loading={loading}
-        emptyMessage="No contacts yet. Import athletes or add manually."
-      />
+      {loading ? <MetaText>Loading...</MetaText> : filtered.length === 0 ? (
+        <div style={{ padding: '40px 0', textAlign: 'center', color: 'rgba(26,26,26,0.25)', fontSize: 13 }}>No contacts yet. Import athletes or add manually.</div>
+      ) : (
+        <div style={{ border: '1px solid rgba(10,37,64,0.06)', borderRadius: 12, overflow: 'hidden' }}>
+          {filtered.map((c, i) => (
+            <div key={c.id} style={{
+              display: 'flex', alignItems: 'center', gap: 14, padding: '12px 20px',
+              borderBottom: i < filtered.length - 1 ? '1px solid rgba(10,37,64,0.04)' : 'none',
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontWeight: 600, fontSize: 13, color: '#0A2540' }}>{c.name}</span>
+                {c.opted_out && <StatusDot status="danger" label="Opted out" />}
+              </div>
+              <MetaText style={{ width: 130, flexShrink: 0 }}>{c.phone || 'No phone'}</MetaText>
+              <MetaText style={{ width: 160, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.email || '—'}</MetaText>
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, backgroundColor: 'rgba(43,165,160,0.08)', color: '#2BA5A0', textTransform: 'capitalize', fontWeight: 500, flexShrink: 0 }}>{c.type}</span>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                <button onClick={() => openEdit(c)} style={{ fontSize: 12, color: '#1478B5', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Edit</button>
+                <button onClick={() => handleDelete(c.id)} style={{ fontSize: 12, color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Remove</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {showModal && (
-        <Modal title={editing ? 'Edit Contact' : 'New Contact'} onClose={() => { setShowModal(false); setEditing(null) }}>
+        <Modal open={showModal} title={editing ? 'Edit Contact' : 'New Contact'} onClose={() => { setShowModal(false); setEditing(null) }}>
           <FormField label="Name">
             <input style={inputStyle} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full name" />
           </FormField>

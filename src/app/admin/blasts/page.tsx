@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { PageHeader, DataTable, Modal, FormField, Button, StatusDot, MetaText, ActionLinks, inputStyle, selectStyle } from '@/components/admin/ui'
+import { PageHeader, Modal, FormField, Button, MetaText, inputStyle, selectStyle } from '@/components/admin/ui'
 
 interface Blast {
   id: string; title: string; body: string; status: string
@@ -130,11 +130,7 @@ export default function BlastsPage() {
       <PageHeader
         title="WhatsApp Blasts"
         subtitle={`${blasts.length} blasts · ${totalRecipients} messages sent`}
-        actions={
-          <Button onClick={() => { setShowComposer(true); setTitle(''); setBody(''); setAudience('all') }}>
-            New Blast
-          </Button>
-        }
+        action={{ label: 'New Blast', onClick: () => { setShowComposer(true); setTitle(''); setBody(''); setAudience('all') } }}
       />
 
       {/* Quick stats */}
@@ -151,28 +147,34 @@ export default function BlastsPage() {
         ))}
       </div>
 
-      <DataTable
-        columns={['Title', 'Recipients', 'Status', 'Sent', '']}
-        rows={blasts.map(b => [
-          <div key="t">
-            <span style={{ fontWeight: 600 }}>{b.title}</span>
-            <MetaText style={{ display: 'block', marginTop: 2 }}>{b.body.substring(0, 60)}...</MetaText>
-          </div>,
-          <MetaText key="r">{b.recipient_count}</MetaText>,
-          <span key="s" style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, backgroundColor: `${STATUS_COLORS[b.status]}15`, color: STATUS_COLORS[b.status], fontWeight: 600, textTransform: 'capitalize' }}>{b.status}</span>,
-          <MetaText key="d">{b.sent_at ? new Date(b.sent_at).toLocaleString() : '—'}</MetaText>,
-          <ActionLinks key="a" actions={[
-            ...(b.status === 'draft' ? [{ label: 'Send Now', onClick: () => handleResend(b.id) }] : []),
-            ...(b.error_message ? [{ label: 'Retry Failed', onClick: () => handleResend(b.id) }] : []),
-          ]} />,
-        ])}
-        loading={loading}
-        emptyMessage="No blasts yet. Create your first WhatsApp blast!"
-      />
+      {loading ? <MetaText>Loading...</MetaText> : blasts.length === 0 ? (
+        <div style={{ padding: '40px 0', textAlign: 'center', color: 'rgba(26,26,26,0.25)', fontSize: 13 }}>No blasts yet. Create your first WhatsApp blast!</div>
+      ) : (
+        <div style={{ border: '1px solid rgba(10,37,64,0.06)', borderRadius: 12, overflow: 'hidden' }}>
+          {blasts.map((b, i) => (
+            <div key={b.id} style={{
+              display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px',
+              borderBottom: i < blasts.length - 1 ? '1px solid rgba(10,37,64,0.04)' : 'none',
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontWeight: 600, fontSize: 13, color: '#0A2540' }}>{b.title}</span>
+                <MetaText style={{ display: 'block', marginTop: 2 }}>{b.body.substring(0, 60)}...</MetaText>
+              </div>
+              <MetaText style={{ flexShrink: 0 }}>{b.recipient_count} recipients</MetaText>
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, backgroundColor: `${STATUS_COLORS[b.status]}15`, color: STATUS_COLORS[b.status], fontWeight: 600, textTransform: 'capitalize', flexShrink: 0 }}>{b.status}</span>
+              <MetaText style={{ width: 100, flexShrink: 0 }}>{b.sent_at ? new Date(b.sent_at).toLocaleString() : '—'}</MetaText>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                {b.status === 'draft' && <button onClick={() => handleResend(b.id)} style={{ fontSize: 12, color: '#2BA5A0', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Send</button>}
+                {b.error_message && <button onClick={() => handleResend(b.id)} style={{ fontSize: 12, color: '#F59E0B', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Retry</button>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* COMPOSER MODAL */}
       {showComposer && (
-        <Modal title="Compose WhatsApp Blast" onClose={() => setShowComposer(false)} wide>
+        <Modal open={showComposer} title="Compose WhatsApp Blast" onClose={() => setShowComposer(false)} width={640}>
           {/* Templates */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(26,26,26,0.4)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Quick Templates</div>

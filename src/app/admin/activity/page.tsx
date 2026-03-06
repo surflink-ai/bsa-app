@@ -1,11 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { PageHeader, DataTable, MetaText, inputStyle, selectStyle } from '@/components/admin/ui'
+import { PageHeader, MetaText, selectStyle } from '@/components/admin/ui'
 
 interface AuditEntry {
-  id: string; user_id: string | null; action: string
-  entity_type: string | null; entity_id: string | null
+  id: string; action: string; entity_type: string | null
   details: any; created_at: string
 }
 
@@ -15,18 +14,13 @@ const ACTION_LABELS: Record<string, string> = {
   article_created: 'Created article',
   contact_imported: 'Imported contacts',
   contact_created: 'Added contact',
-  contact_updated: 'Updated contact',
   settings_updated: 'Updated settings',
   stream_toggled: 'Toggled stream',
-  login: 'Signed in',
 }
 
 const ACTION_COLORS: Record<string, string> = {
-  blast_sent: '#2BA5A0',
-  article_published: '#1478B5',
-  contact_imported: '#6366F1',
-  settings_updated: '#F59E0B',
-  stream_toggled: '#EF4444',
+  blast_sent: '#2BA5A0', article_published: '#1478B5',
+  contact_imported: '#6366F1', settings_updated: '#F59E0B', stream_toggled: '#EF4444',
 }
 
 function timeAgo(date: string) {
@@ -54,41 +48,36 @@ export default function ActivityPage() {
 
   useEffect(() => { load() }, [actionFilter])
 
-  const actions = [...new Set(entries.map(e => e.action))]
-
   return (
     <>
       <PageHeader title="Activity Log" subtitle={`${entries.length} entries`} />
-
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+      <div style={{ marginBottom: 16 }}>
         <select style={{ ...selectStyle, maxWidth: 200 }} value={actionFilter} onChange={e => setActionFilter(e.target.value)}>
           <option value="">All actions</option>
-          {Object.entries(ACTION_LABELS).map(([key, label]) => (
-            <option key={key} value={key}>{label}</option>
-          ))}
+          {Object.entries(ACTION_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
         </select>
       </div>
 
-      <DataTable
-        columns={['Action', 'Details', 'Time']}
-        rows={entries.map(e => [
-          <div key="a" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-              backgroundColor: ACTION_COLORS[e.action] || 'rgba(26,26,26,0.15)',
-            }} />
-            <span style={{ fontWeight: 500, fontSize: 13 }}>{ACTION_LABELS[e.action] || e.action}</span>
-          </div>,
-          <div key="d">
-            {e.details?.title && <MetaText>{e.details.title}</MetaText>}
-            {e.details?.sent !== undefined && <MetaText> · {e.details.sent}/{e.details.total} delivered</MetaText>}
-            {e.entity_type && !e.details?.title && <MetaText>{e.entity_type} {e.entity_id}</MetaText>}
-          </div>,
-          <MetaText key="t">{timeAgo(e.created_at)}</MetaText>,
-        ])}
-        loading={loading}
-        emptyMessage="No activity recorded yet."
-      />
+      {loading ? <MetaText>Loading...</MetaText> : entries.length === 0 ? (
+        <div style={{ padding: '40px 0', textAlign: 'center', color: 'rgba(26,26,26,0.25)', fontSize: 13 }}>No activity recorded yet.</div>
+      ) : (
+        <div style={{ border: '1px solid rgba(10,37,64,0.06)', borderRadius: 12, overflow: 'hidden' }}>
+          {entries.map((e, i) => (
+            <div key={e.id} style={{
+              display: 'flex', alignItems: 'center', gap: 14, padding: '12px 20px',
+              borderBottom: i < entries.length - 1 ? '1px solid rgba(10,37,64,0.04)' : 'none',
+            }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, backgroundColor: ACTION_COLORS[e.action] || 'rgba(26,26,26,0.15)' }} />
+              <div style={{ flex: 1 }}>
+                <span style={{ fontWeight: 500, fontSize: 13, color: '#0A2540' }}>{ACTION_LABELS[e.action] || e.action}</span>
+                {e.details?.title && <MetaText style={{ marginLeft: 8 }}>{e.details.title}</MetaText>}
+                {e.details?.sent !== undefined && <MetaText style={{ marginLeft: 4 }}>· {e.details.sent}/{e.details.total} delivered</MetaText>}
+              </div>
+              <MetaText>{timeAgo(e.created_at)}</MetaText>
+            </div>
+          ))}
+        </div>
+      )}
     </>
   )
 }

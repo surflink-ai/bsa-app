@@ -641,16 +641,6 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
         </div>
       </section>
 
-      <WaveDivider color="#FFFFFF" bg="#0A2540" />
-
-      {/* ── Footer area ────────────────────────────────────── */}
-      <section style={{ backgroundColor: '#fff', padding: '32px 24px 80px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
-          <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: 'rgba(10,37,64,0.3)' }}>
-            Rankings updated automatically · Data refreshed every 5 minutes
-          </p>
-        </div>
-      </section>
     </div>
   )
 }

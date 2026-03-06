@@ -16,6 +16,7 @@ const NAV: { section?: string; label: string; href: string }[] = [
   { section: 'Events', label: 'Polls', href: '/admin/polls' },
   { section: 'Comms', label: 'WhatsApp Blasts', href: '/admin/blasts' },
   { section: 'Comms', label: 'Contacts', href: '/admin/contacts' },
+  { section: 'People', label: 'Athletes', href: '/admin/athletes' },
   { section: 'People', label: 'Champions', href: '/admin/champions' },
   { section: 'People', label: 'Coaches', href: '/admin/coaches' },
   { section: 'People', label: 'Users', href: '/admin/users' },

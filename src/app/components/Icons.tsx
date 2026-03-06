@@ -36,3 +36,6 @@ export function BarChartIcon({ size = 24 }: { size?: number }) {
 export function NewsIcon({ size = 24 }: { size?: number }) {
   return <svg {...s} width={size} height={size}><path d="M4 4h16a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z" /><line x1="7" y1="8" x2="17" y2="8" /><line x1="7" y1="12" x2="13" y2="12" /><line x1="7" y1="16" x2="15" y2="16" /></svg>
 }
+export function PlayIcon({ size = 24 }: { size?: number }) {
+  return <svg {...s} width={size} height={size}><polygon points="5 3 19 12 5 21 5 3" /></svg>
+}

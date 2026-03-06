@@ -2,13 +2,14 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { CalendarIcon, UsersIcon, BarChartIcon, HomeIcon } from "./Icons"
+import { CalendarIcon, UsersIcon, BarChartIcon, HomeIcon, PlayIcon } from "./Icons"
 
 const NAV_LINKS = [
   { href: "/events", label: "Events" },
   { href: "/athletes", label: "Athletes" },
   { href: "/rankings", label: "Rankings" },
-  { href: "/history", label: "History" },
+  { href: "/surf-report", label: "Surf Report" },
+  { href: "/stream", label: "Live" },
   { href: "/news", label: "News" },
 ]
 
@@ -46,6 +47,7 @@ export function Navigation() {
         {[
           { href: "/", label: "Home", Icon: HomeIcon },
           { href: "/events", label: "Events", Icon: CalendarIcon },
+          { href: "/stream", label: "Live", Icon: PlayIcon },
           { href: "/athletes", label: "Athletes", Icon: UsersIcon },
           { href: "/rankings", label: "Rankings", Icon: BarChartIcon },
         ].map(({ href, label, Icon }) => {

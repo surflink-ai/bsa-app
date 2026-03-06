@@ -54,6 +54,19 @@ export function EventDetailClient({ event, photos }: { event: { id: string; name
               </div>
             ))}
           </div>
+          {/* Live Scoring link */}
+          <div style={{ marginTop: 24 }}>
+            <a href="https://heatsync.ai" target="_blank" rel="noopener noreferrer" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600,
+              color: '#2BA5A0', textDecoration: 'none',
+              padding: '10px 20px', borderRadius: 8,
+              background: 'rgba(43,165,160,0.08)', border: '1px solid rgba(43,165,160,0.15)',
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" /></svg>
+              Live Scoring on HeatSync
+            </a>
+          </div>
         </div>
       </section>
       <WaveDivider color="#FFFFFF" bg="#0A2540" />

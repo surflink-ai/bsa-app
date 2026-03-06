@@ -1,35 +1,89 @@
-import Link from "next/link"
+import Link from 'next/link'
+
+const footerLinks = [
+  {
+    title: 'Competition',
+    links: [
+      { href: '/events', label: 'Events' },
+      { href: '/rankings', label: 'Rankings' },
+      { href: '/athletes', label: 'Athletes' },
+      { href: '/stream', label: 'Live Stream' },
+      { href: '/history', label: 'History' },
+    ],
+  },
+  {
+    title: 'Information',
+    links: [
+      { href: '/surf-report', label: 'Surf Report' },
+      { href: '/juniors', label: 'Juniors Programme' },
+      { href: '/news', label: 'News' },
+      { href: '/contact', label: 'Contact' },
+    ],
+  },
+  {
+    title: 'Connect',
+    links: [
+      { href: 'https://www.instagram.com/barbadossurfingassociation/', label: 'Instagram', external: true },
+      { href: 'https://www.facebook.com/bsasurf/', label: 'Facebook', external: true },
+      { href: 'mailto:barbadossurfingassociation@gmail.com', label: 'Email', external: true },
+    ],
+  },
+]
 
 export function Footer() {
   return (
-    <footer style={{ backgroundColor: "#0A2540", color: "rgba(255,255,255,0.6)", paddingBottom: 80 }} className="md:pb-0">
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "64px 32px 40px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 48 }}>
+    <footer className="hidden md:block" style={{ backgroundColor: '#0A2540', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 32px 32px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 48, marginBottom: 40 }}>
+          {/* Brand */}
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-              <img src="https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp" alt="BSA" style={{ width: 32, height: 32, borderRadius: "50%" }} />
-              <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 16, color: "#fff" }}>Barbados Surfing Association</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <img src="https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp" alt="BSA" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+              <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 16, color: '#fff' }}>BSA</span>
             </div>
-            <p style={{ fontSize: 14, lineHeight: 1.7, maxWidth: 280 }}>The National Governing Body for Surfing in Barbados. ISA Member Federation since 1995.</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, maxWidth: 280 }}>
+              The National Governing Body for Surfing in Barbados. ISA Member Federation since 1995.
+            </p>
+            <div style={{ marginTop: 16 }}>
+              <a href="https://heatsync.ai" target="_blank" rel="noopener noreferrer" style={{
+                fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
+                color: 'rgba(255,255,255,0.2)', textDecoration: 'none',
+                letterSpacing: '0.08em', textTransform: 'uppercase',
+              }}>
+                Competition platform powered by HeatSync
+              </a>
+            </div>
           </div>
-          <div>
-            <h4 style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 20 }}>Navigate</h4>
-            {[["/", "Home"], ["/events", "Events"], ["/athletes", "Athletes"], ["/rankings", "Rankings"]].map(([href, label]) => (
-              <Link key={href} href={href} style={{ display: "block", textDecoration: "none", color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 10 }}>{label}</Link>
-            ))}
-          </div>
-          <div>
-            <h4 style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 20 }}>Connect</h4>
-            <a href="https://instagram.com/barbadossurfing" target="_blank" rel="noopener noreferrer" style={{ display: "block", textDecoration: "none", color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 10 }}>Instagram</a>
-            <a href="https://facebook.com/BarbadosSurfingAssociation" target="_blank" rel="noopener noreferrer" style={{ display: "block", textDecoration: "none", color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 10 }}>Facebook</a>
-          </div>
-          <div>
-            <h4 style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 20 }}>Contact</h4>
-            <p style={{ fontSize: 14, lineHeight: 1.8 }}>Barbados Surfing Association<br />Bridgetown, Barbados<br />info@barbadossurfing.org</p>
-          </div>
+
+          {/* Link columns */}
+          {footerLinks.map(col => (
+            <div key={col.title}>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#2BA5A0', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 16 }}>{col.title}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {col.links.map(link => (
+                  'external' in link ? (
+                    <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer" style={{
+                      fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'rgba(255,255,255,0.45)', textDecoration: 'none',
+                    }}>{link.label}</a>
+                  ) : (
+                    <Link key={link.href} href={link.href} style={{
+                      fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'rgba(255,255,255,0.45)', textDecoration: 'none',
+                    }}>{link.label}</Link>
+                  )
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: 48, paddingTop: 24, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>
-          {new Date().getFullYear()} Barbados Surfing Association. All rights reserved.
+
+        {/* Bottom bar */}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>
+            &copy; 2026 Barbados Surfing Association
+          </span>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.15)' }}>
+            EST. 1995 &middot; ISA Member Federation
+          </span>
         </div>
       </div>
     </footer>

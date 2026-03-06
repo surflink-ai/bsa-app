@@ -1,9 +1,8 @@
-import Link from 'next/link'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'BSA Live — Barbados Surfing Association',
-  description: 'Watch live surf competitions and video replays from the Barbados Surfing Association.',
+  description: 'Watch live surf competitions from the Barbados Surfing Association.',
 }
 
 const SCHEDULE_2026 = [
@@ -25,24 +24,8 @@ export default function StreamPage() {
             Live Competition Stream
           </h1>
           <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.5)', marginBottom: 40, lineHeight: 1.6 }}>
-            Watch BSA competitions live with real-time scoring overlays, priority tracking, and instant replay — powered by HeatSync.
+            Watch BSA competitions live with real-time scoring overlays, priority tracking, and instant replay.
           </p>
-
-          {/* Stream CTA */}
-          <a
-            href="https://heatsync.ai/stream"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 10,
-              fontFamily: "'Space Grotesk', sans-serif", fontSize: 15, fontWeight: 600,
-              color: '#fff', background: '#1478B5',
-              padding: '16px 36px', borderRadius: 10, textDecoration: 'none',
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-            Watch Live on HeatSync
-          </a>
           <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 16 }}>
             Stream goes live during competition days
           </p>
@@ -94,17 +77,6 @@ export default function StreamPage() {
             ))}
           </div>
         </div>
-      </section>
-
-      {/* Powered by */}
-      <section style={{ padding: '0 24px 48px', textAlign: 'center' }}>
-        <a href="https://heatsync.ai" target="_blank" rel="noopener noreferrer" style={{
-          fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
-          color: 'rgba(255,255,255,0.25)', textDecoration: 'none',
-          letterSpacing: '0.1em', textTransform: 'uppercase',
-        }}>
-          Streaming powered by HeatSync
-        </a>
       </section>
     </div>
   )

@@ -44,15 +44,7 @@ export function Footer() {
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, maxWidth: 280 }}>
               The National Governing Body for Surfing in Barbados. ISA Member Federation since 1995.
             </p>
-            <div style={{ marginTop: 16 }}>
-              <a href="https://heatsync.ai" target="_blank" rel="noopener noreferrer" style={{
-                fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
-                color: 'rgba(255,255,255,0.2)', textDecoration: 'none',
-                letterSpacing: '0.08em', textTransform: 'uppercase',
-              }}>
-                Competition platform powered by HeatSync
-              </a>
-            </div>
+
           </div>
 
           {/* Link columns */}

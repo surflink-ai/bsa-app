@@ -1,4 +1,4 @@
-// Stream config now lives in HeatSync — this stub checks HeatSync's stream status
+// Stream config stub — returns null (no active stream)
 export interface StreamConfig {
   id: string
   active: boolean
@@ -12,21 +12,5 @@ export interface StreamConfig {
 }
 
 export async function getStreamConfig(): Promise<StreamConfig | null> {
-  try {
-    // Check HeatSync stream status
-    const res = await fetch('https://heatsync.ai/api/stream/status', { next: { revalidate: 10 } })
-    const data = await res.json()
-    return {
-      id: 'heatsync',
-      active: data.live || false,
-      stream_url: null,
-      embed_code: null,
-      title: null,
-      event_id: null,
-      updated_at: new Date().toISOString(),
-      updated_by: null,
-    }
-  } catch {
-    return null
-  }
+  return null
 }

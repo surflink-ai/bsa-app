@@ -398,16 +398,6 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
         </div>
       </section>
 
-      {/* POWERED BY HEATSYNC — white */}
-      <section style={{ backgroundColor: "#FFFFFF", padding: "40px 24px" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", textAlign: "center" }}>
-          <a href="https://heatsync.ai" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 12, padding: "14px 28px", borderRadius: 10, border: "1px solid rgba(10,37,64,0.08)", background: "rgba(10,37,64,0.02)" }}>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(26,26,26,0.35)", letterSpacing: "0.1em", textTransform: "uppercase" }}>Competition platform powered by</span>
-            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 16, color: "#0A2540" }}>HeatSync</span>
-          </a>
-        </div>
-      </section>
-
       {/* SOCIAL — navy */}
       <WaveDivider color="#0A2540" bg="#FFFFFF" />
       <section style={{ backgroundColor: "#0A2540", padding: "64px 24px" }}>

@@ -190,7 +190,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
                       ))}
                     </div>
                   )}
-                  <a href="https://bsa.surf" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register on BSA.surf <ArrowRightIcon size={16} /></a>
+                  <a href="https://liveheats.com/BarbadosSurfingAssociation" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register on LiveHeats <ArrowRightIcon size={16} /></a>
                 </div>
                 {/* Right: Full 2026 schedule */}
                 <div>
@@ -354,7 +354,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }} className="stagger grid-responsive-3">
             {[
               { icon: <TrophyIcon size={28} />, title: "Compete", desc: "Enter BSA-sanctioned events and compete for national titles across all divisions.", link: "/events", linkText: "View Events" },
-              { icon: <UsersIcon size={28} />, title: "Register", desc: "Sign up on BSA.surf to enter competitions, access coaching, and be eligible for national team selection.", link: "https://bsa.surf", linkText: "Register on BSA.surf" },
+              { icon: <UsersIcon size={28} />, title: "Register", desc: "Sign up on BSA.surf to enter competitions, access coaching, and be eligible for national team selection.", link: "https://liveheats.com/BarbadosSurfingAssociation", linkText: "Register on LiveHeats" },
               { icon: <CompassIcon size={28} />, title: "Sponsor", desc: "Partner with the BSA to support competitive surfing in Barbados and the Caribbean.", link: "mailto:barbadossurfingassociation@gmail.com", linkText: "Get in Touch" },
             ].map(item => (
               <ScrollReveal key={item.title}>

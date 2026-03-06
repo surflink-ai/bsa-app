@@ -81,7 +81,7 @@ export function EventsClient({ upcoming, past }: { upcoming: BSAEvent[]; past: B
                       ))}
                     </div>
                   )}
-                  <a href="https://bsa.surf" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#fff', backgroundColor: '#1478B5', padding: '10px 20px', borderRadius: 6, textDecoration: 'none' }}>Register <ArrowRightIcon size={14} /></a>
+                  <a href="https://liveheats.com/BarbadosSurfingAssociation" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#fff', backgroundColor: '#1478B5', padding: '10px 20px', borderRadius: 6, textDecoration: 'none' }}>Register <ArrowRightIcon size={14} /></a>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <CountdownTimer targetDate={nextEvent.date} />

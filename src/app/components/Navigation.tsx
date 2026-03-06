@@ -37,7 +37,7 @@ export function Navigation() {
             {NAV_LINKS.map(l => (
               <Link key={l.href} href={l.href} style={{ textDecoration: "none", fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 500, color: pathname.startsWith(l.href) ? "#2BA5A0" : "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em", transition: "color 0.2s ease" }}>{l.label}</Link>
             ))}
-            <a href="https://bsa.surf" target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "8px 18px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register</a>
+            <a href="https://liveheats.com/BarbadosSurfingAssociation" target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "8px 18px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register</a>
           </div>
         </div>
       </nav>

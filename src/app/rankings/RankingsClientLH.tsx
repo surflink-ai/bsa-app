@@ -268,7 +268,7 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
           100% { background-position: 200% 0; }
         }
         .rank-row { transition: all 0.2s; cursor: pointer; }
-        .rank-row:hover { background: rgba(43,165,160,0.06) !important; transform: translateX(4px); }
+        .rank-row:hover { background: rgba(43,165,160,0.08) !important; transform: translateX(4px); }
         .division-pill { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
         .division-pill:hover { transform: translateY(-2px); }
         .loading-bar {
@@ -399,37 +399,43 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
         </div>
       </section>
 
-      {/* ── Podium + Rankings ───────────────────────────────── */}
-      <section style={{ backgroundColor: '#0A2540', padding: '32px 24px 0' }}>
+      <WaveDivider color="#FFFFFF" bg="#0A2540" />
+
+      {/* ── Podium + Rankings (WHITE SECTION) ──────────────── */}
+      <section style={{ backgroundColor: '#FFFFFF', padding: '48px 24px 60px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           {loading ? (
             <div style={{ padding: '80px 0', textAlign: 'center' }}>
               <div className="loading-bar" style={{ height: 3, borderRadius: 2, maxWidth: 200, margin: '0 auto 16px' }} />
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }}>Loading rankings...</p>
+              <p style={{ color: 'rgba(10,37,64,0.3)', fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }}>Loading rankings...</p>
             </div>
           ) : rankings.length === 0 ? (
             <div style={{ padding: '80px 0', textAlign: 'center' }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>🏄</div>
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontFamily: "'Space Grotesk',sans-serif", fontSize: 16 }}>
+              <p style={{ color: 'rgba(10,37,64,0.3)', fontFamily: "'Space Grotesk',sans-serif", fontSize: 16 }}>
                 No rankings for this division yet
               </p>
             </div>
           ) : (
             <>
               {/* Podium */}
-              <Podium rankings={rankings} color={activeDivision.color} events={currentSeries?.events || []} />
+              <ScrollReveal>
+                <div style={{ background: '#0A2540', borderRadius: 20, padding: '8px 24px 0', marginBottom: 32 }}>
+                  <Podium rankings={rankings} color={activeDivision.color} events={currentSeries?.events || []} />
+                </div>
+              </ScrollReveal>
 
               {/* Event header row */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '48px 1fr 80px 80px',
                 padding: '12px 16px', marginBottom: 4,
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                borderBottom: '1px solid rgba(10,37,64,0.08)',
               }}>
-                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>#</span>
-                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Athlete</span>
-                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center' }}>Form</span>
-                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'right' }}>Points</span>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(10,37,64,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>#</span>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(10,37,64,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Athlete</span>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(10,37,64,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center' }}>Form</span>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(10,37,64,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'right' }}>Points</span>
               </div>
 
               {/* Rankings list */}
@@ -449,7 +455,7 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
                       onClick={() => setExpandedId(isExpanded ? null : entry.athlete.id)}
                       style={{
                         borderRadius: 12,
-                        background: isExpanded ? 'rgba(43,165,160,0.06)' : i < 3 ? 'rgba(255,255,255,0.02)' : 'transparent',
+                        background: isExpanded ? `${activeDivision.color}08` : i < 3 ? 'rgba(10,37,64,0.02)' : 'transparent',
                         border: isExpanded ? `1px solid ${activeDivision.color}33` : '1px solid transparent',
                         animation: `fade-in 0.3s ${Math.min(i * 0.03, 0.5)}s both`,
                         overflow: 'hidden',
@@ -465,7 +471,7 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
                         <div style={{
                           fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700,
                           fontSize: i < 3 ? 18 : 14,
-                          color: i === 0 ? '#F5A623' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : 'rgba(255,255,255,0.3)',
+                          color: i === 0 ? '#F5A623' : i === 1 ? '#A0A0A0' : i === 2 ? '#CD7F32' : 'rgba(10,37,64,0.25)',
                         }}>
                           {entry.place}
                         </div>
@@ -476,7 +482,7 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
                             width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
                             background: entry.athlete.image ? `url(${entry.athlete.image}) center/cover` : `linear-gradient(135deg, ${activeDivision.color}88, ${activeDivision.color}44)`,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            border: i < 3 ? `2px solid ${activeDivision.color}44` : '2px solid rgba(255,255,255,0.06)',
+                            border: i < 3 ? `2px solid ${activeDivision.color}44` : '2px solid rgba(10,37,64,0.08)',
                           }}>
                             {!entry.athlete.image && (
                               <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 12, color: '#fff' }}>
@@ -486,12 +492,12 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
                           </div>
                           <div>
                             <div style={{
-                              fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 14, color: '#fff',
+                              fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 14, color: '#0A2540',
                             }}>
                               {entry.athlete.name}
                               {winCount > 0 && <span style={{ marginLeft: 6, fontSize: 11 }} title={`${winCount} event win${winCount > 1 ? 's' : ''}`}>🏆×{winCount}</span>}
                             </div>
-                            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 1 }}>
+                            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: 'rgba(10,37,64,0.35)', marginTop: 1 }}>
                               {eventsPlayed}/{totalEvts} events{entry.athlete.nationality ? ` · ${entry.athlete.nationality}` : ''}
                             </div>
                           </div>
@@ -506,12 +512,12 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
                         <div style={{ textAlign: 'right' }}>
                           <div style={{
                             fontFamily: "'JetBrains Mono',monospace", fontWeight: 700,
-                            fontSize: 16, color: i < 3 ? activeDivision.color : '#fff',
+                            fontSize: 16, color: i < 3 ? activeDivision.color : '#0A2540',
                           }}>
                             <AnimatedNumber value={entry.points} />
                           </div>
                           {gap > 0 && (
-                            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 1 }}>
+                            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(10,37,64,0.2)', marginTop: 1 }}>
                               -{gap}
                             </div>
                           )}
@@ -532,18 +538,18 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
                               return (
                                 <div key={ei} style={{
                                   padding: '8px 14px', borderRadius: 10,
-                                  background: r?.place === 1 ? 'rgba(245,166,35,0.1)' : 'rgba(255,255,255,0.04)',
-                                  border: r?.place === 1 ? '1px solid rgba(245,166,35,0.2)' : '1px solid rgba(255,255,255,0.06)',
+                                  background: r?.place === 1 ? 'rgba(245,166,35,0.08)' : 'rgba(10,37,64,0.03)',
+                                  border: r?.place === 1 ? '1px solid rgba(245,166,35,0.2)' : '1px solid rgba(10,37,64,0.06)',
                                   opacity: r?.dropped ? 0.4 : 1,
                                   minWidth: 100,
                                 }}>
-                                  <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
+                                  <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(10,37,64,0.35)', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
                                     {evtName || `Event ${ei + 1}`}
                                   </div>
                                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                                     <span style={{
                                       fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 18,
-                                      color: r?.place === 1 ? '#F5A623' : r?.place ? '#fff' : 'rgba(255,255,255,0.15)',
+                                      color: r?.place === 1 ? '#F5A623' : r?.place ? '#0A2540' : 'rgba(10,37,64,0.15)',
                                     }}>
                                       {r?.place ? `${r.place}${getPlaceSuffix(r.place)}` : 'DNS'}
                                     </span>
@@ -567,8 +573,8 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
                               { label: 'Total Pts', value: entry.points.toLocaleString() },
                             ].map(s => (
                               <div key={s.label}>
-                                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{s.label}</div>
-                                <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 14, color: '#fff' }}>{s.value}</div>
+                                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: 'rgba(10,37,64,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{s.label}</div>
+                                <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 14, color: '#0A2540' }}>{s.value}</div>
                               </div>
                             ))}
                           </div>
@@ -583,53 +589,55 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
         </div>
       </section>
 
-      <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(43,165,160,0.2), transparent)' }} />
+      <WaveDivider color="#0A2540" bg="#FFFFFF" />
 
-      {/* ── Season Events ──────────────────────────────────── */}
-      <section style={{ backgroundColor: '#0A2540', padding: '48px 24px 0' }}>
+      {/* ── Season Events (NAVY SECTION) ───────────────────── */}
+      <section style={{ backgroundColor: '#0A2540', padding: '48px 24px 60px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <h2 style={{
-            fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 24,
-            color: '#fff', marginBottom: 20,
-          }}>
-            Season Events
-          </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
-            {(currentSeries?.events || []).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((evt, i) => {
-              const isComplete = evt.status === 'results_published'
-              const d = new Date(evt.date)
-              const shortName = evt.name.replace(/SOTY Championship \d{4}\s*/, '').replace(/^Event #\d+\s*/, '').trim()
-              return (
-                <a key={evt.id} href={`/events/${evt.id}`} style={{
-                  padding: '16px 20px', borderRadius: 12,
-                  background: isComplete ? 'rgba(43,165,160,0.06)' : 'rgba(255,255,255,0.02)',
-                  border: `1px solid ${isComplete ? 'rgba(43,165,160,0.15)' : 'rgba(255,255,255,0.06)'}`,
-                  textDecoration: 'none', transition: 'all 0.2s',
-                  display: 'flex', flexDirection: 'column', gap: 8,
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 700, color: isComplete ? '#2BA5A0' : 'rgba(255,255,255,0.3)' }}>
-                      Event {i + 1}
-                    </span>
-                    <span style={{
-                      fontSize: 9, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
-                      fontFamily: "'JetBrains Mono',monospace", textTransform: 'uppercase', letterSpacing: '0.05em',
-                      background: isComplete ? 'rgba(43,165,160,0.15)' : 'rgba(245,166,35,0.1)',
-                      color: isComplete ? '#2BA5A0' : '#F5A623',
-                    }}>
-                      {isComplete ? '✓ Results' : 'Upcoming'}
-                    </span>
-                  </div>
-                  <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 14, color: '#fff' }}>
-                    {shortName || evt.name}
-                  </div>
-                  <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
-                    {d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                  </div>
-                </a>
-              )
-            })}
-          </div>
+          <ScrollReveal>
+            <h2 style={{
+              fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 24,
+              color: '#fff', marginBottom: 20,
+            }}>
+              Season Events
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+              {(currentSeries?.events || []).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((evt, i) => {
+                const isComplete = evt.status === 'results_published'
+                const d = new Date(evt.date)
+                const shortName = evt.name.replace(/SOTY Championship \d{4}\s*/, '').replace(/^Event #\d+\s*/, '').trim()
+                return (
+                  <a key={evt.id} href={`/events/${evt.id}`} style={{
+                    padding: '16px 20px', borderRadius: 12,
+                    background: isComplete ? 'rgba(43,165,160,0.06)' : 'rgba(255,255,255,0.02)',
+                    border: `1px solid ${isComplete ? 'rgba(43,165,160,0.15)' : 'rgba(255,255,255,0.06)'}`,
+                    textDecoration: 'none', transition: 'all 0.2s',
+                    display: 'flex', flexDirection: 'column', gap: 8,
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 700, color: isComplete ? '#2BA5A0' : 'rgba(255,255,255,0.3)' }}>
+                        Event {i + 1}
+                      </span>
+                      <span style={{
+                        fontSize: 9, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
+                        fontFamily: "'JetBrains Mono',monospace", textTransform: 'uppercase', letterSpacing: '0.05em',
+                        background: isComplete ? 'rgba(43,165,160,0.15)' : 'rgba(245,166,35,0.1)',
+                        color: isComplete ? '#2BA5A0' : '#F5A623',
+                      }}>
+                        {isComplete ? '✓ Results' : 'Upcoming'}
+                      </span>
+                    </div>
+                    <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 14, color: '#fff' }}>
+                      {shortName || evt.name}
+                    </div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+                      {d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    </div>
+                  </a>
+                )
+              })}
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 

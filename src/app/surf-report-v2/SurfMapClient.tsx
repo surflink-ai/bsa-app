@@ -74,6 +74,7 @@ export default function SurfMapClient() {
   const [lastUpdate, setLastUpdate] = useState('')
   const [editMode, setEditMode] = useState(false)
   const [editedCoords, setEditedCoords] = useState<Record<string, { lat: number; lon: number }>>({})
+  const editedCoordsRef = useRef<Record<string, { lat: number; lon: number }>>({})
   const [showExport, setShowExport] = useState(false)
 
   // Fetch conditions
@@ -182,7 +183,7 @@ export default function SurfMapClient() {
       const size = editMode ? 20 : 16
 
       // Use edited coordinates if available
-      const coords = editedCoords[spot.id] || { lat: spot.lat, lon: spot.lon }
+      const coords = editedCoordsRef.current[spot.id] || { lat: spot.lat, lon: spot.lon }
 
       // Create marker element
       const el = document.createElement('div')
@@ -258,10 +259,9 @@ export default function SurfMapClient() {
       if (editMode) {
         marker.on('dragend', () => {
           const lngLat = marker.getLngLat()
-          setEditedCoords(prev => ({
-            ...prev,
-            [spot.id]: { lat: Math.round(lngLat.lat * 10000) / 10000, lon: Math.round(lngLat.lng * 10000) / 10000 },
-          }))
+          const newCoord = { lat: Math.round(lngLat.lat * 10000) / 10000, lon: Math.round(lngLat.lng * 10000) / 10000 }
+          editedCoordsRef.current = { ...editedCoordsRef.current, [spot.id]: newCoord }
+          setEditedCoords(prev => ({ ...prev, [spot.id]: newCoord }))
         })
       } else {
         el.addEventListener('click', () => {
@@ -279,7 +279,8 @@ export default function SurfMapClient() {
 
       markersRef.current.push(marker)
     })
-  }, [mapLoaded, conditions, editMode, editedCoords])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapLoaded, conditions, editMode])
 
   // Coast filter → fly camera
   const flyToCoast = useCallback((coast: CoastFilter) => {
@@ -382,7 +383,7 @@ export default function SurfMapClient() {
               {showExport ? 'HIDE' : 'SHOW'} COORDINATES
             </button>
             <button
-              onClick={() => { setEditedCoords({}); setEditMode(false); setShowExport(false) }}
+              onClick={() => { editedCoordsRef.current = {}; setEditedCoords({}); setEditMode(false); setShowExport(false) }}
               style={{
                 padding: '6px 14px', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 6,
                 cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace", fontSize: 10,

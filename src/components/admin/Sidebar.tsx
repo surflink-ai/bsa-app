@@ -14,6 +14,8 @@ const NAV: { section?: string; label: string; href: string }[] = [
   { section: 'Events', label: 'Judges', href: '/admin/compete/judges' },
   { section: 'Events', label: 'Live Stream', href: '/admin/stream' },
   { section: 'Events', label: 'Polls', href: '/admin/polls' },
+  { section: 'Comms', label: 'WhatsApp Blasts', href: '/admin/blasts' },
+  { section: 'Comms', label: 'Contacts', href: '/admin/contacts' },
   { section: 'People', label: 'Champions', href: '/admin/champions' },
   { section: 'People', label: 'Coaches', href: '/admin/coaches' },
   { section: 'People', label: 'Users', href: '/admin/users' },

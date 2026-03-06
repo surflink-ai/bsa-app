@@ -17,7 +17,8 @@ export default async function Home() {
     if (past.length > 0) {
       try {
         const ev = await getEvent(past[0].id)
-        latestResults = { event: ev, eventName: past[0].name, eventDate: past[0].date }
+        const cleanName = past[0].name.replace(/\s*\(SOTY\s*#\d+\s*\([^)]*\)\)/gi, '').replace(/\s*\(Nationals only\)/gi, '').trim()
+        latestResults = { event: ev, eventName: cleanName, eventDate: past[0].date }
       } catch {}
     }
     return (

@@ -143,8 +143,12 @@ export default function SurfMapClient() {
     }
   }, [])
 
-  // Update markers when conditions or edit mode change
-  useEffect(() => {
+  // Track edit mode in a ref so conditions effect can check it
+  const editModeRef = useRef(false)
+  editModeRef.current = editMode
+
+  // Build markers — only when edit mode toggles or first load
+  const buildMarkers = useCallback(() => {
     if (!mapLoaded || !mapInstance.current) return
     const mapboxgl = (window as any).mapboxgl
     const map = mapInstance.current
@@ -260,7 +264,19 @@ export default function SurfMapClient() {
       markersRef.current.push(marker)
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapLoaded, conditions, editMode])
+  }, [mapLoaded, editMode])
+
+  // Rebuild on edit mode toggle or first load
+  useEffect(() => {
+    buildMarkers()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapLoaded, editMode])
+
+  // Rebuild on conditions change ONLY if not editing
+  useEffect(() => {
+    if (!editModeRef.current) buildMarkers()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conditions])
 
   // Coast filter → fly camera
   const flyToCoast = useCallback((coast: CoastFilter) => {

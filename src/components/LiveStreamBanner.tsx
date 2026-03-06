@@ -7,7 +7,7 @@ interface LiveStreamBannerProps {
 }
 
 export function LiveStreamBanner({ title, streamUrl, embedCode }: LiveStreamBannerProps) {
-  const displayTitle = title || '🔴 LIVE NOW'
+  const displayTitle = title || 'LIVE NOW'
 
   return (
     <div style={{

@@ -407,8 +407,8 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
             <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.5rem, 3vw, 2rem)", color: "#fff", marginBottom: 32 }}>Stay Connected</h2>
             <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
               {[
-                { platform: "Instagram", handle: "@barbadossurfingassociation", url: "https://www.instagram.com/barbadossurfingassociation/", icon: "📸" },
-                { platform: "Facebook", handle: "BSA Surf", url: "https://www.facebook.com/bsasurf/", icon: "👤" },
+                { platform: "Instagram", handle: "@barbadossurfingassociation", url: "https://www.instagram.com/barbadossurfingassociation/", icon: "" },
+                { platform: "Facebook", handle: "BSA Surf", url: "https://www.facebook.com/bsasurf/", icon: "" },
               ].map(link => (
                 <a key={link.platform} href={link.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 12, backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "16px 28px", textDecoration: "none", border: "1px solid rgba(255,255,255,0.06)", transition: "background 0.2s" }}>
                   <span style={{ fontSize: 22 }}>{link.icon}</span>
@@ -419,7 +419,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
                 </a>
               ))}
               <a href="mailto:barbadossurfingassociation@gmail.com" style={{ display: "flex", alignItems: "center", gap: 12, backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "16px 28px", textDecoration: "none", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <span style={{ fontSize: 22 }}>✉️</span>
+                <span style={{ fontSize: 22 }}></span>
                 <div style={{ textAlign: "left" }}>
                   <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 14, color: "#fff" }}>Email</div>
                   <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>barbadossurfingassociation@gmail.com</div>

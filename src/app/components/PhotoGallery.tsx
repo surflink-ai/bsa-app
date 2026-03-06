@@ -81,7 +81,7 @@ export function PhotoGallery({ photos }: { photos: Photo[] }) {
             />
             {photos[selected].credit && (
               <div style={{ textAlign: "center", color: "rgba(255,255,255,0.5)", fontSize: 12, marginTop: 8 }}>
-                📷 {photos[selected].credit}
+                {photos[selected].credit}
               </div>
             )}
           </div>

@@ -40,7 +40,7 @@ export async function deleteNotification(id: string): Promise<void> {
 }
 
 export const NOTIFICATION_TEMPLATES = [
-  { label: 'Heat Starting', title: 'Heat Starting Now! 🏄', body: 'The next heat is about to begin. Tune in live!', type: 'heat' as const },
+  { label: 'Heat Starting', title: 'Heat Starting Now!', body: 'The next heat is about to begin. Tune in live!', type: 'heat' as const },
   { label: 'Finals Live', title: 'Finals Are LIVE! 🏆', body: 'The finals are underway. Don\'t miss the action!', type: 'event' as const },
-  { label: 'Results Posted', title: 'Results Are In! 📊', body: 'Final results have been posted. Check them out!', type: 'event' as const },
+  { label: 'Results Posted', title: 'Results Are In!', body: 'Final results have been posted. Check them out!', type: 'event' as const },
 ]

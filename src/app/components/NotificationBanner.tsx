@@ -28,7 +28,7 @@ export function NotificationBanner() {
         setSubscribed(true)
         setShow(false)
         // Show a test notification
-        new Notification("BSA Notifications Enabled 🏄", {
+        new Notification("BSA Notifications Enabled", {
           body: "You'll be notified about upcoming events and results!",
           icon: "https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp",
         })
@@ -51,7 +51,7 @@ export function NotificationBanner() {
       maxWidth: 480, margin: "0 auto",
     }}>
       <div>
-        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 14, color: "#fff", marginBottom: 4 }}>Stay in the loop 🏄</div>
+        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 14, color: "#fff", marginBottom: 4 }}>Stay in the loop</div>
         <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Get notified about events, results & news</div>
       </div>
       <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>

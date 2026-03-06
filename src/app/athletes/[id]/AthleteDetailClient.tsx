@@ -211,8 +211,8 @@ export function AthleteDetailClient({ athlete, results, heats, rivals, compResul
                           <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 14, color: '#0A2540' }}>{yr}</span>
                           <div style={{ display: 'flex', gap: 12 }}>
                             <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: 'rgba(26,26,26,0.4)' }}>{sr.length} events</span>
-                            {yw > 0 && <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: '#FFD700', fontWeight: 700 }}>{yw}🥇</span>}
-                            {yp - yw > 0 && <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: '#2BA5A0' }}>{yp - yw}🥈🥉</span>}
+                            {yw > 0 && <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: '#FFD700', fontWeight: 700 }}>{yw}</span>}
+                            {yp - yw > 0 && <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: '#2BA5A0' }}>{yp - yw}</span>}
                           </div>
                         </div>
                       )

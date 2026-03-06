@@ -33,9 +33,9 @@ const PROGRAMMES = [
 ]
 
 const PATHWAY = [
-  { stage: "Learn", desc: "Ocean safety, pop-up technique, wave selection", icon: "🌊" },
+  { stage: "Learn", desc: "Ocean safety, pop-up technique, wave selection", icon: "" },
   { stage: "Compete", desc: "Enter local BSA junior events, build experience", icon: "🏆" },
-  { stage: "Develop", desc: "Join coaching squads, video analysis, fitness", icon: "📈" },
+  { stage: "Develop", desc: "Join coaching squads, video analysis, fitness", icon: "" },
   { stage: "Represent", desc: "National team selection, ISA World Juniors", icon: "🇧🇧" },
 ]
 
@@ -96,8 +96,8 @@ export default function JuniorsPage() {
                   </div>
                   <p style={{ fontSize: 14, lineHeight: 1.7, color: "rgba(255,255,255,0.45)", marginBottom: 16, flex: 1 }}>{prog.desc}</p>
                   <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 12, display: "flex", flexDirection: "column", gap: 4 }}>
-                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>📅 {prog.schedule}</div>
-                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>📍 {prog.location}</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{prog.schedule}</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{prog.location}</div>
                   </div>
                 </div>
               </ScrollReveal>

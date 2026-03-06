@@ -21,16 +21,16 @@ interface RankEntry {
 
 /* ── Division config ───────────────────────────────────────── */
 const DIVISION_ORDER: { id: string; label: string; emoji: string; color: string }[] = [
-  { id: '7747', label: 'Open Men', emoji: '🏄‍♂️', color: '#2BA5A0' },
-  { id: '7746', label: 'Open Women', emoji: '🏄‍♀️', color: '#E74C9B' },
-  { id: '7741', label: 'U18 Boys', emoji: '🔥', color: '#F5A623' },
-  { id: '7743', label: 'U18 Girls', emoji: '⚡', color: '#9B59B6' },
-  { id: '7740', label: 'U16 Boys', emoji: '🌊', color: '#3498DB' },
-  { id: '16171', label: 'U16 Girls', emoji: '💪', color: '#E91E63' },
-  { id: '7739', label: 'U14 Boys', emoji: '🐬', color: '#00BCD4' },
-  { id: '16305', label: 'Longboard', emoji: '🤙', color: '#8BC34A' },
-  { id: '7744', label: 'Grand Masters', emoji: '👑', color: '#FF9800' },
-  { id: '16304', label: 'Novis', emoji: '🌱', color: '#4CAF50' },
+  { id: '7747', label: 'Open Men', emoji: '', color: '#2BA5A0' },
+  { id: '7746', label: 'Open Women', emoji: '', color: '#E74C9B' },
+  { id: '7741', label: 'U18 Boys', emoji: '', color: '#F5A623' },
+  { id: '7743', label: 'U18 Girls', emoji: '', color: '#9B59B6' },
+  { id: '7740', label: 'U16 Boys', emoji: '', color: '#3498DB' },
+  { id: '16171', label: 'U16 Girls', emoji: '', color: '#E91E63' },
+  { id: '7739', label: 'U14 Boys', emoji: '', color: '#00BCD4' },
+  { id: '16305', label: 'Longboard', emoji: '', color: '#8BC34A' },
+  { id: '7744', label: 'Grand Masters', emoji: '', color: '#FF9800' },
+  { id: '16304', label: 'Novis', emoji: '', color: '#4CAF50' },
 ]
 
 /* ── Helpers ───────────────────────────────────────────────── */
@@ -391,7 +391,7 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
                     borderColor: isActive ? `${div.color}44` : 'transparent',
                     transition: 'all 0.25s',
                   }}>
-                  <span>{div.emoji}</span> {div.label}
+                  {div.label}
                 </button>
               )
             })}
@@ -411,7 +411,7 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
             </div>
           ) : rankings.length === 0 ? (
             <div style={{ padding: '80px 0', textAlign: 'center' }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>🏄</div>
+              <div style={{ fontSize: 48, marginBottom: 12 }}></div>
               <p style={{ color: 'rgba(10,37,64,0.3)', fontFamily: "'Space Grotesk',sans-serif", fontSize: 16 }}>
                 No rankings for this division yet
               </p>

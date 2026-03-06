@@ -33,10 +33,10 @@ const PROGRAMMES = [
 ]
 
 const PATHWAY = [
-  { stage: "Learn", desc: "Ocean safety, pop-up technique, wave selection", icon: "" },
-  { stage: "Compete", desc: "Enter local BSA junior events, build experience", icon: "🏆" },
-  { stage: "Develop", desc: "Join coaching squads, video analysis, fitness", icon: "" },
-  { stage: "Represent", desc: "National team selection, ISA World Juniors", icon: "🇧🇧" },
+  { stage: "Learn", desc: "Ocean safety, pop-up technique, wave selection", num: "01" },
+  { stage: "Compete", desc: "Enter local BSA junior events, build experience", num: "02" },
+  { stage: "Develop", desc: "Join coaching squads, video analysis, fitness", num: "03" },
+  { stage: "Represent", desc: "National team selection, ISA World Juniors", num: "04" },
 ]
 
 export default function JuniorsPage() {
@@ -67,7 +67,7 @@ export default function JuniorsPage() {
             {PATHWAY.map((step, i) => (
               <ScrollReveal key={step.stage} delay={i * 100}>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 40, marginBottom: 12 }}>{step.icon}</div>
+                  <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 32, fontWeight: 700, color: "rgba(10,37,64,0.08)", marginBottom: 8, lineHeight: 1 }}>{step.num}</div>
                   <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: "#2BA5A0", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 8 }}>Step {i + 1}</div>
                   <h3 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 18, color: "#0A2540", marginBottom: 8 }}>{step.stage}</h3>
                   <p style={{ fontSize: 14, lineHeight: 1.7, color: "rgba(26,26,26,0.5)" }}>{step.desc}</p>
@@ -116,7 +116,7 @@ export default function JuniorsPage() {
               Whether your child is a complete beginner or an aspiring competitor, the BSA has a programme for them. Contact us to learn more or register for the next intake.
             </p>
             <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-              <a href="https://liveheats.com/BarbadosSurfingAssociation" target="_blank" rel="noopener noreferrer" style={{ fontSize: 14, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register</a>
+              <a href="/contact" style={{ fontSize: 14, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register</a>
               <a href="mailto:barbadossurfingassociation@gmail.com" style={{ fontSize: 14, fontWeight: 600, color: "#1478B5", backgroundColor: "transparent", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em", border: "1px solid rgba(20,120,181,0.2)" }}>Contact Us</a>
             </div>
           </ScrollReveal>

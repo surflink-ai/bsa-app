@@ -12,7 +12,6 @@ export function AthletesClient({ athletes }: { athletes: Athlete[] }) {
   const [filter, setFilter] = useState<'all' | 'photo'>('all')
 
   const withPhotos = useMemo(() => athletes.filter(a => a.image), [athletes])
-  const featured = useMemo(() => withPhotos.sort((a, b) => b.count - a.count).slice(0, 5), [withPhotos])
 
   const list = useMemo(() => {
     let result = filter === 'photo' ? withPhotos : athletes
@@ -27,36 +26,25 @@ export function AthletesClient({ athletes }: { athletes: Athlete[] }) {
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#2BA5A0', marginBottom: 12 }}>Representing Barbados</p>
           <h1 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 'clamp(2rem,5vw,3rem)', color: '#fff', marginBottom: 8 }}>Athletes</h1>
-          <div style={{ display: 'flex', gap: 24, marginTop: 16 }}>
-            <div><span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 28, color: '#fff' }}>{athletes.length}</span><span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', marginLeft: 8, textTransform: 'uppercase' }}>Total</span></div>
-            <div><span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 28, color: '#2BA5A0' }}>{withPhotos.length}</span><span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', marginLeft: 8, textTransform: 'uppercase' }}>Profiles</span></div>
+          {/* Stats row */}
+          <div style={{ display: 'flex', gap: 16, marginTop: 24, flexWrap: 'wrap' }}>
+            {[
+              { value: athletes.length, label: 'Athletes' },
+              { value: withPhotos.length, label: 'With Profiles' },
+              { value: athletes.length > 0 ? Math.max(...athletes.map(a => a.count)) : 0, label: 'Most Events' },
+              { value: athletes.filter(a => a.count > 0).length, label: 'Active Competitors' },
+            ].map(stat => (
+              <div key={stat.label} style={{
+                padding: '14px 20px', background: 'rgba(255,255,255,0.04)',
+                borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)',
+              }}>
+                <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 24, color: '#fff', lineHeight: 1 }}>{stat.value}</div>
+                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 4 }}>{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
-
-      {/* Featured athletes */}
-      {featured.length > 0 && (
-        <section style={{ backgroundColor: '#0A2540', padding: '0 24px 48px' }}>
-          <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 16 }}>Athletes to Watch</div>
-            <div className="no-scrollbar" style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 8 }}>
-              {featured.map(a => (
-                <Link key={a.id} href={`/athletes/${a.id}`} style={{ textDecoration: 'none', flexShrink: 0, width: 'clamp(140px,18vw,180px)' }}>
-                  <div style={{ borderRadius: 12, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div style={{ aspectRatio: '3/4', overflow: 'hidden' }}>
-                      {a.image && <img src={a.image} alt={a.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                    </div>
-                    <div style={{ padding: '10px 12px' }}>
-                      <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 13, color: '#fff', marginBottom: 2 }}>{a.name}</div>
-                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>{a.count} events</div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       <WaveDivider color="#FFFFFF" bg="#0A2540" />
 

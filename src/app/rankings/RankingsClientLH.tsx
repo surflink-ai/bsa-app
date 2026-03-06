@@ -647,7 +647,7 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
       <section style={{ backgroundColor: '#fff', padding: '32px 24px 80px' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
           <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: 'rgba(10,37,64,0.3)' }}>
-            Rankings data from LiveHeats · Updated every 5 minutes
+            Rankings updated automatically · Data refreshed every 5 minutes
           </p>
         </div>
       </section>

@@ -28,80 +28,143 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     })
     const json = await res.json()
     const rankings = (json.data?.series?.rankings || []).slice(0, 5)
-
     if (rankings.length === 0) return new Response('No rankings', { status: 404 })
+
+    const leader = rankings[0]
 
     return new ImageResponse(
       (
         <div style={{
-          width: 1200, height: 630, display: 'flex', flexDirection: 'column',
-          backgroundColor: '#0A2540', fontFamily: 'sans-serif', position: 'relative', overflow: 'hidden',
+          width: 1080, height: 1350, display: 'flex', flexDirection: 'column',
+          position: 'relative', overflow: 'hidden',
+          background: 'linear-gradient(180deg, #050D1A 0%, #0A1628 30%, #0D1F35 60%, #0A1628 100%)',
+          fontFamily: 'sans-serif',
         }}>
-          {/* Teal accent */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, backgroundColor: '#2BA5A0', display: 'flex' }} />
+          {/* Orbs */}
+          <div style={{
+            position: 'absolute', top: -80, right: -60, width: 350, height: 350, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,215,0,0.15) 0%, transparent 70%)',
+            display: 'flex',
+          }} />
+          <div style={{
+            position: 'absolute', bottom: 200, left: -100, width: 300, height: 300, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(43,165,160,0.15) 0%, transparent 70%)',
+            display: 'flex',
+          }} />
+
+          {/* Edge lines */}
+          <div style={{
+            position: 'absolute', top: 0, left: 0, bottom: 0, width: 2,
+            background: 'linear-gradient(180deg, transparent 0%, #2BA5A040 20%, #2BA5A080 50%, #2BA5A040 80%, transparent 100%)',
+            display: 'flex',
+          }} />
+          <div style={{
+            position: 'absolute', top: 0, right: 0, bottom: 0, width: 2,
+            background: 'linear-gradient(180deg, transparent 0%, #2BA5A040 20%, #2BA5A080 50%, #2BA5A040 80%, transparent 100%)',
+            display: 'flex',
+          }} />
 
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '40px 56px 24px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 14, color: '#2BA5A0', textTransform: 'uppercase', letterSpacing: '0.2em', display: 'flex' }}>2025 Season Rankings</span>
-              <span style={{ fontSize: 44, fontWeight: 700, color: '#FFFFFF', display: 'flex' }}>{divName}</span>
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '48px 48px 0', position: 'relative', zIndex: 2 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 24, fontWeight: 700, color: '#FFFFFF', display: 'flex' }}>BSA</span>
+              <div style={{
+                width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)',
+              }}>
+                <span style={{ fontSize: 16, fontWeight: 800, color: '#fff', display: 'flex' }}>BSA</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.15em', textTransform: 'uppercase', display: 'flex' }}>2025 SEASON</span>
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'flex' }}>Rankings</span>
+              </div>
+            </div>
+            <div style={{
+              padding: '6px 16px', borderRadius: 20,
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+              fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'flex',
+            }}>
+              TOP 5
             </div>
           </div>
 
+          {/* Division title */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '36px 48px 0', position: 'relative', zIndex: 2 }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#2BA5A0', letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', marginBottom: 8 }}>LEADERBOARD</span>
+            <span style={{ fontSize: 48, fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.05em', textTransform: 'uppercase', display: 'flex' }}>{divName}</span>
+          </div>
+
           {/* Rankings list */}
-          <div style={{ display: 'flex', flexDirection: 'column', padding: '0 56px', flex: 1, gap: 8 }}>
-            {rankings.map((r: any, i: number) => (
-              <div key={r.athlete.id} style={{
-                display: 'flex', alignItems: 'center', padding: '14px 20px', borderRadius: 12,
-                backgroundColor: i < 3 ? `${medalColors[i]}10` : 'rgba(255,255,255,0.03)',
-                border: i < 3 ? `1px solid ${medalColors[i]}30` : '1px solid rgba(255,255,255,0.04)',
-              }}>
-                {/* Rank */}
-                <div style={{
-                  width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  backgroundColor: i < 3 ? medalColors[i] : 'rgba(255,255,255,0.06)',
-                  marginRight: 16, flexShrink: 0,
-                }}>
-                  <span style={{ fontSize: 18, fontWeight: 700, color: i < 3 ? '#0A2540' : 'rgba(255,255,255,0.3)', display: 'flex' }}>{r.place}</span>
-                </div>
+          <div style={{ display: 'flex', flexDirection: 'column', padding: '36px 40px 0', flex: 1, gap: 10, position: 'relative', zIndex: 2 }}>
+            {rankings.map((r: any, i: number) => {
+              const isTop3 = i < 3
+              const color = isTop3 ? medalColors[i] : 'rgba(255,255,255,0.3)'
+              const bgAlpha = isTop3 ? '0.06' : '0.02'
 
-                {/* Photo */}
-                <div style={{
-                  width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', marginRight: 16, flexShrink: 0,
-                  backgroundColor: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              return (
+                <div key={r.athlete.id} style={{
+                  display: 'flex', alignItems: 'center', padding: '18px 24px', borderRadius: 20,
+                  background: `linear-gradient(135deg, rgba(255,255,255,${bgAlpha}) 0%, rgba(255,255,255,${Number(bgAlpha) / 2}) 100%)`,
+                  border: `1px solid ${isTop3 ? color + '25' : 'rgba(255,255,255,0.04)'}`,
+                  position: 'relative', overflow: 'hidden',
                 }}>
-                  {r.athlete.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={r.athlete.image} alt="" width={44} height={44} style={{ objectFit: 'cover' }} />
-                  ) : (
-                    <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.1)', fontWeight: 700, display: 'flex' }}>{r.athlete.name.split(' ').map((n: string) => n[0]).join('')}</span>
+                  {/* Subtle left accent */}
+                  {isTop3 && (
+                    <div style={{
+                      position: 'absolute', left: 0, top: 0, bottom: 0, width: 3,
+                      background: color, borderRadius: '20px 0 0 20px', display: 'flex',
+                    }} />
                   )}
+
+                  {/* Rank number */}
+                  <div style={{
+                    width: 48, height: 48, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: isTop3 ? `${color}18` : 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${isTop3 ? color + '30' : 'rgba(255,255,255,0.06)'}`,
+                    marginRight: 18, flexShrink: 0,
+                  }}>
+                    <span style={{ fontSize: 22, fontWeight: 800, color, display: 'flex' }}>{r.place}</span>
+                  </div>
+
+                  {/* Photo */}
+                  <div style={{
+                    width: 52, height: 52, borderRadius: '50%', overflow: 'hidden', marginRight: 18, flexShrink: 0,
+                    background: 'rgba(255,255,255,0.04)', border: `2px solid ${isTop3 ? color + '30' : 'rgba(255,255,255,0.06)'}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {r.athlete.image ? (
+                      <img src={r.athlete.image} alt="" width={52} height={52} style={{ objectFit: 'cover' }} />
+                    ) : (
+                      <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.08)', fontWeight: 700, display: 'flex' }}>{r.athlete.name.split(' ').map((n: string) => n[0]).join('')}</span>
+                    )}
+                  </div>
+
+                  {/* Name */}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: 22, fontWeight: 700, color: '#FFFFFF', display: 'flex' }}>{r.athlete.name}</span>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'flex' }}>BARBADOS</span>
+                  </div>
+
+                  {/* Points */}
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                    <span style={{ fontSize: 26, fontWeight: 800, color: isTop3 ? color : '#2BA5A0', display: 'flex' }}>{r.points.toLocaleString()}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em', display: 'flex' }}>PTS</span>
+                  </div>
                 </div>
-
-                {/* Name */}
-                <span style={{ flex: 1, fontSize: 22, fontWeight: 600, color: '#FFFFFF', display: 'flex' }}>{r.athlete.name}</span>
-
-                {/* Points */}
-                <span style={{ fontSize: 22, fontWeight: 700, color: '#2BA5A0', display: 'flex' }}>{r.points.toLocaleString()} pts</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           {/* Footer */}
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '16px 56px', borderTop: '1px solid rgba(255,255,255,0.06)',
-            backgroundColor: 'rgba(0,0,0,0.15)',
+            padding: '0 48px', paddingBottom: 40, marginTop: 'auto', position: 'relative', zIndex: 2,
           }}>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', display: 'flex' }}>Barbados Surfing Association</span>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', display: 'flex' }}>bsa.surf/rankings</span>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em', display: 'flex' }}>BARBADOS SURFING ASSOCIATION</span>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.15)', display: 'flex' }}>bsa.surf/rankings</span>
           </div>
         </div>
       ),
-      { width: 1200, height: 630 },
+      { width: 1080, height: 1350 },
     )
   } catch (e: any) {
     return new Response(`Error: ${e.message}`, { status: 500 })

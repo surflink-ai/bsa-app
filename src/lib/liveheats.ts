@@ -164,11 +164,11 @@ export function sortEventsByDate(events: BSAEvent[]) {
 }
 
 export function getUpcomingEvents(events: BSAEvent[]) {
-  return events.filter(e => e.status === 'upcoming').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  return events.filter(e => e.status === 'upcoming' || e.status === 'on').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 }
 
 export function getPastEvents(events: BSAEvent[]) {
-  return events.filter(e => e.status === 'results_published').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  return events.filter(e => e.status === 'results_published' || e.status === 'finished').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 }
 
 export function getBestWaves(rides: Record<string, RideScore[]>): { total: number; scoring: boolean }[] {

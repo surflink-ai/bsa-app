@@ -417,14 +417,6 @@ export function StreamClient() {
           </div>
         )}
 
-        {/* BSA watermark */}
-        <div style={{
-          position: 'absolute', top: 16, right: 16, zIndex: 10,
-          fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 700,
-          color: 'rgba(255,255,255,0.25)', letterSpacing: '0.12em',
-          textShadow: '0 1px 4px rgba(0,0,0,0.5)',
-        }}>BSA</div>
-
         {showControls && (
           <div style={{
             position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',

@@ -4,14 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 
 // ── Config ──
 const YOUTUBE_VIDEO_ID = 'Xk8qZEY-KJw'
-const LIVEHEATS_EVENT_ID = '429674'
 const POLL_INTERVAL = 10_000
-const GRAPHQL_URL = 'https://liveheats.com/api/graphql'
-const GRAPHQL_HEADERS = {
-  'Content-Type': 'application/json',
-  'Origin': 'https://liveheats.com',
-  'Referer': 'https://liveheats.com/',
-}
+const SCORES_API = '/api/stream/scores'
 
 // ── Types ──
 interface RideScore {
@@ -108,33 +102,9 @@ export function StreamClient() {
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch(GRAPHQL_URL, {
-        method: 'POST',
-        headers: GRAPHQL_HEADERS,
-        body: JSON.stringify({
-          query: `{
-            event(id: "${LIVEHEATS_EVENT_ID}") {
-              id name status
-              eventDivisions {
-                id
-                division { id name }
-                status
-                heats {
-                  id position round startTime endTime
-                  config { totalCountingRides maxRideScore }
-                  result {
-                    place total needs winBy rides
-                    competitor { athlete { id name } bib }
-                  }
-                }
-              }
-            }
-          }`
-        }),
-      })
-      const json = await res.json()
-      const event = json?.data?.event
-      if (!event) return
+      const res = await fetch(SCORES_API, { cache: 'no-store' })
+      const event = await res.json()
+      if (!event || event.error) return
 
       const divs = event.eventDivisions as EventDivision[]
       const dataHash = JSON.stringify(divs.map(d => d.heats.map(h => h.result.map(r => r.total))))

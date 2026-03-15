@@ -214,7 +214,7 @@ function ScoreRows({ sorted, heat, isCompact }: { sorted: HeatResult[]; heat: He
         return (
           <div key={r.competitor.athlete.id} className="score-row" style={{
             display: 'grid',
-            gridTemplateColumns: isCompact ? '16px 1fr auto 58px' : '24px 1fr auto 64px',
+            gridTemplateColumns: isCompact ? '16px minmax(80px,1fr) auto 58px' : '24px minmax(100px,1fr) auto 64px',
             alignItems: 'center', gap: isCompact ? 6 : 10,
             padding: isCompact ? '0 12px' : '0 14px', height: fs.row,
             background: isLeader
@@ -257,8 +257,8 @@ function ScoreRows({ sorted, heat, isCompact }: { sorted: HeatResult[]; heat: He
             </div>
 
             {/* Wave scores */}
-            <div style={{ display: 'flex', gap: isCompact ? 2 : 3, flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
-              {waves.slice(0, isCompact ? 4 : 6).map((w, wi) => {
+            <div style={{ display: 'flex', gap: isCompact ? 2 : 3, flexWrap: 'nowrap', justifyContent: 'flex-end', alignItems: 'center', maxWidth: isCompact ? 120 : 200 }}>
+              {waves.slice(0, isCompact ? 3 : 4).map((w, wi) => {
                 const isCounting = topWaves.includes(w)
                 const isBest = w === bestWave && waves.length > 1
                 return (
@@ -282,9 +282,9 @@ function ScoreRows({ sorted, heat, isCompact }: { sorted: HeatResult[]; heat: He
                   animation: 'ghostPulse 1.8s ease-in-out infinite',
                 }}>–.–</span>
               ))}
-              {waves.length > (isCompact ? 4 : 6) && (
+              {waves.length > (isCompact ? 3 : 4) && (
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: fs.wave - 1, color: 'rgba(255,255,255,0.12)' }}>
-                  +{waves.length - (isCompact ? 4 : 6)}
+                  +{waves.length - (isCompact ? 3 : 4)}
                 </span>
               )}
               {!isCompact && waves.length > 0 && (

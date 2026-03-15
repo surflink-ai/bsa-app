@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   // Quick fetch for name only
   try {
     const org = await getOrg()
-    const past = org.events.filter(e => e.status === 'results_published')
+    const past = org.events.filter(e => e.status === 'results_published' || e.status === 'finished')
     for (const ev of past.slice(0, 5)) {
       const event = await getEvent(ev.id)
       for (const d of event.eventDivisions) {
@@ -72,7 +72,7 @@ export default async function AthleteDetailPage({ params }: { params: Promise<{ 
 
   try {
     const org = await getOrg()
-    const past = org.events.filter(e => e.status === 'results_published').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    const past = org.events.filter(e => e.status === 'results_published' || e.status === 'finished').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     const res = await Promise.allSettled(past.slice(0, 20).map(e => getEvent(e.id)))
 
     for (const r of res) {

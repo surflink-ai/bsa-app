@@ -230,7 +230,7 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const currentSeries = sortedSeries[seriesIdx]
-  const completedEvents = currentSeries?.events.filter(e => e.status === 'results_published') || []
+  const completedEvents = currentSeries?.events.filter(e => e.status === 'results_published' || e.status === 'finished') || []
   const totalEvents = currentSeries?.events.length || 0
   const progress = totalEvents > 0 ? (completedEvents.length / totalEvents) * 100 : 0
   const activeDivision = DIVISION_ORDER[activeDivIdx]
@@ -603,7 +603,7 @@ export function RankingsClientLH({ series }: { series: SeriesInfo[] }) {
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
               {(currentSeries?.events || []).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((evt, i) => {
-                const isComplete = evt.status === 'results_published'
+                const isComplete = evt.status === 'results_published' || evt.status === 'finished'
                 const d = new Date(evt.date)
                 const shortName = evt.name.replace(/SOTY Championship \d{4}\s*/, '').replace(/^Event #\d+\s*/, '').trim()
                 return (

@@ -11,7 +11,7 @@ export async function POST() {
   try {
     const org = await getOrg()
     const past = org.events
-      .filter(e => e.status === 'results_published')
+      .filter(e => e.status === 'results_published' || e.status === 'finished')
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     const athleteMap = new Map<string, {

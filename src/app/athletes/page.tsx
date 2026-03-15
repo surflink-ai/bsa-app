@@ -27,7 +27,7 @@ export default async function AthletesPage() {
   // Count event appearances from LiveHeats (for event count)
   try {
     const org = await getOrg()
-    const past = org.events.filter(e => e.status === 'results_published').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    const past = org.events.filter(e => e.status === 'results_published' || e.status === 'finished').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     const res = await Promise.allSettled(past.slice(0, 15).map(e => getEvent(e.id)))
     for (const r of res) {
       if (r.status === 'fulfilled') {

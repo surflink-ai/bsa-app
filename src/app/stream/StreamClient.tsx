@@ -174,7 +174,7 @@ function TimerBar({ currentDiv, currentHeat, heatIsLive, timeRemaining, size }: 
           fontFamily: "'JetBrains Mono', monospace", fontSize: isSm ? 8 : 9,
           color: 'rgba(255,255,255,0.25)', whiteSpace: 'nowrap',
         }}>
-          {currentHeat?.round} {currentHeat && currentHeat.position > 0 ? `H${currentHeat.position}` : ''} · Best {currentHeat?.config.totalCountingRides}
+          {currentHeat?.round} {currentHeat && currentHeat.position > 0 ? `H${currentHeat.position}` : ''}
         </span>
       </div>
       {timeRemaining !== null && (
@@ -194,6 +194,7 @@ function TimerBar({ currentDiv, currentHeat, heatIsLive, timeRemaining, size }: 
 }
 
 function ScoreRows({ sorted, heat, isCompact }: { sorted: HeatResult[]; heat: Heat; isCompact?: boolean }) {
+  const anyoneScored = sorted.some(r => r.total > 0)
   const fs = isCompact
     ? { pos: 11, name: 12, needs: 8, wave: 8, total: 15, row: 48 }
     : { pos: 16, name: 14, needs: 10, wave: 10, total: 20, row: 64 }
@@ -247,7 +248,7 @@ function ScoreRows({ sorted, heat, isCompact }: { sorted: HeatResult[]; heat: He
                   }}>P</span>
                 )}
               </span>
-              {r.needs != null && r.needs > 0 && i > 0 && (
+              {anyoneScored && r.needs != null && r.needs > 0 && i > 0 && (
                 <span style={{
                   fontFamily: "'JetBrains Mono', monospace", fontSize: fs.needs,
                   color: 'rgba(255,255,255,0.3)', display: 'block', marginTop: 1,

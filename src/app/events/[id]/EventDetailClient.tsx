@@ -11,7 +11,7 @@ interface Photo { src: string; alt?: string; credit?: string }
 const medalColors = ['#FFD700', '#C0C0C0', '#CD7F32']
 const medalBg = ['rgba(255,215,0,0.08)', 'rgba(192,192,192,0.08)', 'rgba(205,127,50,0.08)']
 
-export function EventDetailClient({ event, photos }: { event: { id: string; name: string; date: string; status: string; eventDivisions: EventDivisionFull[] }; photos?: Photo[] }) {
+export function EventDetailClient({ event, photos, resultsEventId }: { event: { id: string; name: string; date: string; status: string; eventDivisions: EventDivisionFull[] }; photos?: Photo[]; resultsEventId?: string | null }) {
   const [tab, setTab] = useState(0)
   const [open, setOpen] = useState<string | null>(null)
   const div = event.eventDivisions[tab]
@@ -55,6 +55,18 @@ export function EventDetailClient({ event, photos }: { event: { id: string; name
             ))}
           </div>
 
+          {resultsEventId && (
+            <div style={{ textAlign: 'center', marginTop: 24 }}>
+              <Link href={`/results/${resultsEventId}`} style={{
+                display: 'inline-block', padding: '10px 28px', borderRadius: 24,
+                background: '#2BA5A0', color: '#fff', fontWeight: 700, fontSize: 14,
+                fontFamily: "'Space Grotesk',sans-serif", textDecoration: 'none',
+                transition: 'opacity 0.2s',
+              }}>
+                📊 View Full Results
+              </Link>
+            </div>
+          )}
         </div>
       </section>
       <WaveDivider color="#FFFFFF" bg="#0A2540" />

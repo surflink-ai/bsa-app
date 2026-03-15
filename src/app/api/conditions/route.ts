@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
 import { BARBADOS_SPOTS, SUBREGIONS } from "@/lib/surfline"
 
-// Use edge runtime — different IP pool, less likely to be blocked by Surfline
-export const runtime = "edge"
+// Node.js runtime — edge was returning empty results from Surfline
+export const dynamic = "force-dynamic"
 
 const SL_BASE = "https://services.surfline.com"
 

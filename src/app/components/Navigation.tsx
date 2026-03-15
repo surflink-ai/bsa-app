@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: "/events", label: "Events" },
   { href: "/athletes", label: "Athletes" },
   { href: "/rankings", label: "Rankings" },
+  { href: "/results", label: "Results" },
   { href: "/surf-report", label: "Surf Report" },
   { href: "/stream", label: "Live" },
   { href: "/news", label: "News" },

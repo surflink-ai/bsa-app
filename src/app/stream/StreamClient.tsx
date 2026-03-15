@@ -356,8 +356,10 @@ export function StreamClient() {
           50% { opacity: 0.3; }
         }
         /* Hide nav/footer in fullscreen stream */
-        nav, footer, header, .pb-20 { display: none !important; }
+        body > nav, body > footer, body > header,
+        body > div > nav, body > div > footer { display: none !important; }
         body { overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
+        main { padding: 0 !important; }
 
         /* Mobile: show short names, hide full */
         .athlete-short { display: none; }

@@ -74,7 +74,7 @@ export function StreamClient() {
   const [showControls, setShowControls] = useState(false)
   const [isLive, setIsLive] = useState(false)
   const prevDataRef = useRef<string>('')
-  const controlsTimeout = useRef<ReturnType<typeof setTimeout>>()
+  const controlsTimeout = useRef<ReturnType<typeof setTimeout>>(null)
 
   const fetchData = useCallback(async () => {
     try {

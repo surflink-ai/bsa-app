@@ -139,8 +139,8 @@ function ScoreRows({ sorted, heat, isCompact }: { sorted: HeatResult[]; heat: He
         const jersey = getJerseyColor(heat, r.competitor.athlete.id)
         return (
           <div key={r.competitor.athlete.id} style={{
-            display: 'grid', gridTemplateColumns: isCompact ? '16px 10px 1fr auto 58px' : '28px 14px 1fr auto 64px',
-            alignItems: 'center', gap: isCompact ? 4 : 8,
+            display: 'grid', gridTemplateColumns: isCompact ? '16px 1fr auto 58px' : '28px 1fr auto 64px',
+            alignItems: 'center', gap: isCompact ? 6 : 10,
             padding: isCompact ? '0 12px' : '0 14px', height: fs.row,
             background: isLeader ? 'rgba(43,165,160,0.06)' : 'transparent',
             borderBottom: i < sorted.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
@@ -149,13 +149,16 @@ function ScoreRows({ sorted, heat, isCompact }: { sorted: HeatResult[]; heat: He
               fontFamily: "'JetBrains Mono', monospace", fontSize: fs.pos, fontWeight: 700,
               color: isLeader ? '#2BA5A0' : 'rgba(255,255,255,0.3)',
             }}>{r.place}</span>
-            <JerseyDot color={jersey} size={isCompact ? 10 : 12} />
             <div style={{ minWidth: 0 }}>
               <span style={{
                 fontFamily: "'Space Grotesk', sans-serif", fontSize: fs.name,
                 fontWeight: isLeader ? 700 : 500, color: '#fff',
-                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block',
-              }}>{r.competitor.athlete.name}</span>
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                display: 'flex', alignItems: 'center', gap: isCompact ? 4 : 6,
+              }}>
+                <JerseyDot color={jersey} size={isCompact ? 8 : 10} />
+                {r.competitor.athlete.name}
+              </span>
               {r.needs != null && r.needs > 0 && i > 0 && (
                 <span style={{
                   fontFamily: "'JetBrains Mono', monospace", fontSize: fs.needs,
@@ -268,14 +271,14 @@ export function StreamClient() {
             </span>
           )}
           <span style={{
-            fontFamily: "'Space Grotesk', sans-serif", fontSize: isSm ? 10 : 13, fontWeight: 700,
-            color: 'rgba(255,255,255,0.6)',
+            fontFamily: "'Space Grotesk', sans-serif", fontSize: isSm ? 10 : 11, fontWeight: 700,
+            color: 'rgba(255,255,255,0.6)', whiteSpace: 'nowrap',
           }}>
             {currentDiv?.division.name}
           </span>
           <span style={{
-            fontFamily: "'JetBrains Mono', monospace", fontSize: isSm ? 8 : 10,
-            color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em',
+            fontFamily: "'JetBrains Mono', monospace", fontSize: isSm ? 8 : 9,
+            color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', whiteSpace: 'nowrap',
           }}>
             {currentHeat?.round} {currentHeat && currentHeat.position > 0 ? `H${currentHeat.position}` : ''} · Best {currentHeat?.config.totalCountingRides}
           </span>

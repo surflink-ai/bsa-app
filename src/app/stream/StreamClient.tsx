@@ -323,7 +323,7 @@ export function StreamClient() {
 
         {/* Overlay scoreboard top-left */}
         {currentHeat && (
-          <div style={{
+          <div className="overlay-scoreboard" style={{
             position: 'absolute', top: 16, left: 16, zIndex: 10,
             background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(12px)',
             borderRadius: 8, overflow: 'hidden', minWidth: 220,
@@ -378,6 +378,14 @@ export function StreamClient() {
         @media (orientation: portrait) {
           .stream-portrait { display: block !important; }
           .stream-landscape { display: none !important; }
+        }
+
+        /* Mobile landscape: scale down overlay 50% */
+        @media (orientation: landscape) and (max-height: 500px) {
+          .overlay-scoreboard {
+            transform: scale(0.5);
+            transform-origin: top left;
+          }
         }
       `}</style>
     </>

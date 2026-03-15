@@ -174,7 +174,7 @@ export function StreamClient() {
                 return (
                   <div key={r.competitor.athlete.id} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '3px 5px', height: 24,
+                    padding: '4px 5px', height: 30,
                     background: isLeader ? 'rgba(43,165,160,0.1)' : 'transparent',
                     borderTop: i > 0 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                   }}>
@@ -267,7 +267,7 @@ export function StreamClient() {
                 return (
                   <div key={r.competitor.athlete.id} style={{
                     display: 'grid', gridTemplateColumns: '24px 1fr auto 56px',
-                    alignItems: 'center', gap: 8, padding: '10px 12px', height: 52,
+                    alignItems: 'center', gap: 8, padding: '10px 12px', height: 60,
                     background: isLeader ? 'rgba(43,165,160,0.04)' : 'transparent',
                     borderBottom: i < sorted.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                   }}>
@@ -389,7 +389,7 @@ export function StreamClient() {
               return (
                 <div key={r.competitor.athlete.id} style={{
                   display: 'grid', gridTemplateColumns: '16px 1fr auto 58px',
-                  alignItems: 'center', gap: 6, padding: '6px 12px', height: 40,
+                  alignItems: 'center', gap: 6, padding: '8px 12px', height: 48,
                   background: isLeader ? 'rgba(43,165,160,0.08)' : 'transparent',
                   borderBottom: i < sorted.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                 }}>

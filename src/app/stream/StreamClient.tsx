@@ -281,11 +281,12 @@ function ScoreRows({ sorted, heat, isCompact }: { sorted: HeatResult[]; heat: He
 
             {/* Total */}
             <span className="score-total" style={{
-              fontFamily: "'JetBrains Mono', monospace", fontSize: fs.total,
-              fontWeight: 800, textAlign: 'right', fontVariantNumeric: 'tabular-nums',
-              color: isLeader ? '#2BA5A0' : '#fff',
+              fontFamily: "'JetBrains Mono', monospace", fontSize: r.total > 0 ? fs.total : isCompact ? 7 : 9,
+              fontWeight: r.total > 0 ? 800 : 500, textAlign: 'right', fontVariantNumeric: 'tabular-nums',
+              color: isLeader ? '#2BA5A0' : r.total > 0 ? '#fff' : 'rgba(255,255,255,0.2)',
               transition: 'color 0.3s ease',
-            }}>{r.total > 0 ? r.total.toFixed(2) : '—'}</span>
+              letterSpacing: r.total > 0 ? undefined : '0.04em',
+            }}>{r.total > 0 ? r.total.toFixed(2) : 'waiting'}</span>
           </div>
         )
       })}

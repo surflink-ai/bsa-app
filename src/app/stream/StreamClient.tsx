@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 
 // ── Config ──
 const YOUTUBE_VIDEO_ID = 'Xk8qZEY-KJw'
-const POLL_INTERVAL = 5_000
+const POLL_INTERVAL = 3_000
 const SCORES_API = '/api/stream/scores'
 const HEAT_DURATION_MS = 20 * 60 * 1000 // 20 minutes default
 

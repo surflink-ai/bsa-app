@@ -47,6 +47,12 @@ function getAllWaves(rides: Record<string, RideScore[]>): number[] {
   return all
 }
 
+function getPendingCount(rides: Record<string, RideScore[]>): number {
+  let count = 0
+  for (const rideList of Object.values(rides)) for (const r of rideList) if (r.total == null) count++
+  return count
+}
+
 function getJerseyColor(heat: Heat, athleteId: string): string | null {
   const comp = heat.competitors?.find(c => c.athlete.id === athleteId)
   if (comp == null || !heat.config.jerseyOrder) return null
@@ -197,6 +203,7 @@ function ScoreRows({ sorted, heat, isCompact }: { sorted: HeatResult[]; heat: He
         const isLeader = i === 0 && r.total > 0
         const waves = getAllWaves(r.rides)
         const topWaves = getTopWaves(r.rides, heat.config.totalCountingRides)
+        const pending = getPendingCount(r.rides)
         const jersey = getJerseyColor(heat, r.competitor.athlete.id)
         const hasPri = hasPriority(heat, r.competitor.athlete.id)
         const bestWave = waves.length > 0 ? Math.max(...waves) : 0
@@ -264,6 +271,16 @@ function ScoreRows({ sorted, heat, isCompact }: { sorted: HeatResult[]; heat: He
                   }}>{w.toFixed(1)}</span>
                 )
               })}
+              {Array.from({ length: pending }).map((_, pi) => (
+                <span key={`p${pi}`} className="ghost-pill" style={{
+                  fontFamily: "'JetBrains Mono', monospace", fontSize: fs.wave,
+                  padding: isCompact ? '1px 3px' : '2px 6px', borderRadius: 3,
+                  color: 'rgba(43,165,160,0.4)',
+                  border: '1px solid rgba(43,165,160,0.25)',
+                  background: 'rgba(43,165,160,0.05)',
+                  animation: 'ghostPulse 1.8s ease-in-out infinite',
+                }}>–.–</span>
+              ))}
               {waves.length > (isCompact ? 4 : 6) && (
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: fs.wave - 1, color: 'rgba(255,255,255,0.12)' }}>
                   +{waves.length - (isCompact ? 4 : 6)}
@@ -439,6 +456,10 @@ export function StreamClient() {
         @keyframes timerPulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.6; }
+        }
+        @keyframes ghostPulse {
+          0%, 100% { opacity: 1; border-color: rgba(43,165,160,0.25); }
+          50% { opacity: 0.4; border-color: rgba(43,165,160,0.1); }
         }
 
         .score-row {

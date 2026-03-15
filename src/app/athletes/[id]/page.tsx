@@ -31,12 +31,24 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params
   // Quick fetch for name only
   try {
+    // Resolve aliases for metadata too
+    let metaIds = [id]
+    try {
+      const supabase = await createClient()
+      const { data: byP } = await supabase.from('athletes').select('liveheats_id, liveheats_aliases').eq('liveheats_id', id).single()
+      if (byP) metaIds = [byP.liveheats_id!, ...(byP.liveheats_aliases || [])].filter(Boolean)
+      else {
+        const { data: byA } = await supabase.from('athletes').select('liveheats_id, liveheats_aliases').contains('liveheats_aliases', [id]).single()
+        if (byA) metaIds = [byA.liveheats_id!, ...(byA.liveheats_aliases || [])].filter(Boolean)
+      }
+    } catch {}
+
     const org = await getOrg()
     const past = org.events.filter(e => e.status === 'results_published' || e.status === 'finished')
     for (const ev of past.slice(0, 5)) {
       const event = await getEvent(ev.id)
       for (const d of event.eventDivisions) {
-        const rk = (d.ranking || []).find(r => r.competitor.athlete.id === id)
+        const rk = (d.ranking || []).find(r => metaIds.includes(r.competitor.athlete.id))
         if (rk) {
           const name = rk.competitor.athlete.name
           const cardUrl = `https://bsa.surf/api/athletes/${id}/card`
@@ -65,6 +77,32 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function AthleteDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+
+  // Resolve all LiveHeats IDs for this athlete (handles duplicates across seasons)
+  let allIds = [id]
+  try {
+    const supabase = await createClient()
+    // Check if this ID is a primary or alias
+    const { data: byPrimary } = await supabase
+      .from('athletes')
+      .select('liveheats_id, liveheats_aliases')
+      .eq('liveheats_id', id)
+      .single()
+    if (byPrimary) {
+      allIds = [byPrimary.liveheats_id!, ...(byPrimary.liveheats_aliases || [])].filter(Boolean)
+    } else {
+      // Check if this ID is an alias
+      const { data: byAlias } = await supabase
+        .from('athletes')
+        .select('liveheats_id, liveheats_aliases')
+        .contains('liveheats_aliases', [id])
+        .single()
+      if (byAlias) {
+        allIds = [byAlias.liveheats_id!, ...(byAlias.liveheats_aliases || [])].filter(Boolean)
+      }
+    }
+  } catch {}
+
   let name = '', img: string | null = null
   const results: ResultEntry[] = []
   const heats: HeatEntry[] = []
@@ -80,8 +118,8 @@ export default async function AthleteDetailPage({ params }: { params: Promise<{ 
       const ev = r.value
 
       for (const d of ev.eventDivisions) {
-        // Check ranking for this athlete
-        const rk = (d.ranking || []).find(r => r.competitor.athlete.id === id)
+        // Check ranking for this athlete (any of their IDs)
+        const rk = (d.ranking || []).find(r => allIds.includes(r.competitor.athlete.id))
         if (!rk) continue
 
         if (!name) name = rk.competitor.athlete.name
@@ -95,7 +133,7 @@ export default async function AthleteDetailPage({ params }: { params: Promise<{ 
 
         // Extract heat-level data
         for (const heat of d.heats || []) {
-          const myResult = heat.result?.find(hr => hr.competitor.athlete.id === id)
+          const myResult = heat.result?.find(hr => allIds.includes(hr.competitor.athlete.id))
           if (!myResult) continue
 
           // Extract wave scores
@@ -111,7 +149,7 @@ export default async function AthleteDetailPage({ params }: { params: Promise<{ 
 
           // Opponents in this heat
           const opponents = heat.result
-            .filter(hr => hr.competitor.athlete.id !== id)
+            .filter(hr => !allIds.includes(hr.competitor.athlete.id))
             .map(hr => ({ name: hr.competitor.athlete.name, total: hr.total, place: hr.place }))
 
           // Track rivals
@@ -140,12 +178,23 @@ export default async function AthleteDetailPage({ params }: { params: Promise<{ 
   try {
     const supabase = await createClient()
 
-    // Find local athlete by liveheats_id or by name
-    const { data: localAthlete } = await supabase
+    // Find local athlete by liveheats_id, alias, or name
+    let localAthlete: { id: string; name: string; image_url: string | null } | null = null
+    const { data: byPrimary } = await supabase
       .from('athletes')
       .select('id, name, image_url')
       .eq('liveheats_id', id)
       .single()
+    if (byPrimary) {
+      localAthlete = byPrimary
+    } else {
+      const { data: byAlias } = await supabase
+        .from('athletes')
+        .select('id, name, image_url')
+        .contains('liveheats_aliases', [id])
+        .single()
+      if (byAlias) localAthlete = byAlias
+    }
 
     if (localAthlete) {
       if (!img && localAthlete.image_url) img = localAthlete.image_url

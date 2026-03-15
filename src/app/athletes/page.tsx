@@ -6,22 +6,28 @@ export const revalidate = 300
 export default async function AthletesPage() {
   const supabase = await createClient()
 
-  // Get all athletes from local DB
+  // Get all athletes from local DB (include aliases)
   const { data: localAthletes } = await supabase
     .from('athletes')
-    .select('id, name, image_url, liveheats_id')
+    .select('id, name, image_url, liveheats_id, liveheats_aliases')
     .eq('active', true)
     .order('name')
 
-  // Build map from local athletes
+  // Build map from local athletes + alias→primary lookup
   const map = new Map<string, { id: string; name: string; image: string | null; count: number }>()
+  const aliasMap = new Map<string, string>() // alias LH ID → primary LH ID
   for (const a of localAthletes || []) {
-    map.set(a.liveheats_id || a.id, {
-      id: a.liveheats_id || a.id, // Use liveheats_id for detail page compatibility
+    const primaryId = a.liveheats_id || a.id
+    map.set(primaryId, {
+      id: primaryId, // Use liveheats_id for detail page compatibility
       name: a.name,
       image: a.image_url,
       count: 0,
     })
+    // Register aliases
+    for (const alias of (a.liveheats_aliases || []) as string[]) {
+      aliasMap.set(alias, primaryId)
+    }
   }
 
   // Count event appearances from LiveHeats (for event count)
@@ -34,13 +40,14 @@ export default async function AthletesPage() {
         for (const d of r.value.eventDivisions) {
           for (const rk of d.ranking || []) {
             const a = rk.competitor.athlete
-            const ex = map.get(a.id)
+            const resolvedId = aliasMap.get(a.id) || a.id
+            const ex = map.get(resolvedId)
             if (ex) {
               ex.count++
               if (a.image && !ex.image) ex.image = a.image
             } else {
               // Athlete in LiveHeats but not local — still show them
-              map.set(a.id, { id: a.id, name: a.name, image: a.image, count: 1 })
+              map.set(resolvedId, { id: resolvedId, name: a.name, image: a.image, count: 1 })
             }
           }
         }

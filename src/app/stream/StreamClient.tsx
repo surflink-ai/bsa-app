@@ -135,76 +135,58 @@ export function StreamClient() {
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
-          {/* WSL-style scoreboard top-left ON video */}
+          {/* WSL-style scoreboard top-left ON video — ultra compact */}
           {currentHeat && (
             <div style={{
-              position: 'absolute', top: 8, left: 8, zIndex: 10,
-              background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
-              borderRadius: 6, overflow: 'hidden', minWidth: 160,
+              position: 'absolute', top: 6, left: 6, zIndex: 10,
+              background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)',
+              borderRadius: 4, overflow: 'hidden', width: 140,
               fontFamily: "'JetBrains Mono', monospace",
             }}>
               {/* Header */}
               <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '4px 8px', background: 'rgba(255,255,255,0.06)',
-                borderBottom: '1px solid rgba(255,255,255,0.08)',
+                padding: '2px 5px', background: 'rgba(255,255,255,0.06)',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 3, minWidth: 0, flex: 1 }}>
                   {heatIsLive && (
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#DC2626', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                    <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#DC2626', flexShrink: 0, animation: 'pulse 1.5s ease-in-out infinite' }} />
                   )}
-                  <span style={{ fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                    {currentDiv?.division.name}
+                  <span style={{
+                    fontSize: 6, fontWeight: 600, color: 'rgba(255,255,255,0.5)',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>
+                    {currentDiv?.division.name} · {currentHeat.round.replace('Quarterfinal', 'QF').replace('Semifinal', 'SF')} {currentHeat.position > 0 ? `H${currentHeat.position}` : ''}
                   </span>
                 </div>
                 {timeRemaining !== null && (
                   <span style={{
-                    fontSize: 10, fontWeight: 700,
-                    color: timeRemaining < 120000 ? '#DC2626' : '#2BA5A0',
+                    fontSize: 8, fontWeight: 800, fontVariantNumeric: 'tabular-nums', flexShrink: 0,
+                    color: timeRemaining < 120000 ? '#DC2626' : 'rgba(255,255,255,0.6)',
                   }}>
                     {formatTime(timeRemaining)}
                   </span>
                 )}
               </div>
-              {/* Round label */}
-              <div style={{
-                padding: '2px 8px', fontSize: 7, color: 'rgba(255,255,255,0.3)',
-                letterSpacing: '0.1em', textTransform: 'uppercase',
-                borderBottom: '1px solid rgba(255,255,255,0.05)',
-              }}>
-                {currentHeat.round} {currentHeat.position > 0 ? `Heat ${currentHeat.position}` : ''}
-              </div>
               {/* Athletes */}
               {sorted.map((r, i) => {
                 const isLeader = i === 0 && r.total > 0
-                const topWaves = getTopWaves(r.rides, currentHeat.config.totalCountingRides)
                 return (
                   <div key={r.competitor.athlete.id} style={{
-                    display: 'grid', gridTemplateColumns: '14px 1fr auto',
-                    alignItems: 'center', gap: 4,
-                    padding: '3px 8px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '1px 5px',
                     background: isLeader ? 'rgba(43,165,160,0.1)' : 'transparent',
-                    borderBottom: i < sorted.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                    borderTop: i > 0 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                   }}>
-                    <span style={{ fontSize: 9, fontWeight: 700, color: isLeader ? '#2BA5A0' : 'rgba(255,255,255,0.3)' }}>
-                      {r.place}
-                    </span>
-                    <div style={{ minWidth: 0 }}>
-                      <span style={{
-                        fontSize: 10, fontWeight: isLeader ? 700 : 500, color: '#fff',
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block',
-                      }}>
-                        {lastName(r.competitor.athlete.name)}
-                      </span>
-                      {r.needs != null && r.needs > 0 && i > 0 && (
-                        <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)' }}>
-                          needs {r.needs.toFixed(2)}
-                        </span>
-                      )}
-                    </div>
                     <span style={{
-                      fontSize: 12, fontWeight: 800,
-                      color: isLeader ? '#2BA5A0' : '#fff',
+                      fontSize: 8, fontWeight: isLeader ? 700 : 500, color: '#fff',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 85,
+                    }}>
+                      {lastName(r.competitor.athlete.name)}
+                    </span>
+                    <span style={{
+                      fontSize: 9, fontWeight: 800, fontVariantNumeric: 'tabular-nums',
+                      color: isLeader ? '#2BA5A0' : 'rgba(255,255,255,0.7)',
                     }}>
                       {r.total > 0 ? r.total.toFixed(2) : '—'}
                     </span>
@@ -350,96 +332,60 @@ export function StreamClient() {
           allowFullScreen
         />
 
-        {/* WSL-style scoreboard — top-left */}
+        {/* WSL-style scoreboard — top-left, ultra compact */}
         {currentHeat && (
           <div style={{
-            position: 'absolute', top: 16, left: 16, zIndex: 10,
-            background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(12px)',
-            borderRadius: 8, overflow: 'hidden', minWidth: 220,
+            position: 'absolute', top: 12, left: 12, zIndex: 10,
+            background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)',
+            borderRadius: 4, overflow: 'hidden', width: 155,
             fontFamily: "'JetBrains Mono', monospace",
-            boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
           }}>
-            {/* Header bar */}
+            {/* Header: division + timer */}
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '6px 12px', background: 'rgba(255,255,255,0.06)',
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
+              padding: '3px 6px', background: 'rgba(255,255,255,0.06)',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0, flex: 1 }}>
                 {heatIsLive && (
-                  <span style={{
-                    display: 'flex', alignItems: 'center', gap: 4,
-                    padding: '1px 6px', borderRadius: 3, background: 'rgba(220,38,38,0.9)',
-                    fontSize: 8, fontWeight: 700, color: '#fff', letterSpacing: '0.1em',
-                  }}>
-                    <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#fff', animation: 'pulse 1.5s ease-in-out infinite' }} />
-                    LIVE
-                  </span>
+                  <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#DC2626', flexShrink: 0, animation: 'pulse 1.5s ease-in-out infinite' }} />
                 )}
-                <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.05em' }}>
-                  {currentDiv?.division.name}
+                <span style={{
+                  fontSize: 7, fontWeight: 600, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.04em',
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                }}>
+                  {currentDiv?.division.name} · {currentHeat.round.replace('Quarterfinal', 'QF').replace('Semifinal', 'SF')} {currentHeat.position > 0 ? `H${currentHeat.position}` : ''}
                 </span>
               </div>
               {timeRemaining !== null && (
                 <span style={{
-                  fontSize: 14, fontWeight: 800, fontVariantNumeric: 'tabular-nums',
-                  color: timeRemaining < 120000 ? '#DC2626' : '#2BA5A0',
+                  fontSize: 9, fontWeight: 800, fontVariantNumeric: 'tabular-nums', flexShrink: 0,
+                  color: timeRemaining < 120000 ? '#DC2626' : 'rgba(255,255,255,0.6)',
                 }}>
                   {formatTime(timeRemaining)}
                 </span>
               )}
             </div>
 
-            {/* Round */}
-            <div style={{
-              padding: '3px 12px', fontSize: 8, color: 'rgba(255,255,255,0.3)',
-              letterSpacing: '0.1em', textTransform: 'uppercase',
-              borderBottom: '1px solid rgba(255,255,255,0.05)',
-            }}>
-              {currentHeat.round} {currentHeat.position > 0 ? `Heat ${currentHeat.position}` : ''} &middot; Best {currentHeat.config.totalCountingRides}
-            </div>
-
-            {/* Athletes */}
+            {/* Athletes — name + score only */}
             {sorted.map((r, i) => {
               const isLeader = i === 0 && r.total > 0
-              const waves = getAllWaves(r.rides)
-              const topWaves = getTopWaves(r.rides, currentHeat.config.totalCountingRides)
               return (
                 <div key={r.competitor.athlete.id} style={{
-                  display: 'grid', gridTemplateColumns: '16px 1fr auto 58px',
-                  alignItems: 'center', gap: 6, padding: '5px 12px',
-                  background: isLeader ? 'rgba(43,165,160,0.08)' : 'transparent',
-                  borderBottom: i < sorted.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '2px 6px',
+                  background: isLeader ? 'rgba(43,165,160,0.1)' : 'transparent',
+                  borderTop: i > 0 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: isLeader ? '#2BA5A0' : 'rgba(255,255,255,0.3)' }}>
-                    {r.place}
-                  </span>
-                  <div style={{ minWidth: 0 }}>
-                    <span style={{
-                      fontSize: 12, fontWeight: isLeader ? 700 : 500, color: '#fff',
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block',
-                    }}>
-                      {r.competitor.athlete.name}
-                    </span>
-                    {r.needs != null && r.needs > 0 && i > 0 && (
-                      <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)' }}>needs {r.needs.toFixed(2)}</span>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', gap: 2 }}>
-                    {waves.slice(0, 4).map((w, wi) => {
-                      const isCounting = topWaves.includes(w)
-                      return (
-                        <span key={wi} style={{
-                          fontSize: 8, padding: '1px 3px', borderRadius: 2,
-                          color: isCounting ? '#2BA5A0' : 'rgba(255,255,255,0.25)',
-                          fontWeight: isCounting ? 700 : 400,
-                        }}>{w.toFixed(1)}</span>
-                      )
-                    })}
-                  </div>
                   <span style={{
-                    fontSize: 15, fontWeight: 800, textAlign: 'right',
-                    color: isLeader ? '#2BA5A0' : '#fff', fontVariantNumeric: 'tabular-nums',
+                    fontSize: 9, fontWeight: isLeader ? 700 : 500, color: '#fff',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    maxWidth: 100,
+                  }}>
+                    {lastName(r.competitor.athlete.name)}
+                  </span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 800, fontVariantNumeric: 'tabular-nums',
+                    color: isLeader ? '#2BA5A0' : 'rgba(255,255,255,0.7)',
                   }}>
                     {r.total > 0 ? r.total.toFixed(2) : '—'}
                   </span>

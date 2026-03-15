@@ -25,7 +25,8 @@ export async function GET() {
               status
               heats {
                 id position round startTime endTime
-                config { totalCountingRides maxRideScore }
+                config { totalCountingRides maxRideScore jerseyOrder }
+                competitors { position athlete { id name } }
                 result {
                   place total needs winBy rides
                   competitor { athlete { id name } bib }

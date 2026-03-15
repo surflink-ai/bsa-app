@@ -15,10 +15,14 @@ interface HeatResult {
   rides: Record<string, RideScore[]>
   competitor: { athlete: { id: string; name: string }; bib: string | null }
 }
+interface HeatCompetitor {
+  position: number; athlete: { id: string; name: string }
+}
 interface Heat {
   id: string; position: number; round: string
   startTime: string | null; endTime: string | null
-  config: { totalCountingRides: number; maxRideScore: number }
+  config: { totalCountingRides: number; maxRideScore: number; jerseyOrder: string[] }
+  competitors: HeatCompetitor[]
   result: HeatResult[]
 }
 interface EventDivision {
@@ -54,6 +58,17 @@ function findActiveHeat(divisions: EventDivision[]): { division: EventDivision; 
     }
   }
   return latest ? { division: latest.division, heat: latest.heat } : null
+}
+
+const JERSEY_HEX: Record<string, string> = {
+  red: '#DC2626', white: '#E2E8F0', green: '#16A34A', blue: '#2563EB',
+  black: '#1E293B', yellow: '#EAB308', pink: '#EC4899', orange: '#EA580C',
+}
+
+function getJerseyColor(heat: Heat, athleteId: string): string | null {
+  const comp = heat.competitors?.find(c => c.athlete.id === athleteId)
+  if (comp == null || !heat.config.jerseyOrder) return null
+  return heat.config.jerseyOrder[comp.position] || null
 }
 
 function formatTime(ms: number): string {
@@ -100,6 +115,18 @@ function HeatPickers({ scoredDivisions, divisions, currentDiv, selectedDivId, se
 }
 
 // ── Shared: Full scoreboard rows (used in mobile portrait below video AND desktop overlay) ──
+function JerseyDot({ color, size }: { color: string | null; size: number }) {
+  if (!color || !JERSEY_HEX[color]) return null
+  return (
+    <span style={{
+      display: 'inline-block', width: size, height: size, borderRadius: 2,
+      background: JERSEY_HEX[color],
+      border: color === 'white' ? '1px solid rgba(255,255,255,0.3)' : 'none',
+      flexShrink: 0,
+    }} />
+  )
+}
+
 function ScoreRows({ sorted, heat, isCompact }: { sorted: HeatResult[]; heat: Heat; isCompact?: boolean }) {
   const fs = isCompact ? { pos: 11, name: 12, needs: 8, wave: 8, total: 15, row: 48 }
     : { pos: 18, name: 15, needs: 10, wave: 10, total: 20, row: 64 }
@@ -109,10 +136,11 @@ function ScoreRows({ sorted, heat, isCompact }: { sorted: HeatResult[]; heat: He
         const isLeader = i === 0 && r.total > 0
         const waves = getAllWaves(r.rides)
         const topWaves = getTopWaves(r.rides, heat.config.totalCountingRides)
+        const jersey = getJerseyColor(heat, r.competitor.athlete.id)
         return (
           <div key={r.competitor.athlete.id} style={{
-            display: 'grid', gridTemplateColumns: isCompact ? '16px 1fr auto 58px' : '28px 1fr auto 64px',
-            alignItems: 'center', gap: isCompact ? 6 : 10,
+            display: 'grid', gridTemplateColumns: isCompact ? '16px 10px 1fr auto 58px' : '28px 14px 1fr auto 64px',
+            alignItems: 'center', gap: isCompact ? 4 : 8,
             padding: isCompact ? '0 12px' : '0 14px', height: fs.row,
             background: isLeader ? 'rgba(43,165,160,0.06)' : 'transparent',
             borderBottom: i < sorted.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
@@ -121,6 +149,7 @@ function ScoreRows({ sorted, heat, isCompact }: { sorted: HeatResult[]; heat: He
               fontFamily: "'JetBrains Mono', monospace", fontSize: fs.pos, fontWeight: 700,
               color: isLeader ? '#2BA5A0' : 'rgba(255,255,255,0.3)',
             }}>{r.place}</span>
+            <JerseyDot color={jersey} size={isCompact ? 10 : 12} />
             <div style={{ minWidth: 0 }}>
               <span style={{
                 fontFamily: "'Space Grotesk', sans-serif", fontSize: fs.name,

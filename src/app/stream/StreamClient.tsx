@@ -214,7 +214,7 @@ function ScoreRows({ sorted, heat, isCompact }: { sorted: HeatResult[]; heat: He
         return (
           <div key={r.competitor.athlete.id} className="score-row" style={{
             display: 'grid',
-            gridTemplateColumns: isCompact ? '16px minmax(80px,1fr) auto 58px' : '24px minmax(100px,1fr) auto 64px',
+            gridTemplateColumns: isCompact ? '16px 1fr 58px' : '24px 1fr 64px',
             alignItems: 'center', gap: isCompact ? 6 : 10,
             padding: isCompact ? '0 12px' : '0 14px', height: fs.row,
             background: isLeader
@@ -248,53 +248,44 @@ function ScoreRows({ sorted, heat, isCompact }: { sorted: HeatResult[]; heat: He
                   }}>P</span>
                 )}
               </span>
-              {anyoneScored && r.needs != null && r.needs > 0 && i > 0 && (
-                <span style={{
-                  fontFamily: "'JetBrains Mono', monospace", fontSize: fs.needs,
-                  color: 'rgba(255,255,255,0.3)', display: 'block', marginTop: 1,
-                }}>needs {r.needs.toFixed(2)}</span>
-              )}
-            </div>
-
-            {/* Wave scores */}
-            <div style={{ display: 'flex', gap: isCompact ? 2 : 3, flexWrap: 'nowrap', justifyContent: 'flex-end', alignItems: 'center', maxWidth: isCompact ? 120 : 200 }}>
-              {waves.slice(0, isCompact ? 3 : 4).map((w, wi) => {
-                const isCounting = topWaves.includes(w)
-                const isBest = w === bestWave && waves.length > 1
-                return (
-                  <span key={wi} style={{
+              {/* Wave scores — below name */}
+              <div style={{ display: 'flex', gap: isCompact ? 2 : 3, flexWrap: 'nowrap', alignItems: 'center', marginTop: 2 }}>
+                {waves.slice(0, isCompact ? 4 : 6).map((w, wi) => {
+                  const isCounting = topWaves.includes(w)
+                  const isBest = w === bestWave && waves.length > 1
+                  return (
+                    <span key={wi} style={{
+                      fontFamily: "'JetBrains Mono', monospace", fontSize: fs.wave,
+                      padding: isCompact ? '1px 3px' : '2px 5px', borderRadius: 3,
+                      color: isCounting ? '#2BA5A0' : 'rgba(255,255,255,0.2)',
+                      background: isCounting ? 'rgba(43,165,160,0.12)' : 'transparent',
+                      fontWeight: isCounting ? 700 : 400,
+                      border: isBest && isExcellent ? '1px solid rgba(43,165,160,0.3)' : isBest && isGood ? '1px solid rgba(43,165,160,0.15)' : 'none',
+                    }}>{w.toFixed(1)}</span>
+                  )
+                })}
+                {Array.from({ length: pending }).map((_, pi) => (
+                  <span key={`p${pi}`} className="ghost-pill" style={{
                     fontFamily: "'JetBrains Mono', monospace", fontSize: fs.wave,
-                    padding: isCompact ? '1px 3px' : '2px 6px', borderRadius: 3,
-                    color: isCounting ? '#2BA5A0' : 'rgba(255,255,255,0.2)',
-                    background: isCounting ? 'rgba(43,165,160,0.12)' : 'transparent',
-                    fontWeight: isCounting ? 700 : 400,
-                    border: isBest && isExcellent ? '1px solid rgba(43,165,160,0.3)' : isBest && isGood ? '1px solid rgba(43,165,160,0.15)' : 'none',
-                  }}>{w.toFixed(1)}</span>
-                )
-              })}
-              {Array.from({ length: pending }).map((_, pi) => (
-                <span key={`p${pi}`} className="ghost-pill" style={{
-                  fontFamily: "'JetBrains Mono', monospace", fontSize: fs.wave,
-                  padding: isCompact ? '1px 3px' : '2px 6px', borderRadius: 3,
-                  color: 'rgba(43,165,160,0.4)',
-                  border: '1px solid rgba(43,165,160,0.25)',
-                  background: 'rgba(43,165,160,0.05)',
-                  animation: 'ghostPulse 1.8s ease-in-out infinite',
-                }}>–.–</span>
-              ))}
-              {waves.length > (isCompact ? 3 : 4) && (
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: fs.wave - 1, color: 'rgba(255,255,255,0.12)' }}>
-                  +{waves.length - (isCompact ? 3 : 4)}
-                </span>
-              )}
-              {!isCompact && waves.length > 0 && (
-                <span style={{
-                  fontFamily: "'JetBrains Mono', monospace", fontSize: 8,
-                  color: 'rgba(255,255,255,0.15)', marginLeft: 2,
-                }}>
-                  ({waves.length}w)
-                </span>
-              )}
+                    padding: isCompact ? '1px 3px' : '2px 5px', borderRadius: 3,
+                    color: 'rgba(43,165,160,0.4)',
+                    border: '1px solid rgba(43,165,160,0.25)',
+                    background: 'rgba(43,165,160,0.05)',
+                    animation: 'ghostPulse 1.8s ease-in-out infinite',
+                  }}>–.–</span>
+                ))}
+                {waves.length > (isCompact ? 4 : 6) && (
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: fs.wave - 1, color: 'rgba(255,255,255,0.12)' }}>
+                    +{waves.length - (isCompact ? 4 : 6)}
+                  </span>
+                )}
+                {anyoneScored && r.needs != null && r.needs > 0 && i > 0 && (
+                  <span style={{
+                    fontFamily: "'JetBrains Mono', monospace", fontSize: fs.needs,
+                    color: 'rgba(255,255,255,0.25)', marginLeft: 4,
+                  }}>needs {r.needs.toFixed(2)}</span>
+                )}
+              </div>
             </div>
 
             {/* Total */}

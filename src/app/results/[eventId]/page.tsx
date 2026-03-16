@@ -83,50 +83,24 @@ export default async function EventResultsPage({ params }: { params: Promise<{ e
       const heatsData: Heat[] = []
 
       for (const heat of heats || []) {
-        // Get heat athletes
+        // Get heat athletes with wave scores in one query
         const { data: heatAthletes } = await supabase
           .from('comp_heat_athletes')
-          .select('athlete_id, athlete_name, jersey_color, result_position, total_score, advanced')
+          .select('id, athlete_id, athlete_name, jersey_color, result_position, total_score, advanced, comp_wave_scores(wave_number, score)')
           .eq('heat_id', heat.id)
           .order('result_position', { ascending: true, nullsFirst: false })
 
-        // Get wave scores for each athlete
-        const athletes: HeatAthlete[] = []
-        for (const ha of heatAthletes || []) {
-          const { data: waves } = await supabase
-            .from('comp_wave_scores')
-            .select('wave_number, score')
-            .eq('heat_athlete_id', `${heat.id}`) // Need the heat_athlete join id
-            .order('wave_number')
-
-          // Actually get heat_athlete id first
-          const { data: haRecord } = await supabase
-            .from('comp_heat_athletes')
-            .select('id')
-            .eq('heat_id', heat.id)
-            .eq('athlete_id', ha.athlete_id)
-            .single()
-
-          let waveScores: number[] = []
-          if (haRecord) {
-            const { data: ws } = await supabase
-              .from('comp_wave_scores')
-              .select('wave_number, score')
-              .eq('heat_athlete_id', haRecord.id)
-              .order('wave_number')
-            waveScores = (ws || []).map(w => w.score)
-          }
-
-          athletes.push({
-            athleteId: ha.athlete_id,
-            name: ha.athlete_name,
-            jerseyColor: ha.jersey_color,
-            resultPosition: ha.result_position,
-            totalScore: ha.total_score,
-            advanced: ha.advanced || false,
-            waveScores,
-          })
-        }
+        const athletes: HeatAthlete[] = (heatAthletes || []).map((ha: any) => ({
+          athleteId: ha.athlete_id,
+          name: ha.athlete_name,
+          jerseyColor: ha.jersey_color,
+          resultPosition: ha.result_position,
+          totalScore: ha.total_score,
+          advanced: ha.advanced || false,
+          waveScores: (ha.comp_wave_scores || [])
+            .sort((a: any, b: any) => a.wave_number - b.wave_number)
+            .map((w: any) => w.score),
+        }))
 
         heatsData.push({ id: heat.id, heatNumber: heat.heat_number, athletes })
       }

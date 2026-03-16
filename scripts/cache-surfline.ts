@@ -55,16 +55,35 @@ const SUBREGIONS: Record<string, string> = {
   west: '58581a836630e24c44879148',
 }
 
-// Key spots for detailed premium forecast (hourly data)
+// ALL 21 Barbados spots for premium hourly forecast
 const PREMIUM_SPOTS = [
+  // East Coast
   { id: '5842041f4e65fad6a7708b48', name: 'Soup Bowl', coast: 'east' },
+  { id: '5842041f4e65fad6a7708c7e', name: 'Parlour', coast: 'east' },
+  { id: '640a28064519059fe096b71e', name: 'Crane Bay', coast: 'east' },
+  { id: '640a2802b6d769e2d74b3d07', name: 'Ragged Point', coast: 'east' },
+  { id: '640a280199dd447996fd3885', name: 'Conset Point', coast: 'east' },
+  { id: '640a27ffb6d769a0e34b3c63', name: 'Sand Bank', coast: 'east' },
+  { id: '640a27fee92030d47097e32b', name: 'Tent Bay', coast: 'east' },
   { id: '5842041f4e65fad6a7708c7f', name: 'Cattle Wash', coast: 'east' },
+  { id: '67f94aeca64db676f445bef3', name: 'Tabletop', coast: 'east' },
+  // South Coast
   { id: '5842041f4e65fad6a7708c81', name: "Brandon's", coast: 'south' },
   { id: '584204204e65fad6a77099c0', name: 'Freights Bay', coast: 'south' },
-  { id: '5842041f4e65fad6a7708c7e', name: 'Parlour', coast: 'south' },
-  { id: '640a28064519059fe096b71e', name: 'Crane Bay', coast: 'east' },
-  { id: '5842041f4e65fad6a7708c80', name: 'South Point', coast: 'south' },
+  { id: '584204204e65fad6a77099c5', name: 'South Point', coast: 'south' },
+  { id: '584204204e65fad6a77099c4', name: "Surfer's Point", coast: 'south' },
+  { id: '584204214e65fad6a7709cea', name: 'Hastings', coast: 'south' },
+  { id: '640a27fc606c45138daaa78c', name: 'Silver Sands', coast: 'south' },
+  { id: '640a2804b6d76970754b3d90', name: 'Long Beach', coast: 'south' },
+  // West Coast
+  { id: '5842041f4e65fad6a7708c80', name: 'Duppies', coast: 'west' },
+  { id: '584204204e65fad6a77099c8', name: 'Maycocks', coast: 'west' },
+  { id: '584204204e65fad6a77099c3', name: 'Tropicana', coast: 'west' },
+  { id: '640a27f94519050e0a96b45a', name: 'Sandy Lane', coast: 'west' },
+  { id: '640a27fb451905b3a196b4bb', name: 'Batts Rock', coast: 'west' },
 ]
+
+const DELAY_BETWEEN_SPOTS_MS = 500 // Be nice to Surfline's API
 
 const WINDGURU_SPOTS = [
   { id: 64149, name: 'Barbados South' },
@@ -100,8 +119,9 @@ async function fetchSurflinePremium() {
   if (!SL_TOKEN) return null
   const forecasts: Record<string, any> = {}
   
-  // Fetch in series to be nice to Surfline's API
+  // Fetch in series with delay to avoid rate limiting
   for (const spot of PREMIUM_SPOTS) {
+    await new Promise(r => setTimeout(r, DELAY_BETWEEN_SPOTS_MS))
     try {
       // Wave forecast — 3 days hourly
       const waveRes = await fetch(

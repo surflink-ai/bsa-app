@@ -14,20 +14,47 @@ const NAV_LINKS = [
   { href: "/news", label: "News" },
 ]
 
+// Links that only appear in the hamburger menu (not in the dock)
+const HAMBURGER_LINKS = [
+  { href: "/results", label: "Results" },
+  { href: "/surf-report", label: "Surf Report" },
+  { href: "/news", label: "News" },
+  { href: "https://liveheats.com/BarbadosSurfingAssociation", label: "Register", external: true },
+]
+
 export function Navigation() {
   const [scrolled, setScrolled] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const pathname = usePathname()
   const isHome = pathname === "/"
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
     window.addEventListener("scroll", onScroll, { passive: true })
     onScroll()
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
+
+  // Close menu on route change
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [pathname])
+
+  // Prevent body scroll when menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => { document.body.style.overflow = "" }
+  }, [menuOpen])
+
   const bgStyle = scrolled || !isHome ? { backgroundColor: "#0A2540" } : { backgroundColor: "transparent" }
+
   return (
     <>
-      {/* Desktop nav */}
+      {/* ── Desktop top nav ── */}
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, transition: "background-color 0.3s ease", ...bgStyle }} className="hidden md:block">
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
@@ -43,8 +70,112 @@ export function Navigation() {
         </div>
       </nav>
 
-      {/* Mobile bottom nav */}
-      <nav className="md:hidden safe-area-bottom" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, backgroundColor: "#0A2540", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-around", alignItems: "center", height: 60 }}>
+      {/* ── Mobile top bar ── */}
+      <nav className="md:hidden" style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 51,
+        backgroundColor: "#0A2540",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        height: 56, padding: "0 16px",
+      }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
+          <img src="https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp" alt="BSA" style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover" }} />
+          <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 16, color: "#fff" }}>BSA</span>
+        </Link>
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            padding: 8, display: "flex", flexDirection: "column",
+            gap: menuOpen ? 0 : 5, alignItems: "center", justifyContent: "center",
+            width: 40, height: 40, position: "relative",
+          }}
+          aria-label="Menu"
+        >
+          <span style={{
+            display: "block", width: 22, height: 2, backgroundColor: "#fff", borderRadius: 2,
+            transition: "all 0.3s ease",
+            transform: menuOpen ? "rotate(45deg) translateY(0px)" : "none",
+            position: menuOpen ? "absolute" : "relative",
+          }} />
+          <span style={{
+            display: "block", width: 22, height: 2, backgroundColor: "#fff", borderRadius: 2,
+            transition: "all 0.3s ease",
+            opacity: menuOpen ? 0 : 1,
+          }} />
+          <span style={{
+            display: "block", width: 22, height: 2, backgroundColor: "#fff", borderRadius: 2,
+            transition: "all 0.3s ease",
+            transform: menuOpen ? "rotate(-45deg) translateY(0px)" : "none",
+            position: menuOpen ? "absolute" : "relative",
+          }} />
+        </button>
+      </nav>
+
+      {/* ── Mobile hamburger overlay ── */}
+      <div
+        className="md:hidden"
+        style={{
+          position: "fixed", top: 56, left: 0, right: 0, bottom: 60,
+          zIndex: 50,
+          backgroundColor: "#0A2540",
+          transform: menuOpen ? "translateY(0)" : "translateY(-120%)",
+          opacity: menuOpen ? 1 : 0,
+          transition: "transform 0.3s ease, opacity 0.25s ease",
+          display: "flex", flexDirection: "column",
+          justifyContent: "center", alignItems: "center",
+          gap: 8,
+        }}
+      >
+        {HAMBURGER_LINKS.map(l => {
+          const isExternal = 'external' in l && l.external
+          const active = !isExternal && pathname.startsWith(l.href)
+          const linkStyle = {
+            textDecoration: "none",
+            fontFamily: "'Space Grotesk', sans-serif",
+            fontSize: 22,
+            fontWeight: 700 as const,
+            color: active ? "#2BA5A0" : "rgba(255,255,255,0.8)",
+            padding: "14px 32px",
+            borderRadius: 12,
+            background: active ? "rgba(43,165,160,0.1)" : "transparent",
+            transition: "all 0.2s",
+            display: "block",
+            textAlign: "center" as const,
+            letterSpacing: "0.02em",
+          }
+
+          if (isExternal) {
+            return (
+              <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer" style={{
+                ...linkStyle,
+                fontSize: 16,
+                marginTop: 16,
+                backgroundColor: "#1478B5",
+                color: "#fff",
+                padding: "12px 40px",
+              }}>
+                {l.label}
+              </a>
+            )
+          }
+
+          return (
+            <Link key={l.href} href={l.href} style={linkStyle}>
+              {l.label}
+            </Link>
+          )
+        })}
+      </div>
+
+      {/* ── Mobile bottom dock (unchanged) ── */}
+      <nav className="md:hidden safe-area-bottom" style={{
+        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 52,
+        backgroundColor: "#0A2540",
+        borderTop: "1px solid rgba(255,255,255,0.06)",
+        display: "flex", justifyContent: "space-around", alignItems: "center",
+        height: 60,
+      }}>
         {[
           { href: "/", label: "Home", Icon: HomeIcon },
           { href: "/events", label: "Events", Icon: CalendarIcon },

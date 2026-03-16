@@ -9,7 +9,45 @@
 const SUPABASE_URL = 'https://veggfcumdveuoumrblcn.supabase.co'
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const SL_BASE = 'https://services.surfline.com'
-const SL_TOKEN = process.env.SURFLINE_ACCESS_TOKEN || ''
+let SL_TOKEN = process.env.SURFLINE_ACCESS_TOKEN || ''
+const SL_REFRESH = process.env.SURFLINE_REFRESH_TOKEN || ''
+
+// Auto-refresh: test token, refresh if expired
+async function ensureToken(): Promise<string> {
+  if (!SL_TOKEN) return ''
+  // Quick test
+  const test = await fetch(`${SL_BASE}/kbyg/spots/forecasts/wave?spotId=5842041f4e65fad6a7708b48&days=1&intervalHours=6&accesstoken=${SL_TOKEN}`)
+  if (test.ok) {
+    const d = await test.json()
+    if (d?.data?.wave?.length) return SL_TOKEN // Token works
+  }
+  // Token expired — try refresh
+  if (!SL_REFRESH) {
+    console.warn('⚠️  Surfline token expired, no refresh token available')
+    return ''
+  }
+  console.log('🔄 Surfline token expired, attempting refresh...')
+  try {
+    const res = await fetch(`${SL_BASE}/trusted/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: SL_REFRESH }),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      if (data.access_token) {
+        SL_TOKEN = data.access_token
+        console.log('✅ Surfline token refreshed')
+        return SL_TOKEN
+      }
+    }
+    console.warn('⚠️  Surfline refresh failed, falling back to free tier')
+    return ''
+  } catch {
+    console.warn('⚠️  Surfline refresh error, falling back to free tier')
+    return ''
+  }
+}
 
 const SUBREGIONS: Record<string, string> = {
   east: '58581a836630e24c44878fe9',
@@ -150,6 +188,9 @@ async function fetchWindGuru() {
 }
 
 async function main() {
+  // Ensure token is valid before making premium calls
+  SL_TOKEN = await ensureToken()
+  
   console.log('🏄 Fetching Surfline overview...')
   const surfline = await fetchSurflineOverview()
   const slSpotCount = Object.values(surfline).reduce((n, s: any) => n + s.length, 0)

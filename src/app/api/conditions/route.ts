@@ -328,9 +328,9 @@ export async function GET(req: Request) {
           conditions: premium ? (premium.ratings?.[0]?.key || rateConditions(mc.wave_height || 0, mc.swell_wave_height || 0, mc.swell_wave_period || 0, wc.wind_speed_10m || 0, windType)) : rateConditions(mc.wave_height || 0, mc.swell_wave_height || 0, mc.swell_wave_period || 0, wc.wind_speed_10m || 0, windType),
         },
         surflinePremium: premium ? {
-          waves: premium.waves?.slice(0, 24),
-          winds: premium.winds?.slice(0, 8),
-          ratings: premium.ratings?.slice(0, 8),
+          waves: premium.waves?.slice(0, 72),  // Full 3-day hourly
+          winds: premium.winds?.slice(0, 24),  // 3-day every 3h
+          ratings: premium.ratings?.slice(0, 24),
         } : null,
         analysis: {
           consensus,
@@ -489,7 +489,7 @@ export async function GET(req: Request) {
           coast: p.coast,
           currentWave: p.waves?.[0],
           currentRating: p.ratings?.[0],
-          trend: p.waves?.slice(0, 12)?.map((w: any) => ({ ts: w.ts, min: w.min, max: w.max })),
+          trend: p.waves?.slice(0, 72)?.map((w: any) => ({ ts: w.ts, min: w.min, max: w.max })),
         }])
       ) : null,
       tides: offsetTides(tides, BARBADOS_TIDE_OFFSET_MIN),

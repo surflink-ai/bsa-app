@@ -98,11 +98,13 @@ export function AthleteDetailClient({ athlete, results, heats, rivals, compResul
   const [tab, setTab] = useState<'overview' | 'heats' | 'rivals'>('overview')
 
   const stats = useMemo(() => {
-    const wins = results.filter(r => r.place === 1).length
+    const divisionWins = results.filter(r => r.place === 1).length
+    const heatWins = heats.filter(h => h.place === 1).length
+    const wins = heatWins // Show heat wins as primary stat
     const podiums = results.filter(r => r.place <= 3).length
-    const bestScore = Math.max(...results.map(r => r.total || 0), 0)
-    const avgScore = results.length > 0 ? results.reduce((s, r) => s + r.total, 0) / results.length : 0
-    const winRate = results.length > 0 ? Math.round((wins / results.length) * 100) : 0
+    const bestScore = Math.max(...heats.map(h => h.total || 0), ...results.map(r => r.total || 0), 0)
+    const avgScore = heats.length > 0 ? heats.reduce((s, h) => s + (h.total || 0), 0) / heats.length : 0
+    const winRate = heats.length > 0 ? Math.round((heatWins / heats.length) * 100) : 0
     const divisions = [...new Set(results.map(r => r.div))]
     const seasons = [...new Set(results.map(r => new Date(r.date).getFullYear()))].sort((a, b) => b - a)
     const allWaves = heats.flatMap(h => h.waves).filter(w => w > 0)

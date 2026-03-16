@@ -55,25 +55,28 @@ export function SurfConditionsBar() {
 
     async function fetchAll() {
       try {
-        const results = await Promise.all(
-          FEATURED_SPOTS.map(async (spot) => {
-            const res = await fetch(`/api/conditions?spot=${spot.id}`)
-            if (!res.ok) return null
-            const d = await res.json()
-            const c = d.current || {}
-            const prem = d.surflinePremium?.waves?.[0]
-            return {
-              name: spot.name,
-              waveMin: prem?.min ?? Math.round((c.wave?.height || 0) * 3.28084 * 0.85),
-              waveMax: prem?.max ?? Math.round((c.wave?.height || 0) * 3.28084),
-              conditions: c.conditions || "FLAT",
-              windSpeed: Math.round(c.wind?.speed || 0),
-              windDir: c.wind?.type || c.wind?.directionLabel || "",
-              swellHeight: c.swell?.height || 0,
-              swellPeriod: c.swell?.period || 0,
-            } as SpotForecast
-          })
-        )
+        // Use overview endpoint — has Surfline-corrected wave heights per spot
+        const res = await fetch('/api/conditions')
+        if (!res.ok) return
+        const d = await res.json()
+        // Collect all spots from all coasts
+        const allSpots = [...(d.east || []), ...(d.south || []), ...(d.west || [])]
+        const spotMap = new Map(allSpots.map((s: any) => [s.spotId, s]))
+
+        const results = FEATURED_SPOTS.map(spot => {
+          const s = spotMap.get(spot.id)
+          if (!s) return null
+          return {
+            name: spot.name,
+            waveMin: s.waveMin || 0,
+            waveMax: s.waveMax || 0,
+            conditions: s.conditions || "FLAT",
+            windSpeed: s.windSpeed || 0,
+            windDir: s.windType || s.windDir || "",
+            swellHeight: s.swellHeight || 0,
+            swellPeriod: s.swellPeriod || 0,
+          } as SpotForecast
+        })
         if (mounted) setSpots(results.filter(Boolean) as SpotForecast[])
       } catch { /* silent */ }
     }

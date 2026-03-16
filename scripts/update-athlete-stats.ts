@@ -120,10 +120,12 @@ async function main() {
           const eventName = eventNameMap.get(eventDiv.event_id) || ''
           if (eventName) s.last_event = eventName
 
+          // Heat wins (1st place in any heat)
+          if (ha.result_position === 1) s.wins++
+
           // Final results
           if (round.name === 'Final') {
             s.finals_made++
-            if (ha.result_position === 1) s.wins++
             if (s.best_finish === null || (ha.result_position && ha.result_position < s.best_finish)) {
               s.best_finish = ha.result_position
             }

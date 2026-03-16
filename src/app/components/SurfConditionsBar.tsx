@@ -60,15 +60,17 @@ export function SurfConditionsBar() {
             const res = await fetch(`/api/conditions?spot=${spot.id}`)
             if (!res.ok) return null
             const d = await res.json()
+            const c = d.current || {}
+            const prem = d.surflinePremium?.waves?.[0]
             return {
               name: spot.name,
-              waveMin: d.wave?.min || 0,
-              waveMax: d.wave?.max || 0,
-              conditions: d.rating?.key || "FLAT",
-              windSpeed: Math.round(d.wind?.speed || 0),
-              windDir: d.wind?.directionType || "",
-              swellHeight: d.wave?.min || 0,
-              swellPeriod: 0,
+              waveMin: prem?.min ?? Math.round((c.wave?.height || 0) * 3.28084 * 0.85),
+              waveMax: prem?.max ?? Math.round((c.wave?.height || 0) * 3.28084),
+              conditions: c.conditions || "FLAT",
+              windSpeed: Math.round(c.wind?.speed || 0),
+              windDir: c.wind?.type || c.wind?.directionLabel || "",
+              swellHeight: c.swell?.height || 0,
+              swellPeriod: c.swell?.period || 0,
             } as SpotForecast
           })
         )

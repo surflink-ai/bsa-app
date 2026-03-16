@@ -1,17 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { ResultsIndexClient } from './ResultsIndexClient'
 export const revalidate = 300
 
 export const metadata: Metadata = {
   title: 'Competition Results — BSA',
-  description: 'Full results from Barbados Surfing Association competitions.',
+  description: 'Full results from all Barbados Surfing Association competitions.',
 }
 
 export default async function ResultsPage() {
   const supabase = await createClient()
 
+  // Get all completed events
   const { data: events } = await supabase
     .from('comp_events')
     .select('id, name, event_date, end_date, location, status, season_id, comp_seasons(name, year)')
@@ -20,93 +21,74 @@ export default async function ResultsPage() {
 
   const completed = (events || []).filter(e => e.status === 'complete')
 
-  // If only one completed event, go straight to it
-  if (completed.length === 1) {
-    redirect(`/results/${completed[0].id}`)
-  }
-
-  // Multiple events — show list with division winners preview
-  const eventPreviews = await Promise.all(
+  // For each event, get division results (finalists)
+  const eventResults = await Promise.all(
     completed.map(async (event) => {
-      // Get finalists (1st place per division)
-      const { data: seasonPoints } = await supabase
-        .from('comp_season_points')
-        .select('athlete_id, points, placing, comp_divisions(name)')
+      const season = event.comp_seasons as any
+
+      // Get event divisions
+      const { data: eventDivisions } = await supabase
+        .from('comp_event_divisions')
+        .select('id, division_id, comp_divisions(name, short_name, sort_order)')
         .eq('event_id', event.id)
-        .eq('placing', 1)
-        .order('points', { ascending: false })
+
+      const divisions = await Promise.all(
+        (eventDivisions || []).map(async (ed) => {
+          const div = ed.comp_divisions as any
+          if (!div) return null
+
+          // Get final round for this division
+          const { data: rounds } = await supabase
+            .from('comp_rounds')
+            .select('id, name')
+            .eq('event_division_id', ed.id)
+            .order('round_number', { ascending: false })
+            .limit(1)
+
+          const finalRound = rounds?.[0]
+          if (!finalRound) return { name: div.name, shortName: div.short_name, sortOrder: div.sort_order, results: [] }
+
+          // Get final heat athletes
+          const { data: heats } = await supabase
+            .from('comp_heats')
+            .select('id')
+            .eq('round_id', finalRound.id)
+
+          const heatIds = (heats || []).map(h => h.id)
+          if (heatIds.length === 0) return { name: div.name, shortName: div.short_name, sortOrder: div.sort_order, results: [] }
+
+          const { data: athletes } = await supabase
+            .from('comp_heat_athletes')
+            .select('athlete_id, athlete_name, result_position, total_score, comp_wave_scores(score)')
+            .in('heat_id', heatIds)
+            .order('result_position', { ascending: true, nullsFirst: false })
+
+          return {
+            name: div.name,
+            shortName: div.short_name,
+            sortOrder: div.sort_order,
+            results: (athletes || []).map((a: any) => ({
+              athleteId: a.athlete_id,
+              name: a.athlete_name,
+              place: a.result_position,
+              total: a.total_score || 0,
+              waves: (a.comp_wave_scores || []).map((w: any) => w.score).sort((a: number, b: number) => b - a),
+            })),
+          }
+        })
+      )
 
       return {
-        ...event,
-        winners: (seasonPoints || []).map((sp: any) => ({
-          division: sp.comp_divisions?.name || '',
-          points: sp.points,
-        })),
+        id: event.id,
+        name: event.name,
+        date: event.event_date,
+        endDate: event.end_date,
+        location: event.location,
+        season: season ? { name: season.name, year: season.year } : null,
+        divisions: divisions.filter(Boolean).sort((a: any, b: any) => a.sortOrder - b.sortOrder),
       }
     })
   )
 
-  return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '6rem 1rem 4rem' }}>
-      <h1 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', fontWeight: 800, color: '#0A2540', textAlign: 'center', fontFamily: 'Space Grotesk, sans-serif' }}>
-        Competition Results
-      </h1>
-      <p style={{ textAlign: 'center', color: 'rgba(10,37,64,0.5)', marginBottom: '2rem', fontSize: 14 }}>
-        Full heat-by-heat results from BSA competitions
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {eventPreviews.map(event => {
-          const season = event.comp_seasons as any
-          const date = new Date(event.event_date + 'T12:00:00')
-          return (
-            <Link key={event.id} href={`/results/${event.id}`} style={{ textDecoration: 'none' }}>
-              <div style={{
-                padding: '20px 24px',
-                borderRadius: 12,
-                border: '1px solid rgba(10,37,64,0.08)',
-                background: 'rgba(10,37,64,0.02)',
-                transition: 'all 0.2s',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 16, color: '#0A2540', fontFamily: 'Space Grotesk, sans-serif' }}>{event.name}</div>
-                    <div style={{ fontSize: 13, color: 'rgba(10,37,64,0.5)', marginTop: 2 }}>
-                      {date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} · {event.location}
-                    </div>
-                    {season && <div style={{ fontSize: 12, color: '#2BA5A0', fontWeight: 600, marginTop: 2 }}>{season.name}</div>}
-                  </div>
-                  <span style={{ color: '#2BA5A0', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>View Full Results →</span>
-                </div>
-                {event.winners.length > 0 && (
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-                    {event.winners.slice(0, 6).map((w, i) => (
-                      <span key={i} style={{
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontSize: 10,
-                        padding: '3px 8px',
-                        borderRadius: 6,
-                        background: 'rgba(43,165,160,0.08)',
-                        color: '#2BA5A0',
-                        fontWeight: 600,
-                      }}>
-                        🥇 {w.division}
-                      </span>
-                    ))}
-                    {event.winners.length > 6 && (
-                      <span style={{ fontSize: 11, color: 'rgba(10,37,64,0.3)' }}>+{event.winners.length - 6} more</span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </Link>
-          )
-        })}
-        {completed.length === 0 && (
-          <p style={{ textAlign: 'center', color: 'rgba(10,37,64,0.4)', padding: '2rem 0' }}>
-            No completed events yet.
-          </p>
-        )}
-      </div>
-    </div>
-  )
+  return <ResultsIndexClient events={eventResults as any} />
 }

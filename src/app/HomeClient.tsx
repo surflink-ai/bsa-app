@@ -42,8 +42,8 @@ interface Props {
 
 // 2026 SOTY Schedule (verified from BSA Instagram Feb 25, 2026)
 const SCHEDULE_2026 = [
-  { num: 1, date: "March 14", location: "Drill Hall", status: "next" },
-  { num: 2, date: "April 11", location: "South Point", status: "upcoming" },
+  { num: 1, date: "March 14", location: "Drill Hall", status: "done" },
+  { num: 2, date: "April 11", location: "South Point", status: "next" },
   { num: 3, date: "May 9", location: "Long Beach", status: "upcoming" },
   { num: 4, date: "September 26", location: "Parlour", status: "upcoming" },
   { num: 5, date: "Nov 27–29", location: "Soup Bowl", status: "upcoming", special: "Independence Pro & Nationals" },
@@ -196,7 +196,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
                   ) : (
                     <>
                       {(() => {
-                        const next = SCHEDULE_2026.find(s => s.status === "upcoming" || s.status === "next")
+                        const next = SCHEDULE_2026.find(s => s.status === "next") || SCHEDULE_2026.find(s => s.status === "upcoming")
                         if (!next) return null
                         return (
                           <>
@@ -220,13 +220,13 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
                     {SCHEDULE_2026.map((event, i) => (
                       <div key={i} style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 0", borderBottom: i < SCHEDULE_2026.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
                         <div style={{ width: 32, textAlign: "center" }}>
-                          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: event.status === "next" ? "#2BA5A0" : "rgba(255,255,255,0.2)", fontWeight: 700 }}>#{event.num}</span>
+                          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: event.status === "next" ? "#2BA5A0" : event.status === "done" ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.2)", fontWeight: 700 }}>#{event.num}</span>
                         </div>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 14, color: event.status === "next" ? "#fff" : "rgba(255,255,255,0.5)" }}>{event.special || `SOTY Event #${event.num}`}</div>
+                          <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 14, color: event.status === "next" ? "#fff" : event.status === "done" ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.5)" }}>{event.special || `SOTY Event #${event.num}`}</div>
                           <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>{event.date} · {event.location}</div>
                         </div>
-                        {event.status === "next" && <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: "3px 8px", borderRadius: 10, backgroundColor: "#2BA5A0", color: "#fff", textTransform: "uppercase", letterSpacing: "0.1em" }}>Next</span>}
+                        {event.status === "next" && <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: "3px 8px", borderRadius: 10, backgroundColor: "#2BA5A0", color: "#fff", textTransform: "uppercase", letterSpacing: "0.1em" }}>Next</span>}{event.status === "done" && <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: "3px 8px", borderRadius: 10, backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: "0.1em" }}>✓</span>}
                       </div>
                     ))}
                   </div>

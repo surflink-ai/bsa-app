@@ -1,27 +1,54 @@
 import { NextResponse } from "next/server"
-import { BARBADOS_SPOTS, SUBREGIONS } from "@/lib/surfline"
+import { BARBADOS_SPOTS } from "@/lib/surfline"
 
-// Node.js runtime
 export const dynamic = "force-dynamic"
 
-const SL_BASE = "https://services.surfline.com"
+// Wind direction relative to coastline → offshore/onshore classification
+function classifyWind(windDir: number, coast: string): string {
+  // Barbados coast orientations:
+  // East coast faces ~90° (east) — offshore = west (240-300°)
+  // South coast faces ~180° (south) — offshore = north (330-30°)  
+  // West coast faces ~270° (west) — offshore = east (60-120°)
+  const coastFacing: Record<string, number> = { East: 90, South: 180, West: 270 }
+  const facing = coastFacing[coast] || 90
+  // Angle between wind direction and coast facing
+  let diff = Math.abs(windDir - facing)
+  if (diff > 180) diff = 360 - diff
+  if (diff > 135) return "Offshore"
+  if (diff > 90) return "Cross-shore"
+  if (diff > 45) return "Cross-shore"
+  return "Onshore"
+}
 
-// Condition rating based on wave height and wind
 function rateConditions(waveMax: number, windSpeed: number, windType: string): string {
   if (waveMax < 0.3) return "FLAT"
-  if (windType === "Offshore" || windType === "Cross-shore/Offshore") {
-    if (waveMax >= 1.5) return "EPIC"
-    if (waveMax >= 0.9) return "GOOD"
+  const isOffshore = windType === "Offshore"
+  const isOnshore = windType === "Onshore"
+  if (isOffshore) {
+    if (waveMax >= 2.0) return "EPIC"
+    if (waveMax >= 1.2) return "GOOD"
     return "FAIR"
   }
-  if (windType === "Onshore" || windType === "Cross-shore/Onshore") {
-    if (windSpeed > 25) return "POOR"
-    return "POOR_TO_FAIR"
-  }
-  // Cross-shore or light
-  if (waveMax >= 1.2) return "FAIR"
+  if (isOnshore && windSpeed > 25) return "POOR"
+  if (isOnshore) return "POOR_TO_FAIR"
+  // Cross-shore
+  if (waveMax >= 1.5) return "FAIR"
   if (waveMax >= 0.6) return "POOR_TO_FAIR"
   return "POOR"
+}
+
+function humanRelation(heightM: number): string {
+  const ft = heightM * 3.28084
+  if (ft < 1) return "Flat"
+  if (ft < 2) return "Ankle to knee"
+  if (ft < 3) return "Knee to thigh"
+  if (ft < 4) return "Thigh to waist"
+  if (ft < 5) return "Waist to chest"
+  if (ft < 6) return "Chest to head"
+  if (ft < 8) return "Overhead"
+  if (ft < 10) return "Overhead to well overhead"
+  if (ft < 12) return "Well overhead"
+  return "Double overhead+"
 }
 
 export async function GET(req: Request) {
@@ -34,102 +61,87 @@ export async function GET(req: Request) {
     if (!spot) return NextResponse.json({ error: "Spot not found" }, { status: 404 })
 
     try {
-      const [waveRes, windRes, ratingRes] = await Promise.all([
-        fetch(`${SL_BASE}/kbyg/spots/forecasts/wave?spotId=${spotId}&days=1&intervalHours=3`),
-        fetch(`${SL_BASE}/kbyg/spots/forecasts/wind?spotId=${spotId}&days=1&intervalHours=3`),
-        fetch(`${SL_BASE}/kbyg/spots/forecasts/rating?spotId=${spotId}&days=1&intervalHours=3`),
+      const [marineRes, weatherRes] = await Promise.all([
+        fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lon}&current=wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_direction,swell_wave_period&hourly=wave_height,swell_wave_height&timezone=America/Barbados&forecast_hours=24`, { signal: AbortSignal.timeout(8000) }),
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m&timezone=America/Barbados`, { signal: AbortSignal.timeout(8000) }),
       ])
 
-      const [waveData, windData, ratingData] = await Promise.all([
-        waveRes.ok ? waveRes.json() : null,
-        windRes.ok ? windRes.json() : null,
-        ratingRes.ok ? ratingRes.json() : null,
+      const [marine, weather] = await Promise.all([
+        marineRes.ok ? marineRes.json() : null,
+        weatherRes.ok ? weatherRes.json() : null,
       ])
 
-      const now = Math.floor(Date.now() / 1000)
-      const findNearest = (arr: any[]) => arr?.reduce((prev: any, curr: any) =>
-        Math.abs(curr.timestamp - now) < Math.abs(prev.timestamp - now) ? curr : prev, arr[0])
-
-      const wave = findNearest(waveData?.data?.wave || [])
-      const wind = findNearest(windData?.data?.wind || [])
-      const rating = findNearest(ratingData?.data?.rating || [])
+      const mc = marine?.current || {}
+      const wc = weather?.current || {}
+      const waveHeight = mc.wave_height || 0
+      const swellHeight = mc.swell_wave_height || 0
+      const windDir = wc.wind_direction_10m || 0
+      const windType = classifyWind(windDir, spot.coast)
 
       return NextResponse.json({
         spot,
-        wave: wave ? { min: wave.surf?.min || 0, max: wave.surf?.max || 0, humanRelation: wave.surf?.humanRelation || "" } : null,
-        wind: wind ? { speed: wind.speed || 0, direction: wind.direction || 0, directionType: wind.directionType || "", gust: wind.gust || 0 } : null,
-        rating: rating ? { key: rating.rating?.key || "FLAT", value: rating.rating?.value || 0 } : null,
+        wave: { min: Math.max(0, waveHeight - 0.3), max: waveHeight, humanRelation: humanRelation(waveHeight) },
+        swell: { height: swellHeight, direction: mc.swell_wave_direction || 0, period: mc.swell_wave_period || 0 },
+        wind: { speed: wc.wind_speed_10m || 0, direction: windDir, directionType: windType, gust: wc.wind_gusts_10m || 0 },
+        rating: { key: rateConditions(waveHeight, wc.wind_speed_10m || 0, windType), value: 0 },
+        hourly: marine?.hourly ? {
+          time: marine.hourly.time?.slice(0, 24) || [],
+          waveHeight: marine.hourly.wave_height?.slice(0, 24) || [],
+          swellHeight: marine.hourly.swell_wave_height?.slice(0, 24) || [],
+        } : null,
       }, { headers: { "Cache-Control": "public, s-maxage=900, stale-while-revalidate=1800" } })
     } catch {
       return NextResponse.json({ error: "Failed to fetch forecast" }, { status: 502 })
     }
   }
 
-  // All spots overview — fetch each spot individually
-  // (Surfline region overview endpoint blocks Vercel IPs)
+  // All spots overview — use Open-Meteo (free, no IP blocking)
   try {
-    const spotResults = await Promise.all(
-      BARBADOS_SPOTS.map(async (spot) => {
-        try {
-          const [waveRes, windRes] = await Promise.all([
-            fetch(`${SL_BASE}/kbyg/spots/forecasts/wave?spotId=${spot.id}&days=1&intervalHours=6`, {
-              signal: AbortSignal.timeout(8000),
-            }),
-            fetch(`${SL_BASE}/kbyg/spots/forecasts/wind?spotId=${spot.id}&days=1&intervalHours=6`, {
-              signal: AbortSignal.timeout(8000),
-            }),
-          ])
+    const lats = BARBADOS_SPOTS.map(s => s.lat).join(",")
+    const lons = BARBADOS_SPOTS.map(s => s.lon).join(",")
 
-          if (!waveRes.ok || !windRes.ok) return null
+    const [marineRes, weatherRes] = await Promise.all([
+      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lats}&longitude=${lons}&current=wave_height,wave_direction,wave_period,swell_wave_height&timezone=America/Barbados`, { signal: AbortSignal.timeout(10000) }),
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=wind_speed_10m,wind_direction_10m&timezone=America/Barbados`, { signal: AbortSignal.timeout(10000) }),
+    ])
 
-          const [waveData, windData] = await Promise.all([
-            waveRes.json(),
-            windRes.json(),
-          ])
+    const [marineData, weatherData] = await Promise.all([
+      marineRes.ok ? marineRes.json() : null,
+      weatherRes.ok ? weatherRes.json() : null,
+    ])
 
-          const now = Math.floor(Date.now() / 1000)
-          const findNearest = (arr: any[]) =>
-            arr?.length
-              ? arr.reduce((prev: any, curr: any) =>
-                  Math.abs(curr.timestamp - now) < Math.abs(prev.timestamp - now) ? curr : prev, arr[0])
-              : null
-
-          const wave = findNearest(waveData?.data?.wave || [])
-          const wind = findNearest(windData?.data?.wind || [])
-
-          const waveMin = wave?.surf?.min || 0
-          const waveMax = wave?.surf?.max || 0
-          const windSpeed = wind?.speed || 0
-          const windType = wind?.directionType || ""
-
-          // Convert meters to feet
-          const toFeet = 3.28084
-          return {
-            spotId: spot.id,
-            name: spot.name,
-            conditions: rateConditions(waveMax, windSpeed, windType),
-            waveMin: Math.round(waveMin * toFeet),
-            waveMax: Math.round(waveMax * toFeet),
-            humanRelation: wave?.surf?.humanRelation || "",
-            windSpeed: Math.round(windSpeed),
-            windDirection: wind?.directionType || "",
-            coast: spot.coast,
-          }
-        } catch {
-          return null
-        }
-      })
-    )
-
-    const valid = spotResults.filter(Boolean) as any[]
+    // Open-Meteo returns array when multiple locations
+    const marines = Array.isArray(marineData) ? marineData : [marineData]
+    const weathers = Array.isArray(weatherData) ? weatherData : [weatherData]
 
     const response: Record<string, any> = { timestamp: new Date().toISOString() }
-    const coasts = ["East", "South", "West"]
-    for (const coast of coasts) {
-      const spots = valid
-        .filter(s => s.coast === coast)
-        .sort((a, b) => b.waveMax - a.waveMax)
-      response[coast.toLowerCase()] = spots
+    const coastSpots: Record<string, any[]> = { east: [], south: [], west: [] }
+
+    BARBADOS_SPOTS.forEach((spot, i) => {
+      const mc = marines[i]?.current || {}
+      const wc = weathers[i]?.current || {}
+      const waveHeight = mc.wave_height || 0
+      const windSpeed = wc.wind_speed_10m || 0
+      const windDir = wc.wind_direction_10m || 0
+      const windType = classifyWind(windDir, spot.coast)
+      const toFeet = 3.28084
+
+      coastSpots[spot.coast.toLowerCase()]?.push({
+        spotId: spot.id,
+        name: spot.name,
+        conditions: rateConditions(waveHeight, windSpeed, windType),
+        waveMin: Math.round(Math.max(0, waveHeight - 0.3) * toFeet),
+        waveMax: Math.round(waveHeight * toFeet),
+        humanRelation: humanRelation(waveHeight),
+        windSpeed: Math.round(windSpeed),
+        windDirection: windType,
+        coast: spot.coast,
+      })
+    })
+
+    for (const coast of ["east", "south", "west"]) {
+      coastSpots[coast].sort((a, b) => b.waveMax - a.waveMax)
+      response[coast] = coastSpots[coast]
     }
 
     return NextResponse.json(response, {

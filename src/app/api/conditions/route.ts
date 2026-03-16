@@ -4,10 +4,12 @@ import { BARBADOS_SPOTS } from "@/lib/surfline"
 export const dynamic = "force-dynamic"
 
 /* ─── Data Sources ────────────────────────────────────────────────────────
- * 1. Open-Meteo Marine   — wave/swell height, period, direction per spot
- * 2. Open-Meteo Weather  — wind speed/dir/gusts, temperature
- * 3. NOAA Buoys          — real measured Atlantic swell (41044, 41043)
- * 4. NOAA Tides          — hi/lo tide from TEC4777 (St. Lucia, nearest)
+ * 1. Surfline            — cached via local cron → Supabase (spot conditions, ratings)
+ * 2. WindGuru ECMWF WAM  — cached via local cron → Supabase (wave/swell forecast)
+ * 3. Open-Meteo Marine   — wave/swell height, period, direction per spot
+ * 4. Open-Meteo Weather  — wind speed/dir/gusts, temperature
+ * 5. NOAA Buoys          — real measured Atlantic swell (41044, 41043)
+ * 6. NOAA Tides          — hi/lo tide from TEC4777 (St. Lucia, nearest)
  * 5. Open-Meteo Forecast — sunrise/sunset
  * ──────────────────────────────────────────────────────────────────────── */
 
@@ -128,6 +130,24 @@ async function fetchSunTimes() {
   } catch { return null }
 }
 
+async function fetchSurfCache() {
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!url || !key) return null
+    const res = await fetch(`${url}/rest/v1/surf_cache?key=eq.latest&select=data,updated_at`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
+      signal: AbortSignal.timeout(4000),
+    })
+    if (!res.ok) return null
+    const rows = await res.json()
+    if (!rows?.[0]) return null
+    const age = Date.now() - new Date(rows[0].updated_at).getTime()
+    if (age > 30 * 60 * 1000) return null // stale > 30min
+    return rows[0].data
+  } catch { return null }
+}
+
 // ─── Route Handler ────────────────────────────────────────────────────────
 
 export async function GET(req: Request) {
@@ -197,13 +217,14 @@ export async function GET(req: Request) {
     const lats = BARBADOS_SPOTS.map(s => s.lat).join(",")
     const lons = BARBADOS_SPOTS.map(s => s.lon).join(",")
 
-    const [marineRes, weatherRes, buoy44, buoy43, tides, sun] = await Promise.all([
+    const [marineRes, weatherRes, buoy44, buoy43, tides, sun, surfCache] = await Promise.all([
       fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lats}&longitude=${lons}&current=wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_direction,swell_wave_period&timezone=America/Barbados`, { signal: AbortSignal.timeout(10000) }),
       fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m&timezone=America/Barbados`, { signal: AbortSignal.timeout(10000) }),
       fetchNOAABuoy("41044"),
       fetchNOAABuoy("41043"),
       fetchNOAATides(),
       fetchSunTimes(),
+      fetchSurfCache(),
     ])
 
     const [marineData, weatherData] = await Promise.all([
@@ -216,9 +237,20 @@ export async function GET(req: Request) {
 
     const coastSpots: Record<string, any[]> = { east: [], south: [], west: [] }
 
+    // Build Surfline spot lookup from cache
+    const slSpots = new Map<string, any>()
+    if (surfCache?.surfline) {
+      for (const coast of ["east", "south", "west"]) {
+        for (const s of surfCache.surfline[coast] || []) {
+          slSpots.set(s.spotId, s)
+        }
+      }
+    }
+
     BARBADOS_SPOTS.forEach((spot, i) => {
       const mc = marines[i]?.current || {}
       const wc = weathers[i]?.current || {}
+      const sl = slSpots.get(spot.id) // Surfline data for this spot
       const waveH = mc.wave_height || 0
       const swellH = mc.swell_wave_height || 0
       const swellP = mc.swell_wave_period || 0
@@ -230,11 +262,14 @@ export async function GET(req: Request) {
       coastSpots[spot.coast.toLowerCase()]?.push({
         spotId: spot.id,
         name: spot.name,
-        conditions: rateConditions(waveH, swellH, swellP, windSpeed, windType),
-        waveMin: Math.round(Math.max(0, waveH - 0.3) * toFeet),
-        waveMax: Math.round(waveH * toFeet),
+        // Use Surfline conditions when available, fall back to computed
+        conditions: sl?.conditions || rateConditions(waveH, swellH, swellP, windSpeed, windType),
+        waveMin: sl?.waveMin ?? Math.round(Math.max(0, waveH - 0.3) * toFeet),
+        waveMax: sl?.waveMax ?? Math.round(waveH * toFeet),
         waveM: Math.round(waveH * 10) / 10,
-        humanRelation: humanWaveHeight(waveH),
+        humanRelation: sl?.humanRelation || humanWaveHeight(waveH),
+        // Surfline wave height in meters (when available)
+        surflineWaveM: sl?.waveHeightM || null,
         swellHeight: Math.round(swellH * 10) / 10,
         swellPeriod: Math.round(swellP * 10) / 10,
         swellDir: compassDir(mc.swell_wave_direction || 0),
@@ -251,17 +286,23 @@ export async function GET(req: Request) {
       coastSpots[coast].sort((a, b) => b.waveMax - a.waveMax)
     }
 
+    const activeSources = ["open-meteo-marine", "open-meteo-weather", "noaa-buoy-41044", "noaa-buoy-41043", "noaa-tides"]
+    if (surfCache?.surfline) activeSources.unshift("surfline")
+    if (surfCache?.windguru) activeSources.push("windguru-ecmwf-wam")
+
     return NextResponse.json({
       timestamp: new Date().toISOString(),
-      sources: ["open-meteo-marine", "open-meteo-weather", "noaa-buoy-41044", "noaa-buoy-41043", "noaa-tides"],
+      sources: activeSources,
       ...coastSpots,
       buoys: {
         "41044": buoy44,
         "41043": buoy43,
         meta: NOAA_BUOYS,
       },
+      windguru: surfCache?.windguru || null,
       tides,
       sun,
+      surflineCacheAge: surfCache ? new Date(surfCache.timestamp).toISOString() : null,
     }, { headers: { "Cache-Control": "public, s-maxage=900, stale-while-revalidate=1800" } })
   } catch {
     return NextResponse.json({ error: "Failed" }, { status: 502 })

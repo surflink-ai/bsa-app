@@ -265,67 +265,146 @@ export default function SurfReportClient() {
             </>
           )}
 
-          {/* East Coast — navy */}
-          <WaveDivider color="#0A2540" bg="#FFFFFF" />
-          <section style={{ backgroundColor: '#0A2540', padding: '64px 24px' }}>
-            <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-              <ScrollReveal>
-                <CoastSection coast="east" spots={data.east || []} dark={true} />
-              </ScrollReveal>
-            </div>
-          </section>
+          {/* WindGuru Forecast */}
+          {data.windguru && Object.keys(data.windguru).length > 0 && (
+            <>
+              <WaveDivider color="#0A2540" bg="#FFFFFF" />
+              <section style={{ backgroundColor: '#0A2540', padding: '48px 24px' }}>
+                <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+                  <ScrollReveal>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.3)', marginBottom: 8 }}>WINDGURU — ECMWF WAM MODEL</div>
+                    <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 18, color: '#fff', marginBottom: 16 }}>
+                      Swell Forecast
+                    </h2>
+                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginBottom: 20, maxWidth: 600 }}>
+                      European weather model wave forecast for Barbados. Shows incoming swell height, period, and direction over the next 3 days.
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12 }}>
+                      {Object.entries(data.windguru as Record<string, any>).filter(([k]) => k !== 'meta').map(([spotId, wg]: [string, any]) => (
+                        <div key={spotId} style={{
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.06)',
+                          borderRadius: 10, padding: '14px 18px',
+                        }}>
+                          <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 13, color: '#fff', marginBottom: 2 }}>
+                            🌬️ WindGuru — {wg.name}
+                          </div>
+                          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', marginBottom: 10 }}>
+                            Model: {wg.model} · Init: {wg.initDate}
+                          </div>
+                          {/* Show next 8 forecast points (every 3h = 24h) */}
+                          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }} className="no-scrollbar">
+                            {(wg.hours || []).slice(0, 8).map((h: number, i: number) => {
+                              const swH = wg.swellHeight?.[i]
+                              const swP = wg.swellPeriod?.[i]
+                              const wvH = wg.waveHeight?.[i]
+                              return (
+                                <div key={i} style={{
+                                  minWidth: 56, textAlign: 'center',
+                                  padding: '6px 4px', borderRadius: 8,
+                                  background: 'rgba(255,255,255,0.04)',
+                                }}>
+                                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)', marginBottom: 4 }}>
+                                    +{h}h
+                                  </div>
+                                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 15, fontWeight: 700, color: '#fff' }}>
+                                    {wvH?.toFixed(1) || '–'}
+                                  </div>
+                                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8, color: 'rgba(255,255,255,0.3)' }}>wave m</div>
+                                  {swH != null && (
+                                    <>
+                                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 600, color: '#2BA5A0', marginTop: 4 }}>
+                                        {swH.toFixed(1)}m
+                                      </div>
+                                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8, color: 'rgba(255,255,255,0.3)' }}>
+                                        {swP?.toFixed(0) || '–'}s swell
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollReveal>
+                </div>
+              </section>
+            </>
+          )}
 
-          {/* South Coast — white */}
+          {/* East Coast — white */}
           <WaveDivider color="#FFFFFF" bg="#0A2540" />
           <section style={{ backgroundColor: '#FFFFFF', padding: '64px 24px' }}>
             <div style={{ maxWidth: 1280, margin: '0 auto' }}>
               <ScrollReveal>
-                <CoastSection coast="south" spots={data.south || []} dark={false} />
+                <CoastSection coast="east" spots={data.east || []} dark={false} />
               </ScrollReveal>
             </div>
           </section>
 
-          {/* West Coast — navy */}
+          {/* South Coast — navy */}
           <WaveDivider color="#0A2540" bg="#FFFFFF" />
           <section style={{ backgroundColor: '#0A2540', padding: '64px 24px' }}>
             <div style={{ maxWidth: 1280, margin: '0 auto' }}>
               <ScrollReveal>
-                <CoastSection coast="west" spots={data.west || []} dark={true} />
+                <CoastSection coast="south" spots={data.south || []} dark={true} />
+              </ScrollReveal>
+            </div>
+          </section>
+
+          {/* West Coast — white */}
+          <WaveDivider color="#FFFFFF" bg="#0A2540" />
+          <section style={{ backgroundColor: '#FFFFFF', padding: '64px 24px' }}>
+            <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+              <ScrollReveal>
+                <CoastSection coast="west" spots={data.west || []} dark={false} />
               </ScrollReveal>
             </div>
           </section>
 
           {/* Sources + Wind Legend */}
-          <WaveDivider color="#FFFFFF" bg="#0A2540" />
-          <section style={{ backgroundColor: '#FFFFFF', padding: '48px 24px' }}>
+          <WaveDivider color="#0A2540" bg="#FFFFFF" />
+          <section style={{ backgroundColor: '#0A2540', padding: '48px 24px' }}>
             <div style={{ maxWidth: 1280, margin: '0 auto' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 32 }}>
                 <div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(10,37,64,0.3)', letterSpacing: '0.1em', marginBottom: 12, textTransform: 'uppercase' }}>Condition Scale</div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', marginBottom: 12, textTransform: 'uppercase' }}>Condition Scale</div>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     {['FLAT', 'POOR', 'POOR_TO_FAIR', 'FAIR', 'GOOD', 'EPIC'].map(c => (
                       <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <span style={{ width: 8, height: 8, borderRadius: '50%', background: conditionColors[c] }} />
-                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'rgba(10,37,64,0.5)' }}>{conditionLabels[c]}</span>
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{conditionLabels[c]}</span>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(10,37,64,0.3)', letterSpacing: '0.1em', marginBottom: 12, textTransform: 'uppercase' }}>Wind Direction</div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', marginBottom: 12, textTransform: 'uppercase' }}>Wind Direction</div>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     {['Offshore', 'Cross-offshore', 'Cross-shore', 'Cross-onshore', 'Onshore'].map(w => (
                       <div key={w} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <span style={{ width: 8, height: 8, borderRadius: '50%', background: windTypeColors[w] }} />
-                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'rgba(10,37,64,0.5)' }}>{w}</span>
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{w}</span>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(10,37,64,0.3)', letterSpacing: '0.1em', marginBottom: 12, textTransform: 'uppercase' }}>Data Sources</div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'rgba(10,37,64,0.4)', lineHeight: 1.8 }}>
-                    Open-Meteo Marine · Open-Meteo Weather · NOAA Buoy 41044 · NOAA Buoy 41043 · NOAA Tides (St. Lucia TEC4777)
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', marginBottom: 12, textTransform: 'uppercase' }}>Data Sources</div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {sources.map((s: string) => (
+                      <span key={s} style={{
+                        fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
+                        padding: '3px 8px', borderRadius: 6,
+                        background: s.includes('surfline') ? 'rgba(0,119,182,0.1)' : s.includes('windguru') ? 'rgba(255,165,0,0.1)' : s.includes('noaa') ? 'rgba(0,100,0,0.1)' : 'rgba(10,37,64,0.05)',
+                        color: s.includes('surfline') ? '#0077B6' : s.includes('windguru') ? '#D97706' : s.includes('noaa') ? '#166534' : 'rgba(10,37,64,0.5)',
+                        fontWeight: 600,
+                      }}>
+                        {s.replace(/-/g, ' ').replace('ecmwf wam', 'ECMWF WAM')}
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>

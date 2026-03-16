@@ -170,7 +170,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
       </section>
 
       {/* NEXT EVENT + FULL SCHEDULE — navy */}
-      {nextEvent && (<>
+      {(nextEvent || SCHEDULE_2026.length > 0) && (<>
         <WaveDivider color="#0A2540" bg="#FFFFFF" />
         <section style={{ backgroundColor: "#0A2540", padding: "80px 24px" }}>
           <div style={{ maxWidth: 1280, margin: "0 auto" }}>
@@ -179,16 +179,37 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
                 {/* Left: Next event with countdown */}
                 <div>
                   <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2BA5A0", marginBottom: 16 }}>NEXT EVENT</div>
-                  <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.5rem, 3vw, 2.5rem)", color: "#fff", lineHeight: 1.15, marginBottom: 12 }}>{nextEvent.name}</h2>
-                  <div style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", marginBottom: 4 }}>{new Date(nextEvent.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 24 }}>Drill Hall, South Coast</div>
-                  <div style={{ marginBottom: 28 }}><CountdownTimer targetDate={nextEvent.date} /></div>
-                  {nextEvent.eventDivisions.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 28 }}>
-                      {nextEvent.eventDivisions.map(d => (
-                        <span key={d.id} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, padding: "4px 10px", borderRadius: 20, backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{d.division.name}</span>
-                      ))}
-                    </div>
+                  {nextEvent ? (
+                    <>
+                      <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.5rem, 3vw, 2.5rem)", color: "#fff", lineHeight: 1.15, marginBottom: 12 }}>{nextEvent.name}</h2>
+                      <div style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", marginBottom: 4 }}>{new Date(nextEvent.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</div>
+                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 24 }}>{typeof nextEvent.location === 'string' ? nextEvent.location : nextEvent.location?.formattedAddress || "South Coast, Barbados"}</div>
+                      <div style={{ marginBottom: 28 }}><CountdownTimer targetDate={nextEvent.date} /></div>
+                      {nextEvent.eventDivisions.length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 28 }}>
+                          {nextEvent.eventDivisions.map(d => (
+                            <span key={d.id} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, padding: "4px 10px", borderRadius: 20, backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{d.division.name}</span>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {(() => {
+                        const next = SCHEDULE_2026.find(s => s.status === "upcoming" || s.status === "next")
+                        if (!next) return null
+                        return (
+                          <>
+                            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.5rem, 3vw, 2.5rem)", color: "#fff", lineHeight: 1.15, marginBottom: 12 }}>
+                              {next.special || `SOTY Championship Event #${next.num}`}
+                            </h2>
+                            <div style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", marginBottom: 4 }}>{next.date}, 2026</div>
+                            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 24 }}>{next.location}</div>
+                            <div style={{ marginBottom: 28 }}><CountdownTimer targetDate={`2026-04-11`} /></div>
+                          </>
+                        )
+                      })()}
+                    </>
                   )}
                   <a href="https://liveheats.com/BarbadosSurfingAssociation" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register on LiveHeats <ArrowRightIcon size={16} /></a>
                 </div>

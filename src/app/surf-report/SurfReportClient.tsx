@@ -335,7 +335,12 @@ export default function SurfReportClient() {
           )}
 
           {/* East Coast — white */}
-          <WaveDivider color="#FFFFFF" bg="#0A2540" />
+          {(() => {
+            const prevIsNavy = !!(data.windguru && Object.keys(data.windguru).length > 0)
+            const prevIsWhite = !prevIsNavy && !!(buoys["41044"] || buoys["41043"])
+            // If prev is navy → wave from navy to white. If prev is white → no divider needed (same color). If no sections → from hero (navy)
+            return prevIsWhite ? null : <WaveDivider color="#FFFFFF" bg="#0A2540" />
+          })()}
           <section style={{ backgroundColor: '#FFFFFF', padding: '64px 24px' }}>
             <div style={{ maxWidth: 1280, margin: '0 auto' }}>
               <ScrollReveal>

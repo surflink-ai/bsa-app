@@ -218,7 +218,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
 
       {/* LATEST RESULTS — white */}
       {displayDivisions.length > 0 && latestResults && (<>
-        <WaveDivider color="#FFFFFF" bg="#0A2540" />
+        <WaveDivider color="#FFFFFF" bg={nextEvent ? "#0A2540" : "#FFFFFF"} />
         <section style={{ backgroundColor: "#FFFFFF", padding: "80px 24px" }}>
           <div style={{ maxWidth: 1280, margin: "0 auto" }}>
             <ScrollReveal>

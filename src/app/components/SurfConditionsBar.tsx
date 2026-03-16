@@ -89,7 +89,7 @@ export function SurfConditionsBar() {
   if (spots.length === 0) return null
 
   return (
-    <div style={{ backgroundColor: "rgba(10,37,64,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "12px 24px", overflow: "hidden" }}>
+    <div style={{ backgroundColor: "#0A2540", padding: "12px 24px", overflow: "hidden" }}>
       <div className="no-scrollbar" style={{ maxWidth: 1280, margin: "0 auto", display: "flex", justifyContent: "center", gap: "clamp(20px, 4vw, 48px)", overflowX: "auto" }}>
         {spots.map(spot => (
           <div key={spot.name} style={{ display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap", flexShrink: 0 }}>

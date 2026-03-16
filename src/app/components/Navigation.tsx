@@ -19,7 +19,15 @@ const HAMBURGER_LINKS = [
   { href: "/results", label: "Results" },
   { href: "/surf-report", label: "Surf Report" },
   { href: "/news", label: "News" },
-  { href: "https://liveheats.com/BarbadosSurfingAssociation", label: "Register", external: true },
+  { href: "/history", label: "History" },
+  { href: "/juniors", label: "Juniors Programme" },
+  { href: "/contact", label: "Contact" },
+]
+
+const HAMBURGER_SOCIAL = [
+  { href: "https://www.instagram.com/barbadossurfingassociation/", label: "Instagram" },
+  { href: "https://www.facebook.com/bsasurf/", label: "Facebook" },
+  { href: "mailto:admin@bsa.surf", label: "Email" },
 ]
 
 export function Navigation() {
@@ -128,44 +136,61 @@ export function Navigation() {
         }}
       >
         {HAMBURGER_LINKS.map(l => {
-          const isExternal = 'external' in l && l.external
-          const active = !isExternal && pathname.startsWith(l.href)
-          const linkStyle = {
-            textDecoration: "none",
-            fontFamily: "'Space Grotesk', sans-serif",
-            fontSize: 22,
-            fontWeight: 700 as const,
-            color: active ? "#2BA5A0" : "rgba(255,255,255,0.8)",
-            padding: "14px 32px",
-            borderRadius: 12,
-            background: active ? "rgba(43,165,160,0.1)" : "transparent",
-            transition: "all 0.2s",
-            display: "block",
-            textAlign: "center" as const,
-            letterSpacing: "0.02em",
-          }
-
-          if (isExternal) {
-            return (
-              <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer" style={{
-                ...linkStyle,
-                fontSize: 16,
-                marginTop: 16,
-                backgroundColor: "#1478B5",
-                color: "#fff",
-                padding: "12px 40px",
-              }}>
-                {l.label}
-              </a>
-            )
-          }
-
+          const active = pathname.startsWith(l.href)
           return (
-            <Link key={l.href} href={l.href} style={linkStyle}>
+            <Link key={l.href} href={l.href} style={{
+              textDecoration: "none",
+              fontFamily: "'Space Grotesk', sans-serif",
+              fontSize: 20,
+              fontWeight: 700,
+              color: active ? "#2BA5A0" : "rgba(255,255,255,0.8)",
+              padding: "10px 32px",
+              borderRadius: 12,
+              background: active ? "rgba(43,165,160,0.1)" : "transparent",
+              transition: "all 0.2s",
+              display: "block",
+              textAlign: "center" as const,
+            }}>
               {l.label}
             </Link>
           )
         })}
+
+        {/* Divider */}
+        <div style={{ width: 60, height: 1, background: "rgba(255,255,255,0.08)", margin: "8px auto" }} />
+
+        {/* Social links */}
+        <div style={{ display: "flex", gap: 20, justifyContent: "center" }}>
+          {HAMBURGER_SOCIAL.map(l => (
+            <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer" style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 12,
+              color: "rgba(255,255,255,0.4)",
+              textDecoration: "none",
+            }}>
+              {l.label}
+            </a>
+          ))}
+        </div>
+
+        {/* Register button */}
+        <a href="https://liveheats.com/BarbadosSurfingAssociation" target="_blank" rel="noopener noreferrer" style={{
+          display: "inline-block",
+          fontFamily: "'Space Grotesk', sans-serif",
+          fontSize: 14,
+          fontWeight: 600,
+          color: "#fff",
+          backgroundColor: "#1478B5",
+          padding: "12px 40px",
+          borderRadius: 8,
+          textDecoration: "none",
+          textTransform: "uppercase" as const,
+          letterSpacing: "0.05em",
+          marginTop: 8,
+          textAlign: "center" as const,
+        }}>
+          Register
+        </a>
       </div>
 
       {/* ── Mobile bottom dock (unchanged) ── */}

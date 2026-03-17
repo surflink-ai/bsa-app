@@ -903,7 +903,7 @@ export default function ProposalClient() {
                       borderRadius: '50%', 
                       marginRight: '1rem' 
                     }} />
-                    All competition event syncs (5 per year)
+                    Competition event syncs (5 per year)
                   </li>
                   <li style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <div style={{ 
@@ -913,7 +913,7 @@ export default function ProposalClient() {
                       borderRadius: '50%', 
                       marginRight: '1rem' 
                     }} />
-                    Athlete data management
+                    Athlete profiles and claim system
                   </li>
                   <li style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <div style={{ 
@@ -933,7 +933,7 @@ export default function ProposalClient() {
                       borderRadius: '50%', 
                       marginRight: '1rem' 
                     }} />
-                    Content updates on request
+                    Live stream management and VOD library
                   </li>
                 </ul>
               </div>
@@ -964,7 +964,7 @@ export default function ProposalClient() {
                       borderRadius: '50%', 
                       marginRight: '1rem' 
                     }} />
-                    Monthly health monitoring
+                    WhatsApp communications system
                   </li>
                   <li style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <div style={{ 
@@ -974,7 +974,7 @@ export default function ProposalClient() {
                       borderRadius: '50%', 
                       marginRight: '1rem' 
                     }} />
-                    Google Workspace email setup
+                    Junior programme management
                   </li>
                   <li style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <div style={{ 
@@ -994,7 +994,7 @@ export default function ProposalClient() {
                       borderRadius: '50%', 
                       marginRight: '1rem' 
                     }} />
-                    Priority email support
+                    Contact form and inquiry management
                   </li>
                 </ul>
               </div>

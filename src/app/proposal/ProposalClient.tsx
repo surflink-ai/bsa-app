@@ -52,13 +52,13 @@ export default function ProposalClient() {
     },
     {
       image: '/proposal/event-detail-desktop.jpg',
-      title: 'Livestream Ready',
-      description: 'Competition livestream page with score overlay integration.'
+      title: 'Live Stream + VOD Library',
+      description: 'Multi-source livestream (YouTube, OBS, Cloudflare). Score overlay. Event replay library when not live.'
     },
     {
       image: '/proposal/athlete-detail-desktop.jpg',
-      title: 'Individual Stats',
-      description: 'Deep athlete profiles with wave scores, head-to-head records, and career history.'
+      title: 'Individual Stats + Sharing',
+      description: 'Deep athlete profiles with wave scores, head-to-head records, shareable stat cards, and career history.'
     }
   ]
 
@@ -83,7 +83,7 @@ export default function ProposalClient() {
     },
     {
       title: 'LiveHeats Integration',
-      description: 'Competition results synced directly. Athlete stats auto-calculated.'
+      description: 'Competition results synced directly. Athlete stats auto-calculated. Registrations linked.'
     },
     {
       title: 'ISA Scoring System',
@@ -104,6 +104,14 @@ export default function ProposalClient() {
     {
       title: 'Smart Analysis',
       description: 'Swell window filtering, multi-model consensus, buoy confirmation signals.'
+    },
+    {
+      title: 'WhatsApp Communications',
+      description: 'Blast messaging to athletes, parents, and contacts. Template-based, audience-filtered, delivery-tracked.'
+    },
+    {
+      title: 'Full Audit Trail',
+      description: 'Every admin action logged. Who changed what, when. Complete accountability.'
     }
   ]
 

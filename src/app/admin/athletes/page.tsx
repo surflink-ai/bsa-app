@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader, Button, StatusDot, MetaText } from '@/components/admin/ui'
+import { logAudit } from '@/lib/audit'
 
 interface Athlete {
   id: string; name: string; image_url: string | null
@@ -33,17 +34,20 @@ export default function AdminAthletesPage() {
 
   async function handleApprove(id: string) {
     await supabase.from('athletes').update({ claim_status: 'claimed', verified: true }).eq('id', id)
+    logAudit(supabase, 'Approved athlete claim', 'athlete', id)
     load()
   }
 
   async function handleReject(id: string) {
     if (!confirm('Reject this claim? The athlete will be unlinked.')) return
     await supabase.from('athletes').update({ claim_status: 'rejected', claimed_by: null, verified: false }).eq('id', id)
+    logAudit(supabase, 'Rejected athlete claim', 'athlete', id)
     load()
   }
 
   async function handleToggleVerified(id: string, current: boolean) {
     await supabase.from('athletes').update({ verified: !current }).eq('id', id)
+    logAudit(supabase, current ? 'Unverified athlete' : 'Verified athlete', 'athlete', id)
     load()
   }
 

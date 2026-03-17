@@ -79,12 +79,13 @@ interface Column<T> {
   width?: string
 }
 
-export function DataTable<T extends { id?: string }>({ columns, rows, onRowClick }: {
+export function DataTable<T extends { id?: string }>({ columns, rows, onRowClick, emptyMessage }: {
   columns: Column<T>[]
   rows: T[]
   onRowClick?: (row: T) => void
+  emptyMessage?: string
 }) {
-  if (rows.length === 0) return <EmptyState message="No data found" />
+  if (rows.length === 0) return <EmptyState message={emptyMessage || "No data found"} />
 
   return (
     <Card padding={false} style={{ overflow: 'hidden' }}>

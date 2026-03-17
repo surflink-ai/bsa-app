@@ -18,9 +18,17 @@ const ACTION_LABELS: Record<string, string> = {
   stream_toggled: 'Toggled stream',
 }
 
-const ACTION_COLORS: Record<string, string> = {
-  blast_sent: '#2BA5A0', article_published: '#1478B5',
-  contact_imported: '#6366F1', settings_updated: '#F59E0B', stream_toggled: '#EF4444',
+function actionColor(action: string): string {
+  if (action.includes('stream') || action.includes('live') || action.includes('offline')) return '#EF4444'
+  if (action.includes('athlete') || action.includes('coach')) return '#1478B5'
+  if (action.includes('champion') || action.includes('sponsor')) return '#FFD700'
+  if (action.includes('contact') || action.includes('blast')) return '#2BA5A0'
+  if (action.includes('setting') || action.includes('Updated')) return '#F59E0B'
+  if (action.includes('programme') || action.includes('junior')) return '#6366F1'
+  if (action.includes('article') || action.includes('photo')) return '#1478B5'
+  if (action.includes('spot') || action.includes('poll')) return '#2BA5A0'
+  if (action.includes('Delete') || action.includes('Reject')) return '#EF4444'
+  return 'rgba(26,26,26,0.3)'
 }
 
 function timeAgo(date: string) {
@@ -67,10 +75,12 @@ export default function ActivityPage() {
               display: 'flex', alignItems: 'center', gap: 14, padding: '12px 20px',
               borderBottom: i < entries.length - 1 ? '1px solid rgba(10,37,64,0.04)' : 'none',
             }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, backgroundColor: ACTION_COLORS[e.action] || 'rgba(26,26,26,0.15)' }} />
+              <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, backgroundColor: actionColor(e.action) }} />
               <div style={{ flex: 1 }}>
                 <span style={{ fontWeight: 500, fontSize: 13, color: '#0A2540' }}>{ACTION_LABELS[e.action] || e.action}</span>
-                {e.details?.title && <MetaText style={{ marginLeft: 8 }}>{e.details.title}</MetaText>}
+                {e.entity_type && <MetaText style={{ marginLeft: 8 }}>{e.entity_type}</MetaText>}
+                {e.details?.title && <MetaText style={{ marginLeft: 4 }}>· {e.details.title}</MetaText>}
+                {e.details?.name && <MetaText style={{ marginLeft: 4 }}>· {e.details.name}</MetaText>}
                 {e.details?.sent !== undefined && <MetaText style={{ marginLeft: 4 }}>· {e.details.sent}/{e.details.total} delivered</MetaText>}
               </div>
               <MetaText>{timeAgo(e.created_at)}</MetaText>

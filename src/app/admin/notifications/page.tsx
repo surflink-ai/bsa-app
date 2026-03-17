@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader, Card, DataTable, FormField, Button, MetaText, SectionLabel, inputStyle, selectStyle } from '@/components/admin/ui'
+import { logAudit } from '@/lib/audit'
 
 interface Notification { id: string; title: string; body: string; type: string; sent_at: string }
 

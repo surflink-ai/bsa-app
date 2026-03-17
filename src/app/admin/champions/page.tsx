@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader, DataTable, Modal, FormField, Button, MetaText, TextLink, ActionLinks, inputStyle, selectStyle } from '@/components/admin/ui'
+import { logAudit } from '@/lib/audit'
 
 interface Champion { id: string; year: number; division: string; name: string; image_url: string | null }
 
@@ -29,9 +30,9 @@ export default function ChampionsPage() {
     setSaving(true)
     const sb = createClient()
     if (editing) {
-      await sb.from('champions').update({ year: form.year, division: form.division, name: form.name, image_url: form.image_url || null }).eq('id', editing.id)
+      logAudit(sb, 'Updated champion', 'champion', editing.id); await sb.from('champions').update({ year: form.year, division: form.division, name: form.name, image_url: form.image_url || null }).eq('id', editing.id)
     } else {
-      await sb.from('champions').insert({ year: form.year, division: form.division, name: form.name, image_url: form.image_url || null })
+      await sb.from('champions').insert({ year: form.year, division: form.division, name: form.name, image_url: form.image_url || null }); logAudit(sb, 'Added champion', 'champion', undefined, { name: form.name })
     }
     setSaving(false); setModal(false); load()
   }

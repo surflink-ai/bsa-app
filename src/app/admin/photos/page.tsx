@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader, Card, Modal, FormField, Button, MetaText, TextLink, ActionLinks, inputStyle } from '@/components/admin/ui'
+import { logAudit } from '@/lib/audit'
 
 interface Photo { id: string; event_id: string; event_name: string | null; src: string; alt: string | null; credit: string | null; sort_order: number }
 

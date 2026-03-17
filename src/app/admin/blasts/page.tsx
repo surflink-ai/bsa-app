@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader, Modal, FormField, Button, MetaText, inputStyle, selectStyle } from '@/components/admin/ui'
+import { logAudit } from '@/lib/audit'
 
 interface Blast {
   id: string; title: string; body: string; status: string

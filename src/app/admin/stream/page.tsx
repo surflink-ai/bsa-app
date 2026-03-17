@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader, Card, FormField, Button, SectionLabel, MetaText, inputStyle, selectStyle } from '@/components/admin/ui'
+import { logAudit } from '@/lib/audit'
 
 interface VODEntry { id: string; title: string; youtube_id: string; date: string; thumbnail?: string }
 interface StreamConfig {
@@ -39,6 +40,7 @@ export default function AdminStreamPage() {
     setSaving(true)
     const { id, updated_at, ...rest } = config
     await supabase.from('stream_config').update({ ...rest, updated_at: new Date().toISOString() }).eq('id', id)
+    logAudit(supabase, 'Updated stream config', 'stream_config', id)
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -49,6 +51,7 @@ export default function AdminStreamPage() {
     const newActive = !config.active
     setConfig({ ...config, active: newActive })
     await supabase.from('stream_config').update({ active: newActive, updated_at: new Date().toISOString() }).eq('id', config.id)
+    logAudit(supabase, newActive ? 'Went live' : 'Went offline', 'stream_config', config.id)
   }
 
   function updateConfig(patch: Partial<StreamConfig>) {

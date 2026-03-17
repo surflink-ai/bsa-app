@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader, DataTable, Modal, FormField, Button, StatusDot, MetaText, TextLink, ActionLinks, inputStyle, selectStyle } from '@/components/admin/ui'
+import { logAudit } from '@/lib/audit'
 
 interface Sponsor { id: string; name: string; logo_url: string | null; website_url: string | null; tier: string; sort_order: number; active: boolean }
 
@@ -29,8 +30,8 @@ export default function SponsorsPage() {
   const save = async () => {
     setSaving(true); const sb = createClient()
     const data = { name: form.name, logo_url: form.logo_url || null, website_url: form.website_url || null, tier: form.tier, active: form.active, sort_order: form.sort_order }
-    if (editing) await sb.from('sponsors').update(data).eq('id', editing.id)
-    else await sb.from('sponsors').insert(data)
+    if (editing) { await sb.from('sponsors').update(data).eq('id', editing.id); logAudit(sb, 'Updated sponsor', 'sponsor', editing.id) }
+    else { await sb.from('sponsors').insert(data); logAudit(sb, 'Added sponsor', 'sponsor') }
     setSaving(false); setModal(false); load()
   }
 

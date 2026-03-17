@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader, Card, FormField, Button, SectionLabel, inputStyle } from '@/components/admin/ui'
+import { logAudit } from '@/lib/audit'
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Record<string, string>>({ instagram: '', facebook: '', twitter: '', youtube: '', contact_email: '', contact_address: '', registration_link: '' })
@@ -27,6 +28,7 @@ export default function SettingsPage() {
     for (const [key, value] of Object.entries(settings)) {
       await sb.from('site_settings').upsert({ key, value: { value } }, { onConflict: 'key' })
     }
+    logAudit(sb, 'Updated settings', 'site_settings')
     setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 3000)
   }
 

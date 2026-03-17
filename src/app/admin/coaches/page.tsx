@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader, DataTable, Modal, FormField, Button, StatusDot, MetaText, TextLink, ActionLinks, inputStyle } from '@/components/admin/ui'
+import { logAudit } from '@/lib/audit'
 
 interface Coach { id: string; name: string; bio: string | null; photo_url: string | null; specialties: string[] | null; contact_email: string | null; website_url: string | null; surflink_url: string | null; bsa_certified: boolean; active: boolean; sort_order: number }
 
@@ -23,8 +24,8 @@ export default function CoachesPage() {
     setSaving(true)
     const data = { name: form.name, bio: form.bio || null, photo_url: form.photo_url || null, contact_email: form.contact_email || null, website_url: form.website_url || null, surflink_url: form.surflink_url || null, bsa_certified: form.bsa_certified, active: form.active, specialties: form.specialties.split(',').map(s => s.trim()).filter(Boolean) }
     const sb = createClient()
-    if (editing) await sb.from('coaches').update(data).eq('id', editing.id)
-    else await sb.from('coaches').insert(data)
+    if (editing) { await sb.from('coaches').update(data).eq('id', editing.id); logAudit(sb, 'Updated coach', 'coach', editing.id) }
+    else { await sb.from('coaches').insert(data); logAudit(sb, 'Added coach', 'coach') }
     setSaving(false); setModal(false); load()
   }
 

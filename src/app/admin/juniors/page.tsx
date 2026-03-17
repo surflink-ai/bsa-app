@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader, Card, Modal, FormField, Button, StatusDot, MetaText, inputStyle, selectStyle } from '@/components/admin/ui'
+import { logAudit } from '@/lib/audit'
 
 interface Programme {
   id: string; title: string; age_group: string | null; description: string | null
@@ -48,8 +49,10 @@ export default function AdminJuniorsPage() {
     const data = { title: form.title, age_group: form.age_group || null, description: form.description || null, schedule: form.schedule || null, location: form.location || null, coach_name: form.coach_name || null, category: form.category, active: form.active, sort_order: form.sort_order, updated_at: new Date().toISOString() }
     if (editing) {
       await supabase.from('junior_programmes').update(data).eq('id', editing.id)
+      logAudit(supabase, 'Updated programme', 'junior_programme', editing.id)
     } else {
       await supabase.from('junior_programmes').insert(data)
+      logAudit(supabase, 'Added programme', 'junior_programme', undefined, { title: form.title })
     }
     setShowModal(false)
     load()
@@ -58,6 +61,7 @@ export default function AdminJuniorsPage() {
   async function remove(id: string) {
     if (!confirm('Delete this programme?')) return
     await supabase.from('junior_programmes').delete().eq('id', id)
+    logAudit(supabase, 'Deleted programme', 'junior_programme', id)
     load()
   }
 

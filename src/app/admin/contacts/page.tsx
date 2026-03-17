@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader, Modal, FormField, Button, StatusDot, MetaText, inputStyle, selectStyle } from '@/components/admin/ui'
+import { logAudit } from '@/lib/audit'
 
 interface Contact {
   id: string; name: string; phone: string | null; email: string | null
@@ -54,8 +55,10 @@ export default function ContactsPage() {
 
     if (editing) {
       await supabase.from('contacts').update(payload).eq('id', editing.id)
+      logAudit(supabase, 'Updated contact', 'contact', editing.id)
     } else {
       await supabase.from('contacts').insert(payload)
+      logAudit(supabase, 'Added contact', 'contact', undefined, { name: form.name })
     }
     setShowModal(false)
     setEditing(null)
@@ -66,6 +69,7 @@ export default function ContactsPage() {
   async function handleDelete(id: string) {
     if (!confirm('Remove this contact?')) return
     await supabase.from('contacts').update({ active: false }).eq('id', id)
+    logAudit(supabase, 'Deactivated contact', 'contact', id)
     load()
   }
 

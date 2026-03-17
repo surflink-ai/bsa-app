@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader, DataTable, Modal, FormField, Button, StatusDot, MetaText, TextLink, ActionLinks, inputStyle } from '@/components/admin/ui'
+import { logAudit } from '@/lib/audit'
 
 interface Poll { id: string; title: string; description: string | null; options: { label: string; id: string }[]; event_id: string | null; active: boolean; closes_at: string | null; created_at: string }
 

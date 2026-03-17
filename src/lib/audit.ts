@@ -1,4 +1,4 @@
-import { SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export async function logAudit(
   supabase: SupabaseClient,
@@ -19,4 +19,10 @@ export async function logAudit(
   } catch {
     // Silent fail — audit should never break the app
   }
+}
+
+// Shorthand for client components
+export function createAuditor(supabase: SupabaseClient) {
+  return (action: string, entityType?: string, entityId?: string, details?: Record<string, any>) =>
+    logAudit(supabase, action, entityType, entityId, details)
 }

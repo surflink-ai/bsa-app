@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader, DataTable, Modal, FormField, Button, StatusDot, MetaText, TextLink, ActionLinks, inputStyle, selectStyle } from '@/components/admin/ui'
+import { logAudit } from '@/lib/audit'
 
 interface Spot { id: string; surfline_spot_id: string | null; name: string; coast: string; best_swell: string | null; best_size: string | null; offshore_wind: string | null; break_type: string | null; description: string | null; admin_note: string | null; priority: number; active: boolean }
 
@@ -23,8 +24,8 @@ export default function SpotsPage() {
     setSaving(true)
     const data = { name: form.name, coast: form.coast, surfline_spot_id: form.surfline_spot_id || null, best_swell: form.best_swell || null, best_size: form.best_size || null, offshore_wind: form.offshore_wind || null, break_type: form.break_type || null, description: form.description || null, admin_note: form.admin_note || null, priority: form.priority, active: form.active }
     const sb = createClient()
-    if (editing) await sb.from('surf_spots').update(data).eq('id', editing.id)
-    else await sb.from('surf_spots').insert(data)
+    if (editing) { await sb.from('surf_spots').update(data).eq('id', editing.id); logAudit(sb, 'Updated surf spot', 'surf_spot', editing.id) }
+    else { await sb.from('surf_spots').insert(data); logAudit(sb, 'Added surf spot', 'surf_spot') }
     setSaving(false); setModal(false); load()
   }
 

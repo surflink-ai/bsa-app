@@ -20,6 +20,8 @@ const NAV: { section?: string; label: string; href: string }[] = [
   { section: 'People', label: 'Athletes', href: '/admin/athletes' },
   { section: 'People', label: 'Champions', href: '/admin/champions' },
   { section: 'People', label: 'Coaches', href: '/admin/coaches' },
+  { section: 'Programmes', label: 'Juniors', href: '/admin/juniors' },
+  { section: 'Comms', label: 'Inquiries', href: '/admin/inquiries' },
   { section: 'People', label: 'Users', href: '/admin/users' },
   { section: 'Data', label: 'Surf Spots', href: '/admin/spots' },
   { section: 'Data', label: 'Sponsors', href: '/admin/sponsors' },

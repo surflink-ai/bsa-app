@@ -30,7 +30,7 @@ export function NotificationBanner() {
         // Show a test notification
         new Notification("BSA Notifications Enabled", {
           body: "You'll be notified about upcoming events and results!",
-          icon: "https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp",
+          icon: "/bsa-logo.webp",
         })
       } else {
         setShow(false)

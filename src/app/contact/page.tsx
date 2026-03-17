@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { WaveDivider } from '../components/WaveDivider'
+import { ContactForm } from './ContactForm'
 
 export const metadata: Metadata = {
   title: 'Contact — Barbados Surfing Association',
@@ -77,6 +78,16 @@ export default function ContactPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Contact Form */}
+      <WaveDivider color="#0A2540" bg="#FFFFFF" />
+      <section style={{ backgroundColor: '#0A2540', padding: '80px 24px' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto' }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#2BA5A0', marginBottom: 16 }}>SEND A MESSAGE</div>
+          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: '#fff', marginBottom: 32 }}>Contact Form</h2>
+          <ContactForm />
         </div>
       </section>
     </div>

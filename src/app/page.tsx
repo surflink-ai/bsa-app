@@ -1,15 +1,18 @@
 import { getOrg, getEvent, getUpcomingEvents, getPastEvents } from '@/lib/liveheats'
 import { getLatestArticles } from '@/lib/news'
 import { getStreamConfig } from '@/lib/db/stream'
+import { createClient } from '@/lib/supabase/server'
 import { HomeClient } from './HomeClient'
 import { LiveStreamBanner } from '@/components/LiveStreamBanner'
 export const revalidate = 300
 export default async function Home() {
   try {
-    const [org, articles, streamConfig] = await Promise.all([
+    const supabase = await createClient()
+    const [org, articles, streamConfig, athleteCount] = await Promise.all([
       getOrg(),
       getLatestArticles(3),
       getStreamConfig().catch(() => null),
+      supabase.from('athletes').select('id', { count: 'exact', head: true }).eq('active', true).then(r => r.count || 129),
     ])
     const upcoming = getUpcomingEvents(org.events)
     const past = getPastEvents(org.events)
@@ -24,7 +27,7 @@ export default async function Home() {
     return (
       <>
         {streamConfig?.active && <LiveStreamBanner title={streamConfig.title} streamUrl={streamConfig.stream_url} embedCode={streamConfig.embed_code} />}
-        <HomeClient org={org} upcomingEvents={upcoming} pastEvents={past} latestResults={latestResults} latestArticles={articles} />
+        <HomeClient org={org} upcomingEvents={upcoming} pastEvents={past} latestResults={latestResults} latestArticles={articles} athleteCount={athleteCount} />
       </>
     )
   } catch {

@@ -38,7 +38,7 @@ export function Footer() {
           {/* Brand */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-              <img src="https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp" alt="BSA" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+              <img src="/bsa-logo.webp" alt="BSA" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
               <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 16, color: '#fff' }}>BSA</span>
             </div>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, maxWidth: 280 }}>

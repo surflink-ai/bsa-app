@@ -152,7 +152,7 @@ export default function ProposalClient() {
         <ScrollReveal>
           <div style={{ marginBottom: '3rem' }}>
             <img 
-              src="https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp" 
+              src="/bsa-logo.webp" 
               alt="BSA Logo"
               style={{ width: '120px', height: '120px', marginBottom: '2rem' }}
             />

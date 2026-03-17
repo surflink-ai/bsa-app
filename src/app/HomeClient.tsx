@@ -38,6 +38,7 @@ interface Props {
     eventDate: string
   } | null
   latestArticles?: ArticlePreview[]
+  athleteCount?: number
 }
 
 // 2026 SOTY Schedule (verified from BSA Instagram Feb 25, 2026)
@@ -70,7 +71,7 @@ const COMPETITION_BREAKS = [
   { name: "Long Beach", coast: "South Coast", desc: "Sandy beach break on the south-east coast with multiple shifting peaks. Works on most tides and handles a range of swell sizes. Popular for all levels." },
 ]
 
-export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, latestArticles = [] }: Props) {
+export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, latestArticles = [], athleteCount = 129 }: Props) {
   const nextEvent = upcomingEvents[0] || null
   const totalEvents = org.events.length
 
@@ -143,7 +144,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
       <section style={{ minHeight: "100vh", background: "linear-gradient(160deg, #0A2540 0%, #0D3055 50%, #0A2540 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", padding: "0 24px" }}>
         <svg style={{ position: "absolute", bottom: 0, left: 0, right: 0, opacity: 0.04 }} viewBox="0 0 1440 320" preserveAspectRatio="none"><path fill="#fff" d="M0,224L48,213.3C96,203,192,181,288,186.7C384,192,480,224,576,229.3C672,235,768,213,864,192C960,171,1056,149,1152,154.7C1248,160,1344,192,1392,208L1440,224L1440,320L0,320Z" /></svg>
         <div style={{ textAlign: "center", position: "relative", zIndex: 1 }}>
-          <div className="anim-scale"><img src="https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp" alt="BSA Logo" style={{ width: 100, height: 100, borderRadius: "50%", margin: "0 auto 32px", objectFit: "cover", border: "2px solid rgba(255,255,255,0.1)" }} /></div>
+          <div className="anim-scale"><img src="/bsa-logo.webp" alt="BSA Logo" style={{ width: 100, height: 100, borderRadius: "50%", margin: "0 auto 32px", objectFit: "cover", border: "2px solid rgba(255,255,255,0.1)" }} /></div>
           <h1 className="anim-fade-1" style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(2rem, 5vw, 4rem)", color: "#fff", letterSpacing: "-0.02em", lineHeight: 1.05, maxWidth: 800, margin: "0 auto" }}>BARBADOS SURFING<br />ASSOCIATION</h1>
           <p className="anim-fade-2" style={{ fontSize: "clamp(0.95rem, 2vw, 1.2rem)", color: "rgba(255,255,255,0.55)", maxWidth: 480, margin: "20px auto 0", lineHeight: 1.6 }}>The National Governing Body for Surfing in Barbados</p>
           <p className="anim-fade-3" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: "0.2em", textTransform: "uppercase", marginTop: 24 }}>EST. 1995 &middot; ISA Member Federation</p>
@@ -159,7 +160,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
       <section style={{ backgroundColor: "#FFFFFF", padding: "80px 24px" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 32, textAlign: "center" }} className="stagger grid-responsive-4">
-            {[{ end: 250, suffix: "+", label: "Athletes" }, { end: totalEvents, suffix: "", label: "Sanctioned Events" }, { end: org.series.length || 6, suffix: "", label: "SOTY Seasons" }, { end: COMPETITION_BREAKS.length, suffix: "", label: "Competition Breaks" }].map((stat, i) => (
+            {[{ end: athleteCount, suffix: "+", label: "Athletes" }, { end: totalEvents, suffix: "", label: "Sanctioned Events" }, { end: org.series.length || 6, suffix: "", label: "SOTY Seasons" }, { end: COMPETITION_BREAKS.length, suffix: "", label: "Competition Breaks" }].map((stat, i) => (
               <ScrollReveal key={stat.label} delay={i * 100}>
                 <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(2rem, 4vw, 3rem)", color: "#0A2540" }}><CountUp end={stat.end} suffix={stat.suffix} /></div>
                 <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.15em", color: "rgba(26,26,26,0.4)", marginTop: 8 }}>{stat.label}</div>
@@ -279,7 +280,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
                           <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 14, color: "#fff" }}>{a.name}</div>
                           <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", marginTop: 3, textTransform: "uppercase" }}>Barbados 🇧🇧</div>
                         </div>
-                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: "3px 8px", borderRadius: 10, backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.3)", cursor: "pointer" }}>Claim</span>
+                        <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = '/athlete/signup' }} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: "3px 8px", borderRadius: 10, backgroundColor: "rgba(43,165,160,0.12)", color: "#2BA5A0", cursor: "pointer", border: "1px solid rgba(43,165,160,0.2)" }}>Claim</span>
                       </div>
                     </div>
                   </Link>

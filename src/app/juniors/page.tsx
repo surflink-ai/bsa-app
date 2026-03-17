@@ -1,36 +1,8 @@
+import { createClient } from '@/lib/supabase/server'
 import { ScrollReveal } from '../components/ScrollReveal'
 import { WaveDivider } from '../components/WaveDivider'
 
-const PROGRAMMES = [
-  {
-    title: "Grom Development",
-    age: "Under 10",
-    desc: "Introduction to surfing fundamentals, ocean safety, and board handling. Designed to build confidence and a love for the ocean in young surfers.",
-    schedule: "Saturdays, 8:00–10:00 AM",
-    location: "Drill Hall Beach",
-  },
-  {
-    title: "Junior Competitive",
-    age: "Under 14 & Under 16",
-    desc: "Structured coaching for competitive surfers. Focus on contest strategy, manoeuvre progression, heat tactics, and physical conditioning.",
-    schedule: "Tuesdays & Thursdays, 3:30–5:30 PM",
-    location: "Soup Bowl / Drill Hall",
-  },
-  {
-    title: "Elite Junior Squad",
-    age: "Under 18",
-    desc: "Advanced programme for BSA-ranked juniors targeting national team selection and international competition. Includes video analysis, strength & conditioning, and mental performance coaching.",
-    schedule: "Mon, Wed, Fri, 4:00–6:00 PM",
-    location: "Soup Bowl",
-  },
-  {
-    title: "Summer Surf Camp",
-    age: "All Ages",
-    desc: "Annual week-long surf camp during summer holidays. Open to all abilities — beginners welcome. Certified instructors, equipment provided, and heaps of fun.",
-    schedule: "July / August (dates TBA)",
-    location: "Various Locations",
-  },
-]
+export const revalidate = 300
 
 const PATHWAY = [
   { stage: "Learn", desc: "Ocean safety, pop-up technique, wave selection", num: "01" },
@@ -39,7 +11,17 @@ const PATHWAY = [
   { stage: "Represent", desc: "National team selection, ISA World Juniors", num: "04" },
 ]
 
-export default function JuniorsPage() {
+export default async function JuniorsPage() {
+  const supabase = await createClient()
+  const { data: programmes } = await supabase
+    .from('junior_programmes')
+    .select('*')
+    .eq('active', true)
+    .order('sort_order')
+    .order('title')
+
+  const progs = programmes || []
+
   return (
     <div className="pb-20 md:pb-0">
       {/* HERO */}
@@ -87,17 +69,18 @@ export default function JuniorsPage() {
             <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: "clamp(1.875rem,4vw,2.5rem)", color: "#fff", marginBottom: 48 }}>Coaching & Training</h2>
           </ScrollReveal>
           <div className="grid-responsive-4" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 24 }}>
-            {PROGRAMMES.map((prog, i) => (
-              <ScrollReveal key={prog.title} delay={i * 80}>
+            {progs.map((prog, i) => (
+              <ScrollReveal key={prog.id} delay={i * 80}>
                 <div style={{ backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 12, padding: "28px 24px", height: "100%", display: "flex", flexDirection: "column" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                     <h3 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 17, color: "#fff" }}>{prog.title}</h3>
-                    <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, padding: "3px 10px", borderRadius: 20, backgroundColor: "rgba(43,165,160,0.15)", color: "#2BA5A0" }}>{prog.age}</span>
+                    {prog.age_group && <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, padding: "3px 10px", borderRadius: 20, backgroundColor: "rgba(43,165,160,0.15)", color: "#2BA5A0" }}>{prog.age_group}</span>}
                   </div>
-                  <p style={{ fontSize: 14, lineHeight: 1.7, color: "rgba(255,255,255,0.45)", marginBottom: 16, flex: 1 }}>{prog.desc}</p>
+                  {prog.description && <p style={{ fontSize: 14, lineHeight: 1.7, color: "rgba(255,255,255,0.45)", marginBottom: 16, flex: 1 }}>{prog.description}</p>}
                   <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 12, display: "flex", flexDirection: "column", gap: 4 }}>
-                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{prog.schedule}</div>
-                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{prog.location}</div>
+                    {prog.schedule && <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{prog.schedule}</div>}
+                    {prog.location && <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{prog.location}</div>}
+                    {prog.coach_name && <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: "rgba(255,255,255,0.25)" }}>Coach: {prog.coach_name}</div>}
                   </div>
                 </div>
               </ScrollReveal>
@@ -116,7 +99,7 @@ export default function JuniorsPage() {
             <p style={{ fontSize: "1rem", lineHeight: 1.7, color: "rgba(26,26,26,0.5)", marginBottom: 32 }}>
               We're building structured coaching pathways, competition programmes, and development squads for Barbados' next generation of surfers. Get in touch to register your interest.
             </p>
-            <a href="mailto:admin@bsa.surf" style={{ fontSize: 14, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register Interest</a>
+            <a href="mailto:admin@bsa.surf?subject=Junior%20Programme%20Interest" style={{ fontSize: 14, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register Interest</a>
           </ScrollReveal>
         </div>
       </section>

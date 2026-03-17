@@ -96,6 +96,10 @@ export function AthleteDetailClient({ athlete, results, heats, rivals, compResul
   seasonPoints?: SeasonPoint[]
 }) {
   const [tab, setTab] = useState<'overview' | 'heats' | 'rivals'>('overview')
+  const [shareToast, setShareToast] = useState<string | null>(null)
+
+  // Auto-dismiss toast
+  if (shareToast) setTimeout(() => setShareToast(null), 2500)
 
   const stats = useMemo(() => {
     const divisionWins = results.filter(r => r.place === 1).length
@@ -134,12 +138,16 @@ export function AthleteDetailClient({ athlete, results, heats, rivals, compResul
                 ))}
               </div>
               {/* Share buttons */}
-              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     const url = `https://bsa.surf/athletes/${athlete.id}`
-                    navigator.clipboard?.writeText(url)
-                    alert('Profile link copied!')
+                    if (navigator.share) {
+                      try { await navigator.share({ title: `${athlete.name} — BSA`, url }) } catch {}
+                    } else {
+                      navigator.clipboard?.writeText(url)
+                      setShareToast('Link copied!')
+                    }
                   }}
                   style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, padding: '6px 14px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em' }}
                 >
@@ -159,6 +167,14 @@ export function AthleteDetailClient({ athlete, results, heats, rivals, compResul
                   style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, padding: '6px 14px', borderRadius: 6, border: '1px solid rgba(43,165,160,0.2)', backgroundColor: 'rgba(43,165,160,0.08)', color: '#2BA5A0', cursor: 'pointer', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.08em' }}
                 >
                   WhatsApp
+                </a>
+                <a
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${athlete.name}'s surf stats on @BSASurf`)}&url=${encodeURIComponent(`https://bsa.surf/athletes/${athlete.id}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, padding: '6px 14px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.08em' }}
+                >
+                  X / Twitter
                 </a>
               </div>
             </div>
@@ -395,6 +411,19 @@ export function AthleteDetailClient({ athlete, results, heats, rivals, compResul
           )}
         </div>
       </section>
+
+      {/* Share toast */}
+      {shareToast && (
+        <div style={{
+          position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+          backgroundColor: '#2BA5A0', color: '#fff', padding: '10px 24px', borderRadius: 8,
+          fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 600,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)', zIndex: 100,
+          animation: 'fadeIn 0.2s ease',
+        }}>
+          {shareToast}
+        </div>
+      )}
     </div>
   )
 }

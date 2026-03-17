@@ -66,7 +66,7 @@ export function Navigation() {
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, transition: "background-color 0.3s ease", ...bgStyle }} className="hidden md:block">
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-            <img src="https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp" alt="BSA" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
+            <img src="/bsa-logo.webp" alt="BSA" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
             <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 18, color: "#fff", letterSpacing: "0.05em" }}>BSA</span>
           </Link>
           <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
@@ -87,7 +87,7 @@ export function Navigation() {
         height: 56, padding: "0 16px",
       }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <img src="https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp" alt="BSA" style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover" }} />
+          <img src="/bsa-logo.webp" alt="BSA" style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover" }} />
           <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 16, color: "#fff" }}>BSA</span>
         </Link>
         <button

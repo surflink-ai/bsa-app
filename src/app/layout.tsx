@@ -8,6 +8,24 @@ import { PublicShell } from "./components/PublicShell"
 export const metadata: Metadata = {
   title: "Barbados Surfing Association",
   description: "The National Governing Body for Surfing in Barbados. ISA Member Federation.",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: "Barbados Surfing Association",
+    description: "The National Governing Body for Surfing in Barbados. ISA Member Federation since 1995. Competition results, surf reports, athlete profiles.",
+    url: "https://bsa.surf",
+    siteName: "BSA",
+    images: [{ url: "https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp", width: 400, height: 400 }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Barbados Surfing Association",
+    description: "The National Governing Body for Surfing in Barbados. Competition results, surf reports, athlete profiles.",
+    images: ["https://liveheats.com/images/dbb2a21b-7566-4629-8ea5-4c08a0b2877b.webp"],
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

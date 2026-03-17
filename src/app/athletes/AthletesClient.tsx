@@ -70,7 +70,8 @@ export function AthletesClient({ athletes }: { athletes: Athlete[] }) {
               <Link key={a.id} href={`/athletes/${a.id}`} style={{ display: 'block', textDecoration: 'none' }}>
                 <div style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(10,37,64,0.06)', transition: 'box-shadow 0.2s' }}>
                   <div style={{ aspectRatio: '1', overflow: 'hidden', backgroundColor: '#0A2540' }}>
-                    {a.image ? <img src={a.image} alt={a.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.08)', fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 28 }}>{a.name.split(' ').map((n: string) => n[0]).join('')}</div>}
+                    {a.image ? <img src={a.image} alt={a.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.querySelector('div')!.style.display = 'flex' }} /> : null}
+                    <div style={{ width: '100%', height: '100%', display: a.image ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.08)', fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 28, position: a.image ? 'absolute' : 'relative', inset: 0 }}>{a.name.split(' ').map((n: string) => n[0]).join('')}</div>
                   </div>
                   <div style={{ padding: '10px 12px' }}>
                     <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 600, fontSize: 12, color: '#0A2540', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.name}</div>

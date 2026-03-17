@@ -2,14 +2,14 @@ import Link from 'next/link'
 
 export const metadata = {
   title: 'Documentation — BSA',
-  description: 'Documentation and resources for the Barbados Surfing Association.',
+  description: 'Platform features, resources, and administration guides.',
 }
 
 const sections = [
   {
     label: 'COMPETITION',
     items: [
-      { href: '/events', title: 'Competition Events', desc: 'Upcoming and past BSA-sanctioned events, dates, locations, and division listings.' },
+      { href: '/events', title: 'Competition Events', desc: 'Upcoming and past sanctioned events, dates, locations, and division listings.' },
       { href: '/rankings', title: 'Season Rankings', desc: 'Live SOTY points standings across all divisions, updated after each event.' },
       { href: '/results', title: 'Full Results', desc: 'Heat-by-heat breakdowns with individual wave scores, medal standings, and placements.' },
       { href: '/history', title: 'Hall of Champions', desc: 'Historical national champions across all divisions from 2022 to present.' },
@@ -18,7 +18,7 @@ const sections = [
   {
     label: 'ATHLETES',
     items: [
-      { href: '/athletes', title: 'Athlete Registry', desc: '129+ registered athletes with career stats, event appearances, head-to-head records, and shareable stat cards.' },
+      { href: '/athletes', title: 'Athlete Registry', desc: 'Registered athletes with career stats, event appearances, head-to-head records, and shareable stat cards.' },
       { href: '/athlete/signup', title: 'Claim Your Profile', desc: 'Athletes can sign up, claim their profile, add bio, social links, sponsors, and manage their public page.' },
       { href: '/athlete/login', title: 'Athlete Portal Login', desc: 'Sign in to manage your claimed athlete profile, download stat cards, and share your results.' },
     ],
@@ -27,13 +27,13 @@ const sections = [
     label: 'LIVE',
     items: [
       { href: '/stream', title: 'Live Stream & VOD', desc: 'Watch live competition broadcasts with real-time score overlays. Event replays available when not live.' },
-      { href: '/surf-report', title: 'Surf Report', desc: 'Real-time conditions across 21 Barbados surf spots from 7 data sources, updated every 15 minutes.' },
+      { href: '/surf-report', title: 'Surf Report', desc: 'Real-time surf conditions from multiple data sources, updated every 15 minutes.' },
     ],
   },
   {
     label: 'INFORMATION',
     items: [
-      { href: '/news', title: 'News & Articles', desc: 'Athlete spotlights, event recaps, announcements, and stories from the Barbados surf community.' },
+      { href: '/news', title: 'News & Articles', desc: 'Athlete spotlights, event recaps, announcements, and stories from the surf community.' },
       { href: '/juniors', title: 'Junior Development', desc: 'Coaching programmes, development pathway, schedules, and locations for junior surfers.' },
       { href: '/contact', title: 'Contact & Inquiries', desc: 'Get in touch about membership, sponsorship, coaching, media, or submit an inquiry via the contact form.' },
     ],
@@ -61,7 +61,7 @@ export default function DocsPage() {
           Documentation
         </h1>
         <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.5)', marginBottom: 48, lineHeight: 1.6 }}>
-          Everything the BSA platform offers — competition, athletes, streaming, coaching, communications, and administration.
+          Platform features, resources, and administration guides.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>

@@ -38,7 +38,8 @@ function SeasonProgress() {
             <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
               <div style={{ width: isNext ? 14 : 10, height: isNext ? 14 : 10, borderRadius: '50%', backgroundColor: isPast ? '#2BA5A0' : isNext ? '#1478B5' : 'rgba(255,255,255,0.1)', border: isNext ? '2px solid #fff' : 'none', marginBottom: 8, transition: 'all 0.3s' }} />
               <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 11, fontWeight: isNext ? 700 : 500, color: isNext ? '#fff' : isPast ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)', textAlign: 'center' }}>{e.label}</span>
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 2, textAlign: 'center' }}>{e.location}</span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 2, textAlign: 'center' }}>{new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: 'rgba(255,255,255,0.15)', marginTop: 1, textAlign: 'center' }}>{e.location}</span>
             </div>
           )
         })}

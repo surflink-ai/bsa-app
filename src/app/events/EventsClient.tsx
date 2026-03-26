@@ -38,7 +38,7 @@ function SeasonProgress() {
             <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
               <div style={{ width: isNext ? 14 : 10, height: isNext ? 14 : 10, borderRadius: '50%', backgroundColor: isPast ? '#2BA5A0' : isNext ? '#1478B5' : 'rgba(255,255,255,0.1)', border: isNext ? '2px solid #fff' : 'none', marginBottom: 8, transition: 'all 0.3s' }} />
               <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 11, fontWeight: isNext ? 700 : 500, color: isNext ? '#fff' : isPast ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)', textAlign: 'center' }}>{e.label}</span>
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 2, textAlign: 'center' }}>{new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 2, textAlign: 'center' }}>{new Date(e.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
               <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: 'rgba(255,255,255,0.15)', marginTop: 1, textAlign: 'center' }}>{e.location}</span>
             </div>
           )
@@ -74,7 +74,7 @@ export function EventsClient({ upcoming, past }: { upcoming: BSAEvent[]; past: B
                 <div>
                   <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#2BA5A0', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 8 }}>Next Up</div>
                   <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 'clamp(1.25rem,3vw,2rem)', color: '#fff', marginBottom: 8 }}>{nextEvent.name.replace(/\s*\(SOTY\s*#\d+\s*\([^)]*\)\)/gi, '').replace(/\s*\(Nationals only\)/gi, '').trim()}</h2>
-                  <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 16 }}>{new Date(nextEvent.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                  <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 16 }}>{new Date(nextEvent.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                   {nextEvent.eventDivisions.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 20 }}>
                       {nextEvent.eventDivisions.map(d => (
@@ -113,7 +113,7 @@ export function EventsClient({ upcoming, past }: { upcoming: BSAEvent[]; past: B
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {filtered.map((event, i) => {
-              const d = new Date(event.date)
+              const d = new Date(event.date + 'T12:00:00')
               const divCount = event.eventDivisions.length
               return (
                 <ScrollReveal key={event.id} delay={i * 50}>

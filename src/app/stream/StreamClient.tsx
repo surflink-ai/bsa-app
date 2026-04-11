@@ -405,11 +405,11 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
 
   // Get the YouTube embed URL from config
   const youtubeEmbedUrl = config?.youtubeVideoId
-    ? `https://www.youtube.com/embed/${config.youtubeVideoId}?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&controls=0&showinfo=0&iv_load_policy=3`
+    ? `https://www.youtube.com/embed/${config.youtubeVideoId}?rel=0&modestbranding=1&playsinline=1&controls=0&showinfo=0&iv_load_policy=3`
     : config?.embedCode || null
 
   const youtubeEmbedUrlLandscape = config?.youtubeVideoId
-    ? `https://www.youtube.com/embed/${config.youtubeVideoId}?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&controls=0&showinfo=0&iv_load_policy=3`
+    ? `https://www.youtube.com/embed/${config.youtubeVideoId}?rel=0&modestbranding=1&playsinline=1&controls=0&showinfo=0&iv_load_policy=3`
     : config?.embedCode || null
 
   // ── LIVE — Full scoring experience ──
@@ -422,12 +422,10 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
             <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%' }}>
               <iframe
                 src={youtubeEmbedUrl!}
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
-              {/* Block YouTube controls interaction */}
-              <div style={{ position: 'absolute', inset: 0, zIndex: 2 }} />
             </div>
           </div>
 
@@ -473,12 +471,10 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
         }}>
           <iframe
             src={youtubeEmbedUrlLandscape!}
-            style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '100vw', height: '56.25vw', minHeight: '100vh', minWidth: '177.78vh', border: 'none', pointerEvents: 'none' }}
+            style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '100vw', height: '56.25vw', minHeight: '100vh', minWidth: '177.78vh', border: 'none' }}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
-          {/* Block YouTube controls interaction */}
-          <div style={{ position: 'absolute', inset: 0, zIndex: 1 }} />
 
           {currentHeat && (
             <div className="overlay-scoreboard" style={{

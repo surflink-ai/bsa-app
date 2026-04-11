@@ -523,24 +523,25 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
             transition: background 0.3s ease;
           }
 
-          /* Default: landscape/overlay mode (desktop + mobile landscape) */
-          .stream-portrait { display: none !important; }
-          .stream-landscape { display: block; }
-          body > nav, body > footer, body > header,
-          body > div > nav, body > div > footer { display: none !important; }
-          body { overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
-          main { padding: 0 !important; margin: 0 !important; }
-          html { overflow: hidden !important; }
+          /* Mobile portrait (phones upright) → stacked layout, normal page chrome */
+          .stream-portrait { display: flex; }
+          .stream-landscape { display: none; }
 
-          /* Mobile portrait only (phones held upright) → stacked layout */
+          /* Desktop + tablets + mobile landscape → fullscreen overlay */
+          @media (min-width: 769px), (orientation: landscape) {
+            .stream-portrait { display: none !important; }
+            .stream-landscape { display: block !important; }
+            body > nav, body > footer, body > header,
+            body > div > nav, body > div > footer { display: none !important; }
+            body { overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
+            main { padding: 0 !important; margin: 0 !important; }
+            html { overflow: hidden !important; }
+          }
+
+          /* Force portrait on small portrait screens (override the min-width rule) */
           @media (orientation: portrait) and (max-width: 768px) {
             .stream-portrait { display: flex !important; }
             .stream-landscape { display: none !important; }
-            body > nav, body > footer, body > header,
-            body > div > nav, body > div > footer { display: block !important; }
-            body { overflow: auto !important; margin: 0 !important; padding: 0 !important; }
-            main { padding: 0 !important; }
-            html { overflow: auto !important; }
           }
 
           /* Mobile landscape: scale overlay for small screens */

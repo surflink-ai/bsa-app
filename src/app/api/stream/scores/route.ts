@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 const GRAPHQL_URL = 'https://liveheats.com/api/graphql'
-const LIVEHEATS_EVENT_ID = '429674'
+const LIVEHEATS_EVENT_ID = '493370'
 
 export const revalidate = 0
 export const dynamic = 'force-dynamic'

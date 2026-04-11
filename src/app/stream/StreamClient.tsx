@@ -468,7 +468,45 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
           )}
         </div>
 
-        {/* ═══ LANDSCAPE — Fullscreen + Overlay ═══ */}
+        {/* ═══ DESKTOP — BSA page with video + overlay scoreboard ═══ */}
+        <div className="stream-desktop" onClick={handleTap} style={{ backgroundColor: '#0A2540', cursor: 'pointer' }}>
+          <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', background: '#000' }}>
+            <iframe
+              src={youtubeEmbedUrl!}
+              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+            {currentHeat && (
+              <div className="overlay-scoreboard" style={{
+                position: 'absolute', top: 16, left: 16, zIndex: 10,
+                background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(12px)',
+                borderRadius: 8, overflow: 'hidden', minWidth: 280,
+                boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+              }}>
+                <TimerBar {...timerProps} size="sm" />
+                <ScoreRows sorted={sorted} heat={currentHeat} isCompact />
+              </div>
+            )}
+            {showControls && (
+              <div style={{
+                position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)',
+                zIndex: 20, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(12px)',
+                borderRadius: 10, padding: '8px 12px',
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}>
+                <HeatPickers {...pickerProps} dark />
+              </div>
+            )}
+          </div>
+          <div style={{
+            textAlign: 'center', padding: '12px 0',
+            fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
+            color: 'rgba(255,255,255,0.15)', letterSpacing: '0.12em',
+          }}>BSA · LIVEHEATS · LIVE SCORING · TAP VIDEO TO CHANGE HEAT</div>
+        </div>
+
+        {/* ═══ MOBILE LANDSCAPE — Fullscreen + Overlay ═══ */}
         <div className="stream-landscape" onClick={handleTap} style={{
           position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
           background: '#000', zIndex: 9999, overflow: 'hidden',
@@ -523,29 +561,29 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
             transition: background 0.3s ease;
           }
 
-          /* Mobile portrait (phones upright) → stacked layout, normal page chrome */
-          .stream-portrait { display: flex; }
+          /* Default: desktop view (BSA page + video with overlay) */
+          .stream-portrait { display: none; }
+          .stream-desktop { display: block; }
           .stream-landscape { display: none; }
 
-          /* Desktop + tablets + mobile landscape → fullscreen overlay */
-          @media (min-width: 769px), (orientation: landscape) {
+          /* Mobile portrait (phones upright, <=768px) → stacked layout */
+          @media (orientation: portrait) and (max-width: 768px) {
+            .stream-portrait { display: flex !important; }
+            .stream-desktop { display: none !important; }
+            .stream-landscape { display: none !important; }
+          }
+
+          /* Mobile landscape (small screens rotated) → fullscreen overlay */
+          @media (orientation: landscape) and (max-height: 500px) {
             .stream-portrait { display: none !important; }
+            .stream-desktop { display: none !important; }
             .stream-landscape { display: block !important; }
             body > nav, body > footer, body > header,
             body > div > nav, body > div > footer { display: none !important; }
             body { overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
             main { padding: 0 !important; margin: 0 !important; }
             html { overflow: hidden !important; }
-          }
 
-          /* Force portrait on small portrait screens (override the min-width rule) */
-          @media (orientation: portrait) and (max-width: 768px) {
-            .stream-portrait { display: flex !important; }
-            .stream-landscape { display: none !important; }
-          }
-
-          /* Mobile landscape: scale overlay for small screens */
-          @media (orientation: landscape) and (max-height: 500px) {
             .overlay-scoreboard {
               transform: scale(0.5);
               transform-origin: top left;

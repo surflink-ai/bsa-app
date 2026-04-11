@@ -519,12 +519,12 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
             transition: background 0.3s ease;
           }
 
-          /* Portrait default */
+          /* Default: show portrait/normal layout, hide fullscreen landscape */
           .stream-portrait { display: block; }
           .stream-landscape { display: none !important; }
 
-          /* Landscape → overlay mode */
-          @media (orientation: landscape) {
+          /* Mobile landscape only (max-height 500px = phone in landscape) → fullscreen overlay */
+          @media (orientation: landscape) and (max-height: 500px) {
             .stream-portrait { display: none !important; }
             .stream-landscape { display: block !important; }
             body > nav, body > footer, body > header,
@@ -532,20 +532,11 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
             body { overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
             main { padding: 0 !important; margin: 0 !important; }
             html { overflow: hidden !important; }
-          }
 
-          /* Mobile landscape: scale overlay 50% */
-          @media (orientation: landscape) and (max-height: 500px) {
             .overlay-scoreboard {
               transform: scale(0.5);
               transform-origin: top left;
             }
-          }
-
-          /* Portrait always wins */
-          @media (orientation: portrait) {
-            .stream-portrait { display: block !important; }
-            .stream-landscape { display: none !important; }
           }
 
           /* Smooth select styling */

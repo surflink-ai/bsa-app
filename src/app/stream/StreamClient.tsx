@@ -417,16 +417,18 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
     return (
       <>
         {/* ═══ PORTRAIT — Video + Full Scoreboard ═══ */}
-        <div className="stream-portrait">
-          <div style={{ width: '100%', position: 'relative', paddingTop: '56.25%', background: '#000', overflow: 'hidden' }}>
-            <iframe
-              src={youtubeEmbedUrl!}
-              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-            {/* Block YouTube controls interaction */}
-            <div style={{ position: 'absolute', inset: 0, zIndex: 2 }} />
+        <div className="stream-portrait" style={{ backgroundColor: '#0A2540', minHeight: '100dvh' }}>
+          <div style={{ width: '100%', position: 'sticky', top: 0, zIndex: 10, background: '#000', overflow: 'hidden' }}>
+            <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%' }}>
+              <iframe
+                src={youtubeEmbedUrl!}
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+              {/* Block YouTube controls interaction */}
+              <div style={{ position: 'absolute', inset: 0, zIndex: 2 }} />
+            </div>
           </div>
 
           {currentHeat && (
@@ -466,7 +468,8 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
 
         {/* ═══ LANDSCAPE — Fullscreen + Overlay ═══ */}
         <div className="stream-landscape" onClick={handleTap} style={{
-          position: 'fixed', inset: 0, background: '#000', zIndex: 9999, overflow: 'hidden',
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: '#000', zIndex: 9999, overflow: 'hidden',
         }}>
           <iframe
             src={youtubeEmbedUrlLandscape!}
@@ -530,8 +533,9 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
             .stream-landscape { display: block !important; }
             body > nav, body > footer, body > header,
             body > div > nav, body > div > footer { display: none !important; }
-            body { overflow: hidden !important; }
-            main { padding: 0 !important; }
+            body { overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
+            main { padding: 0 !important; margin: 0 !important; }
+            html { overflow: hidden !important; }
           }
 
           /* Mobile landscape: scale overlay 50% */

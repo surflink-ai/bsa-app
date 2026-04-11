@@ -405,7 +405,7 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
 
   // Get the YouTube embed URL from config
   const youtubeEmbedUrl = config?.youtubeVideoId
-    ? `https://www.youtube.com/embed/${config.youtubeVideoId}?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1`
+    ? `https://www.youtube.com/embed/${config.youtubeVideoId}?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&controls=0&showinfo=0&iv_load_policy=3`
     : config?.embedCode || null
 
   const youtubeEmbedUrlLandscape = config?.youtubeVideoId

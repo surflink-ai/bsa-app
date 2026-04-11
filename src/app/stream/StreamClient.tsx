@@ -416,9 +416,12 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
   if (config?.active && (config.youtubeVideoId || config.embedCode)) {
     return (
       <>
-        {/* ═══ PORTRAIT — Video + Full Scoreboard ═══ */}
-        <div className="stream-portrait" style={{ backgroundColor: '#0A2540', minHeight: '100dvh' }}>
-          <div style={{ width: '100%', position: 'sticky', top: 0, zIndex: 10, background: '#000', overflow: 'hidden' }}>
+        {/* ═══ PORTRAIT / DESKTOP — Video + Scoreboard in one viewport ═══ */}
+        <div className="stream-portrait" style={{
+          backgroundColor: '#0A2540', height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        }}>
+          {/* Video — takes its natural 16:9 space */}
+          <div style={{ width: '100%', background: '#000', flexShrink: 0 }}>
             <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%' }}>
               <iframe
                 src={youtubeEmbedUrl!}
@@ -429,20 +432,21 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
             </div>
           </div>
 
+          {/* Scoreboard — fills remaining space */}
           {currentHeat && (
-            <div style={{ background: '#0A2540', minHeight: '50vh' }}>
+            <div style={{ flex: 1, overflow: 'auto', background: '#0A2540' }}>
               <TimerBar {...timerProps} size="lg" />
-              <div style={{ padding: '10px 14px 0' }}>
+              <div style={{ padding: '8px 14px 0' }}>
                 <HeatPickers {...pickerProps} />
               </div>
               <div style={{
-                margin: '10px 14px', background: 'rgba(255,255,255,0.02)',
+                margin: '8px 14px', background: 'rgba(255,255,255,0.02)',
                 border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden',
               }}>
                 <ScoreRows sorted={sorted} heat={currentHeat} />
               </div>
               <div style={{
-                textAlign: 'center', padding: '4px 0 20px',
+                textAlign: 'center', padding: '4px 0 8px',
                 fontFamily: "'JetBrains Mono', monospace", fontSize: 8,
                 color: 'rgba(255,255,255,0.1)', letterSpacing: '0.12em',
               }}>BSA · LIVEHEATS · LIVE SCORING</div>
@@ -451,7 +455,7 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
 
           {!currentHeat && (
             <div style={{
-              background: '#0A2540', minHeight: '40vh', display: 'flex',
+              flex: 1, background: '#0A2540', display: 'flex',
               alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8,
             }}>
               <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700, color: 'rgba(255,255,255,0.2)' }}>

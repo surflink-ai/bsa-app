@@ -169,7 +169,7 @@ function HeatPickers({ scoredDivisions, divisions, currentDiv, selectedDivId, se
           style={{ background: bg, border, borderRadius: 6, padding: '6px 10px', color: '#fff', fontSize: 12, fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', outline: 'none' }}>
           {currentDiv.heats
             .filter(h => h.result.some(r => r.total > 0) || (h.startTime && !h.endTime))
-            .map(h => <option key={h.id} value={h.id} style={{ background: optBg }}>{h.round} {h.position > 0 ? `H${h.position}` : ''}</option>)}
+            .map(h => <option key={h.id} value={h.id} style={{ background: optBg }}>{h.round} H{h.position + 1}</option>)}
         </select>
       )}
     </div>
@@ -214,7 +214,7 @@ function TimerBar({ currentDiv, currentHeat, heatIsLive, timeRemaining, size }: 
           fontFamily: "'JetBrains Mono', monospace", fontSize: isSm ? 8 : 9,
           color: 'rgba(255,255,255,0.25)', whiteSpace: 'nowrap',
         }}>
-          {currentHeat?.round} {currentHeat && currentHeat.position > 0 ? `H${currentHeat.position}` : ''}
+          {currentHeat?.round} {currentHeat != null ? `H${currentHeat.position + 1}` : ''}
         </span>
       </div>
       {timeRemaining !== null && (

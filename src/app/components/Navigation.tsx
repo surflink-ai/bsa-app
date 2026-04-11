@@ -33,8 +33,28 @@ const HAMBURGER_SOCIAL = [
 export function Navigation() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isLive, setIsLive] = useState(false)
   const pathname = usePathname()
   const isHome = pathname === "/"
+
+  useEffect(() => {
+    let mounted = true
+    const check = async () => {
+      try {
+        const res = await fetch('/api/stream/scores')
+        const data = await res.json()
+        if (mounted) {
+          const live = data.eventDivisions?.some((d: any) =>
+            d.heats?.some((h: any) => h.startTime && !h.endTime)
+          ) ?? false
+          setIsLive(live)
+        }
+      } catch {}
+    }
+    check()
+    const interval = setInterval(check, 30_000)
+    return () => { mounted = false; clearInterval(interval) }
+  }, [])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -73,7 +93,11 @@ export function Navigation() {
             {NAV_LINKS.map(l => (
               <Link key={l.href} href={l.href} style={{ textDecoration: "none", fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 500, color: pathname.startsWith(l.href) ? "#2BA5A0" : "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em", transition: "color 0.2s ease" }}>{l.label}</Link>
             ))}
-            <a href="https://liveheats.com/BarbadosSurfingAssociation" target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "8px 18px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register</a>
+            {isLive ? (
+              <Link href="/stream" style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff", backgroundColor: "#EF4444", padding: "8px 18px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em", display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#fff', animation: 'pulse 1.5s ease-in-out infinite' }} />Watch Live</Link>
+            ) : (
+              <a href="https://liveheats.com/BarbadosSurfingAssociation" target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "8px 18px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register</a>
+            )}
           </div>
         </div>
       </nav>
@@ -173,24 +197,29 @@ export function Navigation() {
           ))}
         </div>
 
-        {/* Register button */}
-        <a href="https://liveheats.com/BarbadosSurfingAssociation" target="_blank" rel="noopener noreferrer" style={{
-          display: "inline-block",
-          fontFamily: "'Space Grotesk', sans-serif",
-          fontSize: 14,
-          fontWeight: 600,
-          color: "#fff",
-          backgroundColor: "#1478B5",
-          padding: "12px 40px",
-          borderRadius: 8,
-          textDecoration: "none",
-          textTransform: "uppercase" as const,
-          letterSpacing: "0.05em",
-          marginTop: 8,
-          textAlign: "center" as const,
-        }}>
-          Register
-        </a>
+        {/* Register / Watch Live button */}
+        {isLive ? (
+          <Link href="/stream" onClick={() => setMenuOpen(false)} style={{
+            display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
+            fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 600,
+            color: "#fff", backgroundColor: "#EF4444", padding: "12px 40px", borderRadius: 8,
+            textDecoration: "none", textTransform: "uppercase" as const, letterSpacing: "0.05em",
+            marginTop: 8,
+          }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#fff', animation: 'pulse 1.5s ease-in-out infinite' }} />
+            Watch Live
+          </Link>
+        ) : (
+          <a href="https://liveheats.com/BarbadosSurfingAssociation" target="_blank" rel="noopener noreferrer" style={{
+            display: "inline-block",
+            fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 600,
+            color: "#fff", backgroundColor: "#1478B5", padding: "12px 40px", borderRadius: 8,
+            textDecoration: "none", textTransform: "uppercase" as const, letterSpacing: "0.05em",
+            marginTop: 8, textAlign: "center" as const,
+          }}>
+            Register
+          </a>
+        )}
       </div>
 
       {/* ── Mobile bottom dock (unchanged) ── */}

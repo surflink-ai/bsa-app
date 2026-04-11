@@ -1,6 +1,6 @@
 "use client"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { BSAOrg, BSAEvent } from "@/lib/liveheats"
 import { ScrollReveal } from "./components/ScrollReveal"
 import { CountUp } from "./components/CountUp"
@@ -74,6 +74,27 @@ const COMPETITION_BREAKS = [
 export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, latestArticles = [], athleteCount = 129 }: Props) {
   const nextEvent = upcomingEvents[0] || null
   const totalEvents = org.events.length
+  const [isLive, setIsLive] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    const check = async () => {
+      try {
+        const res = await fetch('/api/stream/scores')
+        const data = await res.json()
+        if (mounted) {
+          // Live if any heat has startTime but no endTime
+          const live = data.eventDivisions?.some((d: any) =>
+            d.heats?.some((h: any) => h.startTime && !h.endTime)
+          ) ?? false
+          setIsLive(live)
+        }
+      } catch {}
+    }
+    check()
+    const interval = setInterval(check, 30_000)
+    return () => { mounted = false; clearInterval(interval) }
+  }, [])
 
   // Latest results: Open Mens + Open Womens only
   const displayDivisions: { divName: string; podium: { place: number; name: string; score: number; image: string | null }[] }[] = []
@@ -185,7 +206,16 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
                       <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "clamp(1.5rem, 3vw, 2.5rem)", color: "#fff", lineHeight: 1.15, marginBottom: 12 }}>{nextEvent.name}</h2>
                       <div style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", marginBottom: 4 }}>{new Date(nextEvent.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</div>
                       <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 24 }}>{typeof nextEvent.location === 'string' ? nextEvent.location : nextEvent.location?.formattedAddress || "South Coast, Barbados"}</div>
-                      <div style={{ marginBottom: 28 }}><CountdownTimer targetDate={nextEvent.date} /></div>
+                      <div style={{ marginBottom: 28 }}>
+                        {isLive ? (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '12px 24px', borderRadius: 8, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                            <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#EF4444', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700, color: '#EF4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>LIVE NOW</span>
+                          </div>
+                        ) : (
+                          <CountdownTimer targetDate={nextEvent.date} />
+                        )}
+                      </div>
                       {nextEvent.eventDivisions.length > 0 && (
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 28 }}>
                           {nextEvent.eventDivisions.map(d => (
@@ -206,13 +236,26 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
                             </h2>
                             <div style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", marginBottom: 4 }}>{next.date}, 2026</div>
                             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 24 }}>{next.location}</div>
-                            <div style={{ marginBottom: 28 }}><CountdownTimer targetDate={`2026-04-11`} /></div>
+                            <div style={{ marginBottom: 28 }}>
+                              {isLive ? (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '12px 24px', borderRadius: 8, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                                  <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#EF4444', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                                  <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700, color: '#EF4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>LIVE NOW</span>
+                                </div>
+                              ) : (
+                                <CountdownTimer targetDate={`2026-04-11`} />
+                              )}
+                            </div>
                           </>
                         )
                       })()}
                     </>
                   )}
-                  <a href="https://liveheats.com/BarbadosSurfingAssociation" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register on LiveHeats <ArrowRightIcon size={16} /></a>
+                  {isLive ? (
+                    <Link href="/stream" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600, color: "#fff", backgroundColor: "#EF4444", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Watch Live <ArrowRightIcon size={16} /></Link>
+                  ) : (
+                    <a href="https://liveheats.com/BarbadosSurfingAssociation" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600, color: "#fff", backgroundColor: "#1478B5", padding: "12px 28px", borderRadius: 6, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>Register on LiveHeats <ArrowRightIcon size={16} /></a>
+                  )}
                 </div>
                 {/* Right: Full 2026 schedule */}
                 <div>

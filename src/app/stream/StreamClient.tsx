@@ -418,13 +418,15 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
       <>
         {/* ═══ PORTRAIT — Video + Full Scoreboard ═══ */}
         <div className="stream-portrait">
-          <div style={{ width: '100%', position: 'relative', paddingTop: '56.25%', background: '#000' }}>
+          <div style={{ width: '100%', position: 'relative', paddingTop: '56.25%', background: '#000', overflow: 'hidden' }}>
             <iframe
               src={youtubeEmbedUrl!}
-              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
+            {/* Block YouTube controls interaction */}
+            <div style={{ position: 'absolute', inset: 0, zIndex: 2 }} />
           </div>
 
           {currentHeat && (
@@ -468,10 +470,12 @@ export function StreamClient({ config }: { config: StreamProps | null }) {
         }}>
           <iframe
             src={youtubeEmbedUrlLandscape!}
-            style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '100vw', height: '56.25vw', minHeight: '100vh', minWidth: '177.78vh', border: 'none' }}
+            style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '100vw', height: '56.25vw', minHeight: '100vh', minWidth: '177.78vh', border: 'none', pointerEvents: 'none' }}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
+          {/* Block YouTube controls interaction */}
+          <div style={{ position: 'absolute', inset: 0, zIndex: 1 }} />
 
           {currentHeat && (
             <div className="overlay-scoreboard" style={{

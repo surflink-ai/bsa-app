@@ -420,6 +420,7 @@ export async function GET(req: Request) {
 
       // Multi-model consensus
       const readings: ModelReading[] = []
+      // sl.waveHeightM now contains actual meters after cache fix
       if (sl?.waveHeightM) readings.push({ source: "surfline", waveHeightM: sl.waveHeightM.max || 0 })
       if (waveH) readings.push({ source: "gfs-wave", waveHeightM: waveH })
       if (wgAvgWave) readings.push({ source: "ecmwf-wam", waveHeightM: wgAvgWave })

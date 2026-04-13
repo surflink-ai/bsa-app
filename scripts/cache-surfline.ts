@@ -104,9 +104,10 @@ async function fetchSurflineOverview() {
         spotId: s._id,
         name: s.name,
         conditions: s.conditions?.value || 'FLAT',
-        waveMin: s.waveHeight?.min || 0,
-        waveMax: s.waveHeight?.max || 0,
-        waveHeightM: { min: (s.waveHeight?.min || 0) / 3.28084, max: (s.waveHeight?.max || 0) / 3.28084 },
+        // Surfline returns waveHeight min/max in METERS — convert to feet for display
+        waveMin: Math.round((s.waveHeight?.min || 0) * 3.28084),
+        waveMax: Math.round((s.waveHeight?.max || 0) * 3.28084),
+        waveHeightM: { min: s.waveHeight?.min || 0, max: s.waveHeight?.max || 0 },
         humanRelation: s.waveHeight?.humanRelation || '',
         coast: coast.charAt(0).toUpperCase() + coast.slice(1),
       }))

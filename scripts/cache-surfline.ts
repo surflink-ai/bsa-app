@@ -12,6 +12,9 @@ const SL_BASE = 'https://services.surfline.com'
 let SL_TOKEN = process.env.SURFLINE_ACCESS_TOKEN || ''
 const SL_REFRESH = process.env.SURFLINE_REFRESH_TOKEN || ''
 
+// Static Surfline app client credentials (base64 of clientId:clientSecret)
+const SL_CLIENT_AUTH = 'Basic NWM1OWU3YzNmMGI2Y2IxYWQwMmJhZjY2OnNrX1FxWEpkbjZOeTVzTVJ1MjdBbWcz'
+
 // Auto-refresh: test token, refresh if expired
 async function ensureToken(): Promise<string> {
   if (!SL_TOKEN) return ''
@@ -28,10 +31,16 @@ async function ensureToken(): Promise<string> {
   }
   console.log('🔄 Surfline token expired, attempting refresh...')
   try {
-    const res = await fetch(`${SL_BASE}/trusted/token`, {
+    const res = await fetch(`${SL_BASE}/trusted/token?isShortLived=false`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: SL_REFRESH }),
+      body: JSON.stringify({
+        authorizationString: SL_CLIENT_AUTH,
+        grant_type: 'refresh_token',
+        refresh_token: SL_REFRESH,
+        device_id: 'bsa-cache',
+        device_type: 'web',
+      }),
     })
     if (res.ok) {
       const data = await res.json()

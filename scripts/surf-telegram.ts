@@ -195,10 +195,27 @@ async function send(text: string) {
   }
 }
 
+async function fetchWithRetry(url: string, tries = 4): Promise<any> {
+  let lastErr: any
+  for (let i = 0; i < tries; i++) {
+    try {
+      const res = await fetch(url, { cache: 'no-store' })
+      if (res.ok) return await res.json()
+      lastErr = new Error(`HTTP ${res.status}`)
+    } catch (e) {
+      lastErr = e
+    }
+    // Backoff: 3s, 8s, 20s
+    if (i < tries - 1) {
+      const waitMs = [3000, 8000, 20000][i] || 20000
+      await new Promise(r => setTimeout(r, waitMs))
+    }
+  }
+  throw new Error(`API unreachable after ${tries} attempts: ${lastErr?.message || lastErr}`)
+}
+
 async function main() {
-  const res = await fetch(API_URL, { cache: 'no-store' })
-  if (!res.ok) throw new Error(`API fetch failed: ${res.status}`)
-  const data = await res.json()
+  const data = await fetchWithRetry(API_URL)
 
   const all: Spot[] = [...(data.east || []), ...(data.south || []), ...(data.west || [])]
   if (!all.length) throw new Error('No spots returned')

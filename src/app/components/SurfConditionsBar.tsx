@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 // Only these 4 spots, in this order
 const FEATURED_SPOTS = [
   { id: "5842041f4e65fad6a7708b48", name: "Soup Bowl" },
-  { id: "5842041f4e65fad6a7708c81", name: "Brandon's" },
+  { id: "5842041f4e65fad6a7708c81", name: "Branden's" },
   { id: "584204204e65fad6a77099c0", name: "Freights" },
   { id: "584204204e65fad6a77099c3", name: "Tropicana" },
 ]

@@ -45,7 +45,7 @@ interface Props {
 const SCHEDULE_2026 = [
   { num: 1, date: "March 14", location: "Drill Hall", status: "done" },
   { num: 2, date: "April 11", location: "South Point", status: "done" },
-  { num: 3, date: "May 16", location: "Brandon's", status: "next" },
+  { num: 3, date: "May 16", location: "Branden's", status: "next" },
   { num: 4, date: "September 26", location: "Parlour", status: "upcoming" },
   { num: 5, date: "Nov 27–29", location: "Soup Bowl", status: "upcoming", special: "Independence Pro & Nationals" },
 ]

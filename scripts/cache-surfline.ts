@@ -77,7 +77,7 @@ const PREMIUM_SPOTS = [
   { id: '5842041f4e65fad6a7708c7f', name: 'Cattle Wash', coast: 'east' },
   { id: '67f94aeca64db676f445bef3', name: 'Tabletop', coast: 'east' },
   // South Coast
-  { id: '5842041f4e65fad6a7708c81', name: "Brandon's", coast: 'south' },
+  { id: '5842041f4e65fad6a7708c81', name: "Branden's", coast: 'south' },
   { id: '584204204e65fad6a77099c0', name: 'Freights Bay', coast: 'south' },
   { id: '584204204e65fad6a77099c5', name: 'South Point', coast: 'south' },
   { id: '584204204e65fad6a77099c4', name: "Surfer's Point", coast: 'south' },

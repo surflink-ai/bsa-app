@@ -27,7 +27,7 @@ export const BARBADOS_SPOTS: SurflineSpot[] = [
   { id: "67f94aeca64db676f445bef3", name: "Tabletop", coast: "East", lat: 13.2300, lon: -59.5260, bestSwell: "N-NE", bestSize: "2-4ft", offshoreWind: "W-SW", type: "reef" },
 
   // SOUTH COAST — point/reef breaks, works on S-SE swells
-  { id: "5842041f4e65fad6a7708c81", name: "Brandon's", coast: "South", lat: 13.0750, lon: -59.6300, bestSwell: "S-SE", bestSize: "3-6ft", offshoreWind: "N-NE", type: "beach" },
+  { id: "5842041f4e65fad6a7708c81", name: "Branden's", coast: "South", lat: 13.0750, lon: -59.6300, bestSwell: "S-SE", bestSize: "3-6ft", offshoreWind: "N-NE", type: "beach" },
   { id: "584204204e65fad6a77099c0", name: "Freights Bay", coast: "South", lat: 13.0656, lon: -59.5492, bestSwell: "S-SW", bestSize: "3-8ft", offshoreWind: "N-NE", type: "reef" },
   { id: "584204204e65fad6a77099c5", name: "South Point", coast: "South", lat: 13.0542, lon: -59.5289, bestSwell: "S-SE", bestSize: "3-8ft", offshoreWind: "N", type: "point" },
   { id: "584204204e65fad6a77099c4", name: "Surfer's Point", coast: "South", lat: 13.0600, lon: -59.5350, bestSwell: "S-SE", bestSize: "3-6ft", offshoreWind: "N", type: "reef" },

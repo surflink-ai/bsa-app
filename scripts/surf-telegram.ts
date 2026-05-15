@@ -50,12 +50,12 @@ interface Spot {
 
 /** Reef-break spots that hold their shape in small surf */
 const REEF_SPOTS = new Set([
-  'Soup Bowl', 'Brandon\'s', 'Parlour', 'Crane Bay', 'Ragged Point',
+  'Soup Bowl', 'Branden\'s', 'Parlour', 'Crane Bay', 'Ragged Point',
   'South Point', 'Duppies', 'Tropicana',
 ])
 
 /** Surfline-verified spots with reliable cam/rating */
-const VERIFIED_SPOTS = new Set(['Soup Bowl', 'Freights Bay', 'Brandon\'s', 'Crane Bay'])
+const VERIFIED_SPOTS = new Set(['Soup Bowl', 'Freights Bay', 'Branden\'s', 'Crane Bay'])
 
 function pickSize(spot: Spot): { min: number; max: number } {
   // Surfline premium when available — that's the authoritative hourly model

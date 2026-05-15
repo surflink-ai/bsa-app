@@ -10,7 +10,7 @@ import type { BSAEvent } from '@/lib/liveheats'
 const SCHEDULE_2026 = [
   { num: 1, date: "2026-03-14", location: "Drill Hall", label: "SOTY #1" },
   { num: 2, date: "2026-04-11", location: "South Point", label: "SOTY #2" },
-  { num: 3, date: "2026-05-09", location: "Long Beach", label: "SOTY #3" },
+  { num: 3, date: "2026-05-16", location: "Brandon's", label: "SOTY #3" },
   { num: 4, date: "2026-09-26", location: "Parlour", label: "SOTY #4" },
   { num: 5, date: "2026-11-27", location: "Soup Bowl", label: "Nationals" },
 ]

@@ -30,6 +30,15 @@ export function ResultsClient({ event, season, divisions, seasonPoints }: {
   const [activeDivIdx, setActiveDivIdx] = useState(0)
   const [expandedRounds, setExpandedRounds] = useState<Record<string, boolean>>({})
   const activeDiv = divisions[activeDivIdx]
+  const handleDivClick = (i: number) => {
+    setActiveDivIdx(i)
+    setExpandedRounds({})
+    // Smooth scroll back to the final-standings header so the new division
+    // doesn't drop into the wrong section.
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
 
   const toggleRound = (roundId: string) => {
     setExpandedRounds(prev => ({ ...prev, [roundId]: !prev[roundId] }))
@@ -67,28 +76,33 @@ export function ResultsClient({ event, season, divisions, seasonPoints }: {
             )}
 
             {/* Division Tabs */}
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 28 }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 28, alignItems: 'center' }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)', marginRight: 8 }}>Viewing</span>
               {divisions.map((d, i) => (
                 <button
                   key={d.id}
-                  onClick={() => { setActiveDivIdx(i); setExpandedRounds({}) }}
+                  onClick={() => handleDivClick(i)}
                   style={{
-                    padding: '8px 16px',
+                    padding: i === activeDivIdx ? '10px 20px' : '8px 16px',
                     borderRadius: 20,
-                    border: i === activeDivIdx ? `1px solid ${TEAL}` : '1px solid rgba(255,255,255,0.1)',
+                    border: i === activeDivIdx ? `2px solid ${TEAL}` : '1px solid rgba(255,255,255,0.1)',
                     cursor: 'pointer',
                     fontSize: 13,
-                    fontWeight: 600,
+                    fontWeight: i === activeDivIdx ? 800 : 600,
                     fontFamily: "'Space Grotesk', sans-serif",
-                    background: i === activeDivIdx ? 'rgba(43,165,160,0.15)' : 'transparent',
-                    color: i === activeDivIdx ? TEAL : 'rgba(255,255,255,0.5)',
+                    background: i === activeDivIdx ? TEAL : 'transparent',
+                    color: i === activeDivIdx ? '#fff' : 'rgba(255,255,255,0.5)',
                     transition: 'all 0.2s',
+                    boxShadow: i === activeDivIdx ? '0 4px 12px rgba(43,165,160,0.35)' : 'none',
                   }}
                 >
                   {d.shortName}
                 </button>
               ))}
             </div>
+            <p style={{ marginTop: 14, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.05em' }}>
+              {divisions.length} divisions — tap to switch. Currently viewing <span style={{ color: TEAL, fontWeight: 700 }}>{activeDiv?.name}</span>.
+            </p>
           </ScrollReveal>
         </div>
       </section>

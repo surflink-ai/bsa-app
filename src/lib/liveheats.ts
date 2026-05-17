@@ -164,7 +164,13 @@ export function sortEventsByDate(events: BSAEvent[]) {
 }
 
 export function getUpcomingEvents(events: BSAEvent[]) {
-  return events.filter(e => e.status === 'upcoming' || e.status === 'on').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  // Treat events older than 18h as past, even if LiveHeats hasn't flipped status to ended yet.
+  // This guards against the homepage showing yesterday's contest as "next" or "live".
+  const cutoff = Date.now() - 18 * 60 * 60 * 1000
+  return events
+    .filter(e => e.status === 'upcoming' || e.status === 'on')
+    .filter(e => new Date(e.date).getTime() > cutoff)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 }
 
 export function getPastEvents(events: BSAEvent[]) {

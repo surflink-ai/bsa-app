@@ -80,15 +80,11 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
     let mounted = true
     const check = async () => {
       try {
-        const res = await fetch('/api/stream/scores')
+        // Source of truth: admin stream_config.active. Avoids false positives
+        // when LiveHeats still has in-progress heats for an ended event.
+        const res = await fetch('/api/stream/status')
         const data = await res.json()
-        if (mounted) {
-          // Live if any heat has startTime but no endTime
-          const live = data.eventDivisions?.some((d: any) =>
-            d.heats?.some((h: any) => h.startTime && !h.endTime)
-          ) ?? false
-          setIsLive(live)
-        }
+        if (mounted) setIsLive(!!data.active)
       } catch {}
     }
     check()

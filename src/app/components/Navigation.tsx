@@ -41,14 +41,9 @@ export function Navigation() {
     let mounted = true
     const check = async () => {
       try {
-        const res = await fetch('/api/stream/scores')
+        const res = await fetch('/api/stream/status')
         const data = await res.json()
-        if (mounted) {
-          const live = data.eventDivisions?.some((d: any) =>
-            d.heats?.some((h: any) => h.startTime && !h.endTime)
-          ) ?? false
-          setIsLive(live)
-        }
+        if (mounted) setIsLive(!!data.active)
       } catch {}
     }
     check()

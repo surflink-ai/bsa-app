@@ -45,8 +45,8 @@ interface Props {
 const SCHEDULE_2026 = [
   { num: 1, date: "March 14", location: "Drill Hall", status: "done" },
   { num: 2, date: "April 11", location: "South Point", status: "done" },
-  { num: 3, date: "May 16", location: "Branden's", status: "next" },
-  { num: 4, date: "September 26", location: "Parlour", status: "upcoming" },
+  { num: 3, date: "May 16", location: "Branden's", status: "done" },
+  { num: 4, date: "September 26", location: "Parlour", status: "next" },
   { num: 5, date: "Nov 27–29", location: "Soup Bowl", status: "upcoming", special: "Independence Pro & Nationals" },
 ]
 
@@ -243,7 +243,7 @@ export function HomeClient({ org, upcomingEvents, pastEvents, latestResults, lat
                                   <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700, color: '#EF4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>LIVE NOW</span>
                                 </div>
                               ) : (
-                                <CountdownTimer targetDate={`2026-05-16`} />
+                                <CountdownTimer targetDate={`2026-09-26`} />
                               )}
                             </div>
                           </>

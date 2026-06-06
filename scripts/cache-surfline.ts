@@ -18,13 +18,26 @@ const SL_PROXY_KEY = process.env.SURFLINE_PROXY_KEY || ''
 const SL_BASE = 'https://services.surfline.com'
 
 // Build a Surfline kbyg URL, routing through the proxy when available.
-// Direct path:  https://services.surfline.com/kbyg/<path>?<qs>
-// Proxy path:   <proxyBase>/<path>?<qs>&key=<proxyKey>   (worker re-adds /kbyg)
+//
+// Vercel proxy path:  <proxyBase>?path=<kbygPath>&<qs>&secret=<key>
+//   e.g. https://bsa.surf/api/surfline-proxy?path=/spots/forecasts/wave&spotId=xxx
+// CF Worker proxy path: <proxyBase><kbygPath>?<qs>&key=<proxyKey>
+//   e.g. https://surfline-proxy.xxx.workers.dev/spots/forecasts/wave?spotId=xxx
+// Direct (fallback):  https://services.surfline.com/kbyg<kbygPath>?<qs>
+//
+const IS_VERCEL_PROXY = SL_PROXY.includes('bsa.surf') || SL_PROXY.includes('vercel.app')
+
 function slUrl(kbygPath: string, qs: string): string {
   if (SL_PROXY) {
-    const sep = qs ? '&' : ''
-    const keyParam = SL_PROXY_KEY ? `${qs ? '&' : ''}key=${encodeURIComponent(SL_PROXY_KEY)}` : ''
-    return `${SL_PROXY}${kbygPath}${qs ? '?' + qs : ''}${keyParam}`
+    if (IS_VERCEL_PROXY) {
+      // Vercel proxy: path as query param
+      const secretParam = SL_PROXY_KEY ? `&secret=${encodeURIComponent(SL_PROXY_KEY)}` : ''
+      return `${SL_PROXY}?path=${encodeURIComponent(kbygPath)}${qs ? '&' + qs : ''}${secretParam}`
+    } else {
+      // CF Worker proxy: path in URL
+      const keyParam = SL_PROXY_KEY ? `${qs ? '&' : ''}key=${encodeURIComponent(SL_PROXY_KEY)}` : ''
+      return `${SL_PROXY}${kbygPath}${qs ? '?' + qs : ''}${keyParam}`
+    }
   }
   return `${SL_BASE}/kbyg${kbygPath}${qs ? '?' + qs : ''}`
 }

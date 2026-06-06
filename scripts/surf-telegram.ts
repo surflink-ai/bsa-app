@@ -19,6 +19,22 @@
  *   KIND=morning | afternoon | dawn  -> affects header + horizon
  */
 
+// Self-load .env.local so the script never silently falls into dry-run
+// just because the calling shell didn't export vars (zsh `source` quirk).
+import { readFileSync } from 'fs'
+import { join } from 'path'
+try {
+  const envPath = join(process.cwd(), '.env.local')
+  for (const line of readFileSync(envPath, 'utf8').split('\n')) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/)
+    if (!m) continue
+    const key = m[1]
+    if (process.env[key]) continue // don't override real env
+    let val = m[2].replace(/^["']|["']$/g, '').replace(/\\n$/, '').trim()
+    process.env[key] = val
+  }
+} catch { /* no .env.local, rely on real env */ }
+
 const API_URL = process.env.CONDITIONS_URL || 'https://bsa.surf/api/conditions'
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || ''
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID || ''
@@ -259,12 +275,24 @@ async function main() {
   const headerEmoji = KIND === 'dawn' ? '🌅' : KIND === 'afternoon' ? '🌊' : '🏄'
   const headerLabel = KIND === 'dawn' ? 'DAWN PATROL' : KIND === 'afternoon' ? 'AFTERNOON' : 'MORNING'
 
+  // Data-source transparency: is the premium (Surfline LOTUS / ECMWF) layer live,
+  // or are we running on the GFS/Open-Meteo fallback? Never degrade silently.
+  const sources: string[] = Array.isArray(data.sources) ? data.sources : []
+  const hasSurfline = sources.includes('surfline-lotus') || sources.includes('surfline-premium')
+  const cacheStale = data.cache?.stale !== false
+  const premiumLive = hasSurfline && !cacheStale
+  const cacheAge = data.cache?.surflineAge || null
+  const sourceLine = premiumLive
+    ? null // all-good, no need to clutter
+    : `⚠️ <i>Premium models offline — running on GFS/buoy fallback${cacheAge ? ` (cache ${cacheAge})` : ''}. Sizes approximate.</i>`
+
   const lines: string[] = []
   lines.push(`${headerEmoji} <b>BARBADOS · ${dateStr} · ${headerLabel}</b>`)
   lines.push('')
   if (buoyLine) lines.push(buoyLine)
   lines.push(expLine)
   lines.push([sunLine, tideLine].filter(Boolean).join(' · '))
+  if (sourceLine) lines.push(sourceLine)
   lines.push('')
 
   // ----- Flat-case: one-liner, no spot listing -----

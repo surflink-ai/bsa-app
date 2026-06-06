@@ -427,11 +427,19 @@ export async function GET(req: Request) {
       const consensus = computeConsensus(readings)
 
       // Use Surfline as primary, fall back to computed
-      const conditions = !cacheStale && sl?.conditions
+      let conditions = !cacheStale && sl?.conditions
         ? sl.conditions
         : !cacheStale && premium?.ratings?.[0]?.key
         ? premium.ratings[0].key
         : rateConditions(waveH, swellH, swellP, windSpeed, windType)
+
+      // GEOMETRY OVERRIDE: a swell that can't reach this coast can't make surf here,
+      // no matter what any model says. Kills the "GOOD but 0% exposure" contradiction.
+      // (Open-Meteo/Surfline can report a coast's local windswell while the dominant
+      //  groundswell is shadowed; for a surf verdict, shadowed = flat.)
+      if (!inWindow || exposure < 0.15) {
+        conditions = "FLAT"
+      }
 
       coastSpots[spot.coast.toLowerCase()]?.push({
         spotId: spot.id,

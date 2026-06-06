@@ -8,7 +8,26 @@
 
 const SUPABASE_URL = 'https://veggfcumdveuoumrblcn.supabase.co'
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+// Surfline now CF-bot-blocks direct calls from residential/datacenter IPs (502/403).
+// Route through the deployed CF Worker proxy when configured; the worker calls
+// Surfline from Cloudflare's network (not blocked) and prepends /kbyg itself.
+// Set SURFLINE_PROXY_BASE to e.g. https://surfline-proxy.<acct>.workers.dev
+// When unset, falls back to direct (will fail until the proxy is wired up).
+const SL_PROXY = (process.env.SURFLINE_PROXY_BASE || '').replace(/\/$/, '')
+const SL_PROXY_KEY = process.env.SURFLINE_PROXY_KEY || ''
 const SL_BASE = 'https://services.surfline.com'
+
+// Build a Surfline kbyg URL, routing through the proxy when available.
+// Direct path:  https://services.surfline.com/kbyg/<path>?<qs>
+// Proxy path:   <proxyBase>/<path>?<qs>&key=<proxyKey>   (worker re-adds /kbyg)
+function slUrl(kbygPath: string, qs: string): string {
+  if (SL_PROXY) {
+    const sep = qs ? '&' : ''
+    const keyParam = SL_PROXY_KEY ? `${qs ? '&' : ''}key=${encodeURIComponent(SL_PROXY_KEY)}` : ''
+    return `${SL_PROXY}${kbygPath}${qs ? '?' + qs : ''}${keyParam}`
+  }
+  return `${SL_BASE}/kbyg${kbygPath}${qs ? '?' + qs : ''}`
+}
 let SL_TOKEN = process.env.SURFLINE_ACCESS_TOKEN || ''
 const SL_REFRESH = process.env.SURFLINE_REFRESH_TOKEN || ''
 
@@ -19,7 +38,7 @@ const SL_CLIENT_AUTH = 'Basic NWM1OWU3YzNmMGI2Y2IxYWQwMmJhZjY2OnNrX1FxWEpkbjZOeT
 async function ensureToken(): Promise<string> {
   if (!SL_TOKEN) return ''
   // Quick test
-  const test = await fetch(`${SL_BASE}/kbyg/spots/forecasts/wave?spotId=5842041f4e65fad6a7708b48&days=1&intervalHours=6&accesstoken=${SL_TOKEN}`)
+  const test = await fetch(slUrl('/spots/forecasts/wave', `spotId=5842041f4e65fad6a7708b48&days=1&intervalHours=6&accesstoken=${SL_TOKEN}`))
   if (test.ok) {
     const d = await test.json()
     if (d?.data?.wave?.length) return SL_TOKEN // Token works
@@ -104,8 +123,8 @@ async function fetchSurflineOverview() {
   for (const [coast, subregionId] of Object.entries(SUBREGIONS)) {
     try {
       const url = SL_TOKEN
-        ? `${SL_BASE}/kbyg/regions/overview?subregionId=${subregionId}&accesstoken=${SL_TOKEN}`
-        : `${SL_BASE}/kbyg/regions/overview?subregionId=${subregionId}`
+        ? slUrl('/regions/overview', `subregionId=${subregionId}&accesstoken=${SL_TOKEN}`)
+        : slUrl('/regions/overview', `subregionId=${subregionId}`)
       const res = await fetch(url)
       if (!res.ok) { results[coast] = []; continue }
       const data = await res.json()
@@ -135,15 +154,15 @@ async function fetchSurflinePremium() {
     try {
       // Wave forecast — 3 days hourly
       const waveRes = await fetch(
-        `${SL_BASE}/kbyg/spots/forecasts/wave?spotId=${spot.id}&days=3&intervalHours=1&accesstoken=${SL_TOKEN}`
+        slUrl('/spots/forecasts/wave', `spotId=${spot.id}&days=3&intervalHours=1&accesstoken=${SL_TOKEN}`)
       )
       // Wind forecast
       const windRes = await fetch(
-        `${SL_BASE}/kbyg/spots/forecasts/wind?spotId=${spot.id}&days=3&intervalHours=3&accesstoken=${SL_TOKEN}`
+        slUrl('/spots/forecasts/wind', `spotId=${spot.id}&days=3&intervalHours=3&accesstoken=${SL_TOKEN}`)
       )
       // Rating forecast
       const ratingRes = await fetch(
-        `${SL_BASE}/kbyg/spots/forecasts/rating?spotId=${spot.id}&days=3&intervalHours=3&accesstoken=${SL_TOKEN}`
+        slUrl('/spots/forecasts/rating', `spotId=${spot.id}&days=3&intervalHours=3&accesstoken=${SL_TOKEN}`)
       )
 
       const [waveData, windData, ratingData] = await Promise.all([

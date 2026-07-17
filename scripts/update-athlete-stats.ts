@@ -3,8 +3,9 @@
  * Run: npx tsx scripts/update-athlete-stats.ts
  */
 
-const SUPABASE_URL = 'https://veggfcumdveuoumrblcn.supabase.co'
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+import { requireServiceRole } from './_supabase'
+
+const { url: SUPABASE_URL, key: SUPABASE_KEY } = requireServiceRole()
 
 async function sb(path: string, opts: RequestInit = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {

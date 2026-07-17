@@ -1,9 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
+import { requireServiceRole } from './_supabase'
 
-const supabase = createClient(
-  'https://veggfcumdveuoumrblcn.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const { url, key } = requireServiceRole()
+const supabase = createClient(url, key)
 
 async function fixHeatTotals() {
   // Get all heat_athletes

@@ -1,26 +1,59 @@
 /**
- * Sync LiveHeats Event #429674 → BSA Compete Supabase
+ * Sync ONE LiveHeats event → BSA Compete Supabase, then recompute cumulative
+ * season standings from every event already stored for that season.
  *
- * Creates: event, divisions, rounds, heats, heat_athletes, wave_scores, season_points
- * Updates: athlete stats on athlete profiles
+ * This single parameterised script replaces the old per-event copies
+ * (sync_event2.js / sync_event3.js). Nothing is hardcoded — pass config via env:
  *
- * Run: npx tsx scripts/sync-liveheats-event.ts
+ *   LH_EVENT_ID=506069 \
+ *   EVENT_NAME="SOTY Championship Event #3 2026" \
+ *   EVENT_LOCATION="Branden's, Barbados" \
+ *   EVENT_DATE_START=2026-05-16 \
+ *   EVENT_DATE_END=2026-05-17 \
+ *   SEASON_YEAR=2026 \
+ *   npm run sync:event
+ *
+ * Idempotent: re-running deletes the existing event row for this LiveHeats ID
+ * (cascade removes its divisions/rounds/heats/scores) and rebuilds it, then
+ * recomputes season points across ALL complete events in the season.
+ *
+ * Requires SUPABASE_SERVICE_ROLE_KEY (bypasses RLS) in the environment.
  */
 
-const SUPABASE_URL = 'https://veggfcumdveuoumrblcn.supabase.co'
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-const LIVEHEATS_EVENT_ID = '429674'
+import { requireServiceRole } from './_supabase'
+
+const { url: SUPABASE_URL, key: SUPABASE_KEY } = requireServiceRole()
 const GRAPHQL_URL = 'https://liveheats.com/api/graphql'
+
+// ── Required config from env ──
+const LH_EVENT_ID = process.env.LH_EVENT_ID || ''
+const EVENT_NAME = process.env.EVENT_NAME || ''
+const EVENT_LOCATION = process.env.EVENT_LOCATION || 'Barbados'
+const EVENT_DATE_START = process.env.EVENT_DATE_START || ''
+const EVENT_DATE_END = process.env.EVENT_DATE_END || EVENT_DATE_START
+const SEASON_YEAR = Number(process.env.SEASON_YEAR || '2026')
+
+if (!LH_EVENT_ID || !EVENT_NAME || !EVENT_DATE_START) {
+  console.error(
+    'Missing required env. Provide LH_EVENT_ID, EVENT_NAME, EVENT_DATE_START ' +
+      '(and optionally EVENT_LOCATION, EVENT_DATE_END, SEASON_YEAR).'
+  )
+  process.exit(1)
+}
+
+const POINTS_FALLBACK: Record<number, number> = {
+  1: 1000, 2: 800, 3: 650, 4: 500, 5: 400, 6: 300, 7: 200, 8: 100,
+}
 
 // ── Supabase REST helpers ──
 async function sb(path: string, opts: RequestInit = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...opts,
     headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
       'Content-Type': 'application/json',
-      'Prefer': opts.method === 'POST' ? 'return=representation' : 'return=minimal',
+      Prefer: opts.method === 'POST' ? 'return=representation' : 'return=minimal',
       ...opts.headers,
     },
   })
@@ -31,76 +64,50 @@ async function sb(path: string, opts: RequestInit = {}) {
   const text = await res.text()
   return text ? JSON.parse(text) : null
 }
-
-async function sbGet(table: string, query: string = '') {
-  return sb(`${table}?${query}`)
-}
-
-async function sbInsert(table: string, data: Record<string, unknown> | Record<string, unknown>[]) {
-  return sb(table, {
+const sbGet = (table: string, query = '') => sb(`${table}?${query}`)
+const sbInsert = (table: string, data: unknown) =>
+  sb(table, {
     method: 'POST',
-    headers: { 'Prefer': 'return=representation,resolution=merge-duplicates' },
+    headers: { Prefer: 'return=representation,resolution=merge-duplicates' },
     body: JSON.stringify(data),
   })
-}
 
-async function sbUpsert(table: string, data: Record<string, unknown> | Record<string, unknown>[], onConflict?: string) {
-  const prefer = onConflict
-    ? 'return=representation,resolution=merge-duplicates'
-    : 'return=representation,resolution=merge-duplicates'
-  return sb(table, {
-    method: 'POST',
-    headers: { 'Prefer': prefer },
-    body: JSON.stringify(data),
-  })
-}
-
-async function sbPatch(table: string, query: string, data: Record<string, unknown>) {
-  return sb(`${table}?${query}`, {
-    method: 'PATCH',
-    body: JSON.stringify(data),
-  })
-}
-
-// ── LiveHeats fetch ──
+// ── LiveHeats ──
 async function fetchLiveHeatsEvent() {
   const res = await fetch(GRAPHQL_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Origin': 'https://liveheats.com',
-      'Referer': 'https://liveheats.com/',
+      Origin: 'https://liveheats.com',
+      Referer: 'https://liveheats.com/',
     },
     body: JSON.stringify({
-      query: `{
-        event(id: "${LIVEHEATS_EVENT_ID}") {
+      // LiveHeats event id is a GraphQL variable — never string-interpolated.
+      query: `query Event($id: ID!) {
+        event(id: $id) {
           id name status
           eventDivisions {
-            id
-            division { id name }
-            status
+            id division { id name } status
             heats {
               id round position startTime endTime heatDurationMinutes
               config { totalCountingRides maxRideScore jerseyOrder }
               competitors { position athlete { id name } }
-              result {
-                place total needs winBy rides
-                competitor { athlete { id name } }
-              }
+              result { place total needs winBy rides competitor { athlete { id name } } }
             }
           }
         }
       }`,
+      variables: { id: LH_EVENT_ID },
     }),
   })
   const json = await res.json()
+  if (json.errors) throw new Error(JSON.stringify(json.errors))
   return json.data.event
 }
 
-// ── Division name mapping (LiveHeats → BSA) ──
+// LiveHeats division names are inconsistent; map to BSA canonical names.
 const LH_TO_BSA_DIV: Record<string, string> = {
   'Open Mens': 'Open Men',
-  'Open Mens ': 'Open Men',
   'Open Womens': 'Open Women',
   'Under 18 Boys': 'Under 18 Boys',
   'Under 18 Girls': 'Under 18 Girls',
@@ -108,353 +115,261 @@ const LH_TO_BSA_DIV: Record<string, string> = {
   'Under 16 Girls': 'Under 16 Girls',
   'Under 14 Boys': 'Under 14 Boys',
   'Long Board Open': 'Longboard Open',
+  'Longboard Open': 'Longboard Open',
   'Grand Masters (over 40 years old)': 'Grand Masters',
-  'Novis': 'Novis',
+  Novis: 'Novis',
 }
 
-// Round name → number mapping
-function roundNumber(roundName: string): number {
-  const lower = roundName.toLowerCase()
-  if (lower.includes('round 1') || lower.includes('r1')) return 1
-  if (lower.includes('round 2') || lower.includes('r2')) return 2
+const ROUND_MAP: Record<string, number> = {
+  'Round 1': 1, 'Round 2': 2, 'Round 3': 3, Quarterfinal: 4, Semifinal: 5, Final: 6,
+}
+function roundNumber(name: string): number {
+  const lower = name.toLowerCase()
+  if (lower.includes('final') && !lower.includes('semi') && !lower.includes('quarter')) return 6
+  if (lower.includes('semi')) return 5
+  if (lower.includes('quarter')) return 4
   if (lower.includes('round 3') || lower.includes('r3')) return 3
-  if (lower.includes('quarterfinal')) return 4
-  if (lower.includes('semifinal')) return 5
-  if (lower.includes('final')) return 6
-  return 1
+  if (lower.includes('round 2') || lower.includes('r2')) return 2
+  return ROUND_MAP[name] || 1
 }
 
-// ── Main sync ──
+function titleCase(name: string): string {
+  return name
+    .split(' ')
+    .map((p) => {
+      if (!p) return p
+      if (p.length <= 2 && p.toLowerCase() !== p) return p
+      return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()
+    })
+    .join(' ')
+}
+
 async function main() {
-  console.log('🔄 Fetching LiveHeats event...')
+  console.log(`🔄 Syncing LiveHeats event ${LH_EVENT_ID}...`)
   const event = await fetchLiveHeatsEvent()
-  console.log(`📋 Event: ${event.name} (${event.status})`)
+  console.log(`📋 ${event.name} (${event.status})`)
 
-  // 1. Get existing BSA divisions
-  console.log('\n📂 Loading BSA divisions...')
-  const bsaDivisions: { id: string; name: string; short_name: string }[] = await sbGet('comp_divisions', 'select=id,name,short_name')
-  const divMap = new Map(bsaDivisions.map((d: { id: string; name: string }) => [d.name, d.id]))
+  // Divisions
+  const bsaDivisions: { id: string; name: string }[] = await sbGet(
+    'comp_divisions',
+    'select=id,name'
+  )
+  const divMap = new Map(bsaDivisions.map((d) => [d.name, d.id]))
 
-  // Add Novis if missing
-  if (!divMap.has('Novis')) {
-    console.log('  ➕ Adding "Novis" division...')
-    const [novis] = await sbInsert('comp_divisions', { name: 'Novis', short_name: 'NOV', sort_order: 14 })
-    divMap.set('Novis', novis.id)
-  }
-
-  // 2. Get existing season
-  const [season] = await sbGet('comp_seasons', 'select=id,name,points_system&year=eq.2026&limit=1')
+  // Season
+  const [season] = await sbGet(
+    'comp_seasons',
+    `select=id,name,points_system&year=eq.${SEASON_YEAR}&limit=1`
+  )
+  if (!season) throw new Error(`No season found for year ${SEASON_YEAR}`)
+  const pointsSystem: Record<string, number> = season.points_system || {}
   console.log(`🏆 Season: ${season.name} (${season.id})`)
-  const pointsSystem = season.points_system as Record<string, number>
 
-  // 3. Get existing athletes (for liveheats_id mapping)
-  console.log('\n👥 Loading athletes...')
+  // Athletes
   const athletes: { id: string; name: string; liveheats_id: string | null }[] =
     await sbGet('athletes', 'select=id,name,liveheats_id')
-  const athleteByLhId = new Map(athletes.filter(a => a.liveheats_id).map(a => [a.liveheats_id!, a]))
-  const athleteByName = new Map(athletes.map(a => [a.name.toLowerCase(), a]))
-  console.log(`  ${athletes.length} athletes loaded, ${athleteByLhId.size} with LiveHeats IDs`)
+  const athleteByLhId = new Map(
+    athletes.filter((a) => a.liveheats_id).map((a) => [a.liveheats_id!, a])
+  )
+  const athleteByName = new Map(athletes.map((a) => [a.name.toLowerCase(), a]))
 
-  // Helper: find or create athlete
-  async function findOrCreateAthlete(lhId: string, name: string): Promise<{ id: string; name: string }> {
-    let athlete = athleteByLhId.get(lhId) || athleteByName.get(name.toLowerCase())
-    if (athlete) return athlete
-
-    // Create new athlete
-    console.log(`    ➕ Creating athlete: ${name} (lh:${lhId})`)
+  async function findOrCreateAthlete(lhId: string, rawName: string) {
+    const name = titleCase(rawName)
+    const found = athleteByLhId.get(String(lhId)) || athleteByName.get(name.toLowerCase())
+    if (found) return found
     const [created] = await sbInsert('athletes', {
       name,
-      liveheats_id: lhId,
+      liveheats_id: String(lhId),
       nationality: 'Barbados',
       active: true,
     })
-    athleteByLhId.set(lhId, created)
+    athleteByLhId.set(String(lhId), created)
     athleteByName.set(name.toLowerCase(), created)
+    console.log(`  ➕ ${name}`)
     return created
   }
 
-  // 4. Delete existing event data for this LiveHeats ID (idempotent re-sync)
-  console.log('\n🗑️  Cleaning existing sync data for this event...')
-  const existingEvents = await sbGet('comp_events', `select=id&liveheats_id=eq.${LIVEHEATS_EVENT_ID}`)
-  for (const e of existingEvents) {
-    // Cascade will handle event_divisions → rounds → heats → heat_athletes → wave_scores
+  // Idempotent: remove existing event for this LiveHeats id (cascade cleans children)
+  const existing = await sbGet('comp_events', `select=id&liveheats_id=eq.${LH_EVENT_ID}`)
+  for (const e of existing) {
     await sb(`comp_events?id=eq.${e.id}`, { method: 'DELETE' })
-    console.log(`  Deleted existing event ${e.id}`)
+    console.log(`  🗑️  removed prior sync ${e.id}`)
   }
-  // Also clean season points for this event
-  // (we'll recalculate below)
 
-  // 5. Create event
-  console.log('\n📌 Creating event...')
   const [compEvent] = await sbInsert('comp_events', {
     season_id: season.id,
-    name: event.name,
-    location: 'Drill Hall, Barbados',
-    event_date: '2026-03-14',
-    end_date: '2026-03-15',
+    name: EVENT_NAME,
+    location: EVENT_LOCATION,
+    event_date: EVENT_DATE_START,
+    end_date: EVENT_DATE_END,
     status: 'complete',
-    liveheats_id: LIVEHEATS_EVENT_ID,
-    notes: `Synced from LiveHeats event ${LIVEHEATS_EVENT_ID}`,
+    liveheats_id: LH_EVENT_ID,
+    notes: `Synced from LiveHeats event ${LH_EVENT_ID}`,
   })
-  console.log(`  ✅ Event: ${compEvent.id}`)
-
-  // 6. Process each division
-  const seasonPoints: Record<string, Record<string, { place: number; athleteId: string; athleteName: string }>> = {}
+  console.log(`📌 event ${compEvent.id}`)
 
   for (const lhDiv of event.eventDivisions) {
-    const bsaDivName = LH_TO_BSA_DIV[lhDiv.division.name] || LH_TO_BSA_DIV[lhDiv.division.name.trim()]
-    if (!bsaDivName) {
-      console.log(`\n⚠️  Skipping unmapped division: ${lhDiv.division.name}`)
+    const rawName: string = lhDiv.division.name
+    const bsaName = LH_TO_BSA_DIV[rawName] || LH_TO_BSA_DIV[rawName.trim()]
+    const divId = bsaName ? divMap.get(bsaName) : undefined
+    if (!divId) {
+      console.log(`  ⚠️ skip unmapped division "${rawName}"`)
       continue
     }
-    const bsaDivId = divMap.get(bsaDivName)
-    if (!bsaDivId) {
-      console.log(`\n⚠️  Division not found in BSA: ${bsaDivName}`)
-      continue
-    }
-    if (lhDiv.heats.length === 0) {
-      console.log(`\n⏭️  Skipping ${bsaDivName} (no heats)`)
-      continue
-    }
+    if (!lhDiv.heats.length) continue
 
-    console.log(`\n🏄 ${bsaDivName} (${lhDiv.heats.length} heats)`)
-
-    // Create event_division
     const [eventDiv] = await sbInsert('comp_event_divisions', {
       event_id: compEvent.id,
-      division_id: bsaDivId,
+      division_id: divId,
       scoring_best_of: lhDiv.heats[0]?.config?.totalCountingRides || 2,
       ride_time_minutes: lhDiv.heats[0]?.heatDurationMinutes || 20,
       max_athletes: 32,
     })
 
-    // Group heats by round
     const roundGroups = new Map<string, typeof lhDiv.heats>()
-    for (const heat of lhDiv.heats) {
-      const existing = roundGroups.get(heat.round) || []
-      existing.push(heat)
-      roundGroups.set(heat.round, existing)
+    for (const h of lhDiv.heats) {
+      const arr = roundGroups.get(h.round) || []
+      arr.push(h)
+      roundGroups.set(h.round, arr)
     }
 
-    // Sort rounds by round number
-    const sortedRounds = [...roundGroups.entries()].sort((a, b) => roundNumber(a[0]) - roundNumber(b[0]))
-
-    for (const [roundName, roundHeats] of sortedRounds) {
-      const rn = roundNumber(roundName)
-
-      // Create round
+    for (const [roundName, roundHeats] of roundGroups) {
       const [round] = await sbInsert('comp_rounds', {
         event_division_id: eventDiv.id,
-        round_number: rn,
+        round_number: roundNumber(roundName),
         name: roundName,
         status: 'complete',
       })
-
       for (const lhHeat of roundHeats) {
-        const heatNum = lhHeat.position + 1 // LiveHeats is 0-indexed
-
-        // Create heat
         const [heat] = await sbInsert('comp_heats', {
           round_id: round.id,
-          heat_number: heatNum,
+          heat_number: lhHeat.position + 1,
           status: 'complete',
           actual_start: lhHeat.startTime,
           actual_end: lhHeat.endTime,
           duration_minutes: lhHeat.heatDurationMinutes || 20,
         })
-
-        // Create heat athletes + wave scores
-        const results = lhHeat.result || []
-        for (const r of results) {
-          const lhAthleteId = r.competitor.athlete.id
-          const athleteName = r.competitor.athlete.name
-          const athlete = await findOrCreateAthlete(lhAthleteId, athleteName)
-
-          // Determine jersey color
-          const compEntry = (lhHeat.competitors || []).find((c: { athlete: { id: string } }) => c.athlete.id === lhAthleteId)
-          const jerseyOrder = lhHeat.config?.jerseyOrder || ['red', 'white', 'green', 'blue', 'black']
-          const jersey = compEntry != null ? jerseyOrder[compEntry.position] || null : null
-
-          // Was this athlete in the final? Track for season points
-          if (roundName === 'Final' && r.place > 0) {
-            if (!seasonPoints[bsaDivId]) seasonPoints[bsaDivId] = {}
-            seasonPoints[bsaDivId][athlete.id] = {
-              place: r.place,
-              athleteId: athlete.id,
-              athleteName: athleteName,
-            }
-          }
-
-          // Create heat_athlete
+        const jerseyOrder = lhHeat.config?.jerseyOrder || ['red', 'white', 'green', 'blue', 'black']
+        for (const r of lhHeat.result || []) {
+          const athlete = await findOrCreateAthlete(r.competitor.athlete.id, r.competitor.athlete.name)
+          const entry = (lhHeat.competitors || []).find(
+            (c: { athlete: { id: string } }) => c.athlete.id === r.competitor.athlete.id
+          )
           const [heatAthlete] = await sbInsert('comp_heat_athletes', {
             heat_id: heat.id,
             athlete_id: athlete.id,
-            athlete_name: athleteName,
-            jersey_color: jersey,
-            seed_position: compEntry?.position != null ? compEntry.position + 1 : null,
+            athlete_name: athlete.name,
+            jersey_color: entry != null ? jerseyOrder[entry.position] || null : null,
+            seed_position: entry?.position != null ? entry.position + 1 : null,
             result_position: r.place,
-            advanced: roundName !== 'Final' && r.place <= 2,
+            total_score: r.total,
+            advanced: roundNumber(roundName) < 6 && r.place <= 2,
           })
-
-          // Create wave scores
-          const rides = r.rides || {}
           let waveNum = 1
-          for (const rideList of Object.values(rides) as Array<{ total: number | null; scoring_ride?: boolean }[]>) {
+          for (const rideList of Object.values(r.rides || {}) as Array<
+            { total: number | null }[]
+          >) {
             for (const ride of rideList) {
               if (ride.total != null) {
                 await sbInsert('comp_wave_scores', {
                   heat_athlete_id: heatAthlete.id,
-                  wave_number: waveNum,
+                  wave_number: waveNum++,
                   score: ride.total,
                   is_override: false,
                 })
-                waveNum++
               }
             }
           }
         }
-        process.stdout.write('.')
       }
     }
-    console.log(' ✅')
+    console.log(`  ✅ ${bsaName}`)
   }
 
-  // 7. Calculate and insert season points
-  console.log('\n🏅 Calculating season points...')
-  // Clear existing season points for this season (fresh calc)
-  await sb(`comp_season_points?season_id=eq.${season.id}`, { method: 'DELETE' })
+  // ── Cumulative season points from every event stored for this season ──
+  console.log('\n🏅 Recomputing cumulative season points...')
+  const seasonEvents = await sbGet(
+    'comp_events',
+    `select=id&season_id=eq.${season.id}`
+  )
+  const eventIds: string[] = seasonEvents.map((e: { id: string }) => e.id)
+  const eventDivs = await sbGet(
+    'comp_event_divisions',
+    `select=id,division_id&event_id=in.(${eventIds.join(',')})`
+  )
+  const edToDiv = new Map<string, string>(
+    eventDivs.map((ed: { id: string; division_id: string }) => [ed.id, ed.division_id])
+  )
+  const finals = await sbGet(
+    'comp_rounds',
+    `select=id,event_division_id&name=eq.Final&event_division_id=in.(${eventDivs
+      .map((ed: { id: string }) => ed.id)
+      .join(',')})`
+  )
+  const roundToEd = new Map<string, string>(
+    finals.map((r: { id: string; event_division_id: string }) => [r.id, r.event_division_id])
+  )
+  const finalHeats = finals.length
+    ? await sbGet('comp_heats', `select=id,round_id&round_id=in.(${finals.map((r: { id: string }) => r.id).join(',')})`)
+    : []
+  const heatToRound = new Map<string, string>(
+    finalHeats.map((h: { id: string; round_id: string }) => [h.id, h.round_id])
+  )
+  const finalAthletes = finalHeats.length
+    ? await sbGet(
+        'comp_heat_athletes',
+        `select=athlete_id,athlete_name,result_position,heat_id&heat_id=in.(${finalHeats
+          .map((h: { id: string }) => h.id)
+          .join(',')})`
+      )
+    : []
 
-  const pointsInserts: Record<string, unknown>[] = []
-  for (const [divId, athletes] of Object.entries(seasonPoints)) {
-    for (const [athleteId, data] of Object.entries(athletes)) {
-      const points = pointsSystem[String(data.place)] || 0
-      pointsInserts.push({
+  const standings: Record<
+    string,
+    Record<string, { name: string; points: number; best: number; events: number }>
+  > = {}
+  for (const ha of finalAthletes) {
+    if (!ha.result_position || !ha.athlete_id) continue
+    const edId = heatToRound.get(ha.heat_id)
+    const roundEd = edId ? roundToEd.get(edId) : undefined
+    const divId = roundEd ? edToDiv.get(roundEd) : undefined
+    if (!divId) continue
+    const pts = pointsSystem[String(ha.result_position)] ?? POINTS_FALLBACK[ha.result_position] ?? 0
+    standings[divId] ||= {}
+    const s = (standings[divId][ha.athlete_id] ||= {
+      name: ha.athlete_name,
+      points: 0,
+      best: ha.result_position,
+      events: 0,
+    })
+    s.points += pts
+    s.best = Math.min(s.best, ha.result_position)
+    s.events += 1
+  }
+
+  await sb(`comp_season_points?season_id=eq.${season.id}`, { method: 'DELETE' })
+  const inserts: Record<string, unknown>[] = []
+  for (const [divId, byAthlete] of Object.entries(standings)) {
+    for (const [athleteId, s] of Object.entries(byAthlete)) {
+      inserts.push({
         season_id: season.id,
         division_id: divId,
-        athlete_name: data.athleteName,
         athlete_id: athleteId,
-        total_points: points,
-        events_counted: 1,
-        best_result: data.place,
+        athlete_name: s.name,
+        total_points: s.points,
+        events_counted: s.events,
+        best_result: s.best,
       })
     }
   }
-
-  if (pointsInserts.length > 0) {
-    await sbInsert('comp_season_points', pointsInserts)
-    console.log(`  ✅ ${pointsInserts.length} season point entries`)
+  for (let i = 0; i < inserts.length; i += 50) {
+    await sbInsert('comp_season_points', inserts.slice(i, i + 50))
   }
-
-  // 8. Update athlete profile stats
-  console.log('\n📊 Updating athlete profile stats...')
-
-  // Collect all athlete results across divisions
-  const athleteStats: Record<string, {
-    id: string; name: string
-    events: number; wins: number; finals: number
-    bestPlace: number | null; totalPoints: number
-    divisions: string[]
-    bestWave: number
-  }> = {}
-
-  for (const lhDiv of event.eventDivisions) {
-    const bsaDivName = LH_TO_BSA_DIV[lhDiv.division.name] || LH_TO_BSA_DIV[lhDiv.division.name.trim()]
-    if (!bsaDivName) continue
-
-    for (const heat of lhDiv.heats) {
-      for (const r of heat.result || []) {
-        const lhId = r.competitor.athlete.id
-        const athlete = athleteByLhId.get(lhId) || athleteByName.get(r.competitor.athlete.name.toLowerCase())
-        if (!athlete) continue
-
-        if (!athleteStats[athlete.id]) {
-          athleteStats[athlete.id] = {
-            id: athlete.id, name: athlete.name,
-            events: 0, wins: 0, finals: 0,
-            bestPlace: null, totalPoints: 0,
-            divisions: [], bestWave: 0,
-          }
-        }
-        const s = athleteStats[athlete.id]
-
-        // Track divisions entered
-        if (!s.divisions.includes(bsaDivName)) s.divisions.push(bsaDivName)
-
-        // Best wave
-        const rides = r.rides || {}
-        for (const rideList of Object.values(rides) as Array<{ total: number | null }[]>) {
-          for (const ride of rideList) {
-            if (ride.total != null && ride.total > s.bestWave) s.bestWave = ride.total
-          }
-        }
-
-        // Final results
-        if (heat.round === 'Final') {
-          s.finals++
-          if (r.place === 1) s.wins++
-          if (s.bestPlace === null || r.place < s.bestPlace) s.bestPlace = r.place
-
-          // Points
-          const divId = divMap.get(bsaDivName)
-          if (divId && seasonPoints[divId]?.[athlete.id]) {
-            const pts = pointsSystem[String(r.place)] || 0
-            s.totalPoints += pts
-          }
-        }
-      }
-    }
-  }
-
-  // Count unique events per athlete (they entered at least 1 div)
-  for (const s of Object.values(athleteStats)) {
-    s.events = 1 // This is 1 event (Event #1)
-  }
-
-  // Build social_links-style stats into athletes table
-  // We'll store competition stats as a jsonb field
-  let updatedCount = 0
-  for (const s of Object.values(athleteStats)) {
-    const stats = {
-      events_entered: s.events,
-      wins: s.wins,
-      finals_made: s.finals,
-      best_finish: s.bestPlace,
-      total_points: s.totalPoints,
-      best_wave: s.bestWave > 0 ? s.bestWave : null,
-      divisions: s.divisions,
-      last_event: 'SOTY Championship Event #1 2026',
-      last_updated: new Date().toISOString(),
-    }
-
-    await sbPatch('athletes', `id=eq.${s.id}`, {
-      social_links: { competition_stats: stats },
-    })
-    updatedCount++
-  }
-  console.log(`  ✅ ${updatedCount} athlete profiles updated`)
-
-  // Summary
-  console.log('\n═══════════════════════════════════')
-  console.log('✅ SYNC COMPLETE')
-  console.log(`Event: ${event.name}`)
-  console.log(`Divisions: ${Object.keys(seasonPoints).length}`)
-  console.log(`Season points: ${pointsInserts.length} entries`)
-  console.log(`Athletes updated: ${updatedCount}`)
-  console.log('═══════════════════════════════════')
-
-  // Print final results summary
-  console.log('\n🏆 FINAL RESULTS:')
-  for (const lhDiv of event.eventDivisions) {
-    const final = lhDiv.heats.find((h: { round: string }) => h.round === 'Final')
-    if (!final) continue
-    console.log(`\n  ${lhDiv.division.name}:`)
-    const sorted = [...final.result].sort((a: { place: number }, b: { place: number }) => a.place - b.place)
-    for (const r of sorted) {
-      const medal = r.place === 1 ? '🥇' : r.place === 2 ? '🥈' : r.place === 3 ? '🥉' : '  '
-      const pts = pointsSystem[String(r.place)] || 0
-      console.log(`    ${medal} ${r.place}. ${r.competitor.athlete.name} — ${r.total.toFixed(2)} (${pts}pts)`)
-    }
-  }
+  console.log(`  ✅ ${inserts.length} season point rows across ${eventIds.length} events`)
+  console.log('\n✅ SYNC COMPLETE')
 }
 
-main().catch(console.error)
+main().catch((err) => {
+  console.error('FATAL:', err)
+  process.exit(1)
+})

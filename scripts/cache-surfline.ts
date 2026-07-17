@@ -6,8 +6,10 @@
  * Vercel can't hit Surfline directly (IP blocked), so we cache here → Supabase → Vercel reads.
  */
 
-const SUPABASE_URL = 'https://veggfcumdveuoumrblcn.supabase.co'
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+import { SUPABASE_URL as ENV_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } from './_supabase'
+
+const SUPABASE_URL = ENV_SUPABASE_URL
+const SUPABASE_KEY = SUPABASE_SERVICE_ROLE_KEY
 // Surfline now CF-bot-blocks direct calls from residential/datacenter IPs (502/403).
 // Route through the deployed CF Worker proxy when configured; the worker calls
 // Surfline from Cloudflare's network (not blocked) and prepends /kbyg itself.
@@ -44,8 +46,17 @@ function slUrl(kbygPath: string, qs: string): string {
 let SL_TOKEN = process.env.SURFLINE_ACCESS_TOKEN || ''
 const SL_REFRESH = process.env.SURFLINE_REFRESH_TOKEN || ''
 
-// Static Surfline app client credentials (base64 of clientId:clientSecret)
-const SL_CLIENT_AUTH = 'Basic NWM1OWU3YzNmMGI2Y2IxYWQwMmJhZjY2OnNrX1FxWEpkbjZOeTVzTVJ1MjdBbWcz'
+// Surfline app client credentials, base64 of "clientId:clientSecret".
+// Provide via SURFLINE_CLIENT_AUTH (either the raw "clientId:clientSecret" or a
+// pre-encoded "Basic <base64>"). Never hardcode secrets in source.
+function resolveSurflineClientAuth(): string {
+  const raw = (process.env.SURFLINE_CLIENT_AUTH || '').trim()
+  if (!raw) return ''
+  if (raw.startsWith('Basic ')) return raw
+  // Treat as "clientId:clientSecret" and encode.
+  return 'Basic ' + Buffer.from(raw).toString('base64')
+}
+const SL_CLIENT_AUTH = resolveSurflineClientAuth()
 
 // Auto-refresh: test token, refresh if expired
 async function ensureToken(): Promise<string> {
@@ -57,8 +68,8 @@ async function ensureToken(): Promise<string> {
     if (d?.data?.wave?.length) return SL_TOKEN // Token works
   }
   // Token expired — try refresh
-  if (!SL_REFRESH) {
-    console.warn('⚠️  Surfline token expired, no refresh token available')
+  if (!SL_REFRESH || !SL_CLIENT_AUTH) {
+    console.warn('⚠️  Surfline token expired; no refresh token / client auth — falling back to free tier')
     return ''
   }
   console.log('🔄 Surfline token expired, attempting refresh...')

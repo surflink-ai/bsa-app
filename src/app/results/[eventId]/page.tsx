@@ -70,7 +70,7 @@ export default async function EventResultsPage({ params }: { params: Promise<{ e
       .order('round_number')
 
     const roundsData: Round[] = []
-    let finalists: Finalist[] = []
+    const finalists: Finalist[] = []
 
     for (const round of rounds || []) {
       // Get heats for this round

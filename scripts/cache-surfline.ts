@@ -32,9 +32,8 @@ const IS_VERCEL_PROXY = SL_PROXY.includes('bsa.surf') || SL_PROXY.includes('verc
 function slUrl(kbygPath: string, qs: string): string {
   if (SL_PROXY) {
     if (IS_VERCEL_PROXY) {
-      // Vercel proxy: path as query param
-      const secretParam = SL_PROXY_KEY ? `&secret=${encodeURIComponent(SL_PROXY_KEY)}` : ''
-      return `${SL_PROXY}?path=${encodeURIComponent(kbygPath)}${qs ? '&' + qs : ''}${secretParam}`
+      // Vercel proxy: path as query param; secret goes in a header (see slFetch).
+      return `${SL_PROXY}?path=${encodeURIComponent(kbygPath)}${qs ? '&' + qs : ''}`
     } else {
       // CF Worker proxy: path in URL
       const keyParam = SL_PROXY_KEY ? `${qs ? '&' : ''}key=${encodeURIComponent(SL_PROXY_KEY)}` : ''
@@ -42,6 +41,16 @@ function slUrl(kbygPath: string, qs: string): string {
     }
   }
   return `${SL_BASE}/kbyg${kbygPath}${qs ? '?' + qs : ''}`
+}
+
+// Send the proxy secret as a header for the Vercel proxy (never in the URL).
+function slHeaders(): Record<string, string> {
+  if (SL_PROXY && IS_VERCEL_PROXY && SL_PROXY_KEY) return { 'x-proxy-secret': SL_PROXY_KEY }
+  return {}
+}
+
+function slFetch(kbygPath: string, qs: string): Promise<Response> {
+  return fetch(slUrl(kbygPath, qs), { headers: slHeaders() })
 }
 let SL_TOKEN = process.env.SURFLINE_ACCESS_TOKEN || ''
 const SL_REFRESH = process.env.SURFLINE_REFRESH_TOKEN || ''
@@ -62,7 +71,7 @@ const SL_CLIENT_AUTH = resolveSurflineClientAuth()
 async function ensureToken(): Promise<string> {
   if (!SL_TOKEN) return ''
   // Quick test
-  const test = await fetch(slUrl('/spots/forecasts/wave', `spotId=5842041f4e65fad6a7708b48&days=1&intervalHours=6&accesstoken=${SL_TOKEN}`))
+  const test = await slFetch('/spots/forecasts/wave', `spotId=5842041f4e65fad6a7708b48&days=1&intervalHours=6&accesstoken=${SL_TOKEN}`)
   if (test.ok) {
     const d = await test.json()
     if (d?.data?.wave?.length) return SL_TOKEN // Token works
@@ -146,10 +155,9 @@ async function fetchSurflineOverview() {
   const results: Record<string, any> = {}
   for (const [coast, subregionId] of Object.entries(SUBREGIONS)) {
     try {
-      const url = SL_TOKEN
-        ? slUrl('/regions/overview', `subregionId=${subregionId}&accesstoken=${SL_TOKEN}`)
-        : slUrl('/regions/overview', `subregionId=${subregionId}`)
-      const res = await fetch(url)
+      const res = SL_TOKEN
+        ? await slFetch('/regions/overview', `subregionId=${subregionId}&accesstoken=${SL_TOKEN}`)
+        : await slFetch('/regions/overview', `subregionId=${subregionId}`)
       if (!res.ok) { results[coast] = []; continue }
       const data = await res.json()
       results[coast] = (data?.data?.spots || []).map((s: any) => ({
@@ -177,17 +185,11 @@ async function fetchSurflinePremium() {
     await new Promise(r => setTimeout(r, DELAY_BETWEEN_SPOTS_MS))
     try {
       // Wave forecast — 3 days hourly
-      const waveRes = await fetch(
-        slUrl('/spots/forecasts/wave', `spotId=${spot.id}&days=3&intervalHours=1&accesstoken=${SL_TOKEN}`)
-      )
+      const waveRes = await slFetch('/spots/forecasts/wave', `spotId=${spot.id}&days=3&intervalHours=1&accesstoken=${SL_TOKEN}`)
       // Wind forecast
-      const windRes = await fetch(
-        slUrl('/spots/forecasts/wind', `spotId=${spot.id}&days=3&intervalHours=3&accesstoken=${SL_TOKEN}`)
-      )
+      const windRes = await slFetch('/spots/forecasts/wind', `spotId=${spot.id}&days=3&intervalHours=3&accesstoken=${SL_TOKEN}`)
       // Rating forecast
-      const ratingRes = await fetch(
-        slUrl('/spots/forecasts/rating', `spotId=${spot.id}&days=3&intervalHours=3&accesstoken=${SL_TOKEN}`)
-      )
+      const ratingRes = await slFetch('/spots/forecasts/rating', `spotId=${spot.id}&days=3&intervalHours=3&accesstoken=${SL_TOKEN}`)
 
       const [waveData, windData, ratingData] = await Promise.all([
         waveRes.ok ? waveRes.json() : null,

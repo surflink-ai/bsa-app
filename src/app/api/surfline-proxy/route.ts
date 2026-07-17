@@ -1,35 +1,63 @@
 /**
- * Surfline Proxy — routes Surfline kbyg API calls through Vercel's network
- * so they don't get CF-bot-blocked (residential/datacenter IP issue).
+ * Surfline Proxy — routes Surfline kbyg API calls through Vercel's network so
+ * they don't get CF-bot-blocked (residential/datacenter IP issue).
  *
  * Usage: /api/surfline-proxy?path=/spots/forecasts/wave&spotId=xxx&days=1&intervalHours=3
+ * with an `x-proxy-secret` header matching SURFLINE_PROXY_SECRET.
  *
- * Security: locked to internal use only via SURFLINE_PROXY_SECRET env var.
- * The cache-surfline.ts script sets x-proxy-secret header.
+ * Security posture (fail CLOSED):
+ *   - No secret configured  → 503 (never an open relay).
+ *   - Secret via header only (never query string, to avoid log/Referer leaks).
+ *   - Path allowlisted to known kbyg endpoints; `..` and absolute URLs rejected.
+ *   - No wildcard CORS; rate limited.
  */
+
+import { rateLimit, tooMany } from '@/lib/rate-limit'
 
 const SL_BASE = 'https://services.surfline.com/kbyg'
 const SECRET = process.env.SURFLINE_PROXY_SECRET || ''
+
+// Only these kbyg path prefixes may be proxied.
+const ALLOWED_PREFIXES = ['/spots/forecasts/', '/regions/overview', '/spots/reports']
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 export async function GET(req: Request) {
-  // Auth check — must match secret if one is set
-  if (SECRET) {
-    const provided = req.headers.get('x-proxy-secret') || new URL(req.url).searchParams.get('secret') || ''
-    if (provided !== SECRET) {
-      return new Response('Unauthorized', { status: 401 })
-    }
+  // Fail closed: an unset secret disables the proxy rather than opening it.
+  if (!SECRET) {
+    return new Response(JSON.stringify({ error: 'Proxy not configured' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
+  if (req.headers.get('x-proxy-secret') !== SECRET) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const limited = await rateLimit(req, 'surfline-proxy', 60, 60_000)
+  if (!limited.success) return tooMany()
 
   const { searchParams } = new URL(req.url)
-  const path = searchParams.get('path')
-  if (!path || !path.startsWith('/')) {
-    return new Response('Missing path param', { status: 400 })
+  const path = searchParams.get('path') || ''
+
+  // Reject anything that isn't a clean, relative kbyg sub-path.
+  if (
+    !path.startsWith('/') ||
+    path.includes('..') ||
+    path.includes('//') ||
+    /^https?:/i.test(path) ||
+    !ALLOWED_PREFIXES.some((p) => path.startsWith(p))
+  ) {
+    return new Response(JSON.stringify({ error: 'Invalid path' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
-  // Forward all query params except our own
   const forward = new URLSearchParams(searchParams)
   forward.delete('path')
   forward.delete('secret')
@@ -39,10 +67,11 @@ export async function GET(req: Request) {
   try {
     const res = await fetch(targetUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json',
-        'Referer': 'https://www.surfline.com/',
-        'Origin': 'https://www.surfline.com',
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: 'application/json',
+        Referer: 'https://www.surfline.com/',
+        Origin: 'https://www.surfline.com',
       },
       signal: AbortSignal.timeout(12000),
     })
@@ -53,11 +82,10 @@ export async function GET(req: Request) {
       headers: {
         'Content-Type': res.headers.get('Content-Type') || 'application/json',
         'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
-        'Access-Control-Allow-Origin': '*',
       },
     })
-  } catch (e: any) {
-    return new Response(JSON.stringify({ error: 'Proxy fetch failed', detail: e.message }), {
+  } catch {
+    return new Response(JSON.stringify({ error: 'Upstream fetch failed' }), {
       status: 502,
       headers: { 'Content-Type': 'application/json' },
     })

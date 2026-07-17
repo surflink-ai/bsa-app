@@ -5,7 +5,7 @@ export const runtime = 'edge'
 
 const GRAPHQL_URL = 'https://liveheats.com/api/graphql'
 const HEADERS = { 'Content-Type': 'application/json', 'Origin': 'https://liveheats.com', 'Referer': 'https://liveheats.com/' }
-const SERIES_ID = '27909'
+const SERIES_ID = process.env.NEXT_PUBLIC_LIVEHEATS_SERIES_ID || '27909'
 
 const DIVISIONS: Record<string, string> = {
   '7747': 'Open Men', '7746': 'Open Women', '7741': 'U18 Boys', '7743': 'U18 Girls',
@@ -13,18 +13,21 @@ const DIVISIONS: Record<string, string> = {
   '7744': 'Grand Masters', '16304': 'Novis',
 }
 
+const CARD_QUERY = `query Series($id: ID!, $divisionId: ID!) {
+  series(id: $id) { rankings(divisionId: $divisionId) { athlete { id name image } place points } }
+}`
+
 const medalColors = ['#FFD700', '#C0C0C0', '#CD7F32']
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  if (!/^\d+$/.test(id)) return new Response('Invalid division', { status: 400 })
   const divName = DIVISIONS[id] || `Division ${id}`
 
   try {
     const res = await fetch(GRAPHQL_URL, {
       method: 'POST', headers: HEADERS,
-      body: JSON.stringify({
-        query: `{ series(id: "${SERIES_ID}") { rankings(divisionId: "${id}") { athlete { id name image } place points } } }`,
-      }),
+      body: JSON.stringify({ query: CARD_QUERY, variables: { id: SERIES_ID, divisionId: id } }),
     })
     const json = await res.json()
     const rankings = (json.data?.series?.rankings || []).slice(0, 5)
@@ -164,9 +167,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           </div>
         </div>
       ),
-      { width: 1080, height: 1350 },
+      {
+        width: 1080,
+        height: 1350,
+        headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800' },
+      },
     )
-  } catch (e: any) {
-    return new Response(`Error: ${e.message}`, { status: 500 })
+  } catch {
+    return new Response('Card generation failed', { status: 500 })
   }
 }

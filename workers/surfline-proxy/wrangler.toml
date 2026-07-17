@@ -2,5 +2,6 @@ name = "surfline-proxy"
 main = "worker.js"
 compatibility_date = "2024-01-01"
 
-[vars]
-PROXY_KEY = ""
+# Do NOT set PROXY_KEY here (committed vars are public). Set it as a secret:
+#   wrangler secret put PROXY_KEY
+# With no PROXY_KEY configured the worker fails closed (returns 503).

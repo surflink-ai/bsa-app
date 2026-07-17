@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendWhatsApp } from '@/lib/twilio'
+import { requireApiAdmin } from '@/lib/supabase/admin'
+import { MAX_BLAST_RECIPIENTS } from '@/lib/blasts'
 
 // POST: send a blast to all pending recipients
 export async function POST(req: NextRequest) {
+  const gate = await requireApiAdmin()
+  if (gate instanceof NextResponse) return gate
+  const user = gate
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { blast_id } = await req.json()
-  if (!blast_id) return NextResponse.json({ error: 'blast_id required' }, { status: 400 })
+  const parsed = await req.json().catch(() => null)
+  const blast_id = parsed?.blast_id
+  if (!blast_id || typeof blast_id !== 'string') {
+    return NextResponse.json({ error: 'blast_id required' }, { status: 400 })
+  }
 
   // Get blast
   const { data: blast, error: bErr } = await supabase
@@ -27,10 +33,14 @@ export async function POST(req: NextRequest) {
     .eq('blast_id', blast_id)
     .eq('status', 'pending')
 
-  if (rErr) return NextResponse.json({ error: rErr.message }, { status: 500 })
+  if (rErr) return NextResponse.json({ error: 'Failed to load recipients' }, { status: 500 })
   if (!recipients?.length) {
     await supabase.from('blast_messages').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', blast_id)
     return NextResponse.json({ sent: 0, failed: 0, message: 'No pending recipients' })
+  }
+  if (recipients.length > MAX_BLAST_RECIPIENTS) {
+    await supabase.from('blast_messages').update({ status: 'failed', error_message: 'recipient cap exceeded' }).eq('id', blast_id)
+    return NextResponse.json({ error: `Recipient count exceeds the ${MAX_BLAST_RECIPIENTS} cap` }, { status: 422 })
   }
 
   // Update blast status

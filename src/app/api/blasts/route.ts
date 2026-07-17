@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requireApiAdmin } from '@/lib/supabase/admin'
+import { MAX_BLAST_RECIPIENTS } from '@/lib/blasts'
 
 // GET: list blasts
 export async function GET() {
+  const gate = await requireApiAdmin()
+  if (gate instanceof NextResponse) return gate
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data, error } = await supabase
     .from('blast_messages')
@@ -13,21 +15,28 @@ export async function GET() {
     .order('created_at', { ascending: false })
     .limit(50)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Failed to load blasts' }, { status: 500 })
   return NextResponse.json({ blasts: data })
 }
 
 // POST: create & optionally send a blast
 export async function POST(req: NextRequest) {
+  const gate = await requireApiAdmin()
+  if (gate instanceof NextResponse) return gate
+  const user = gate
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await req.json()
+  const body = await req.json().catch(() => null)
+  if (!body || typeof body !== 'object') {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
   const { title, body: messageBody, audience_filter, scheduled_at, send_now } = body
 
-  if (!title || !messageBody) {
+  if (!title || !messageBody || typeof title !== 'string' || typeof messageBody !== 'string') {
     return NextResponse.json({ error: 'Title and body required' }, { status: 400 })
+  }
+  if (title.length > 200 || messageBody.length > 2000) {
+    return NextResponse.json({ error: 'Title or body too long' }, { status: 400 })
   }
 
   // Build recipient list based on audience filter
@@ -44,10 +53,18 @@ export async function POST(req: NextRequest) {
   }
 
   const { data: contacts, error: cErr } = await contactQuery
-  if (cErr) return NextResponse.json({ error: cErr.message }, { status: 500 })
+  if (cErr) return NextResponse.json({ error: 'Failed to load contacts' }, { status: 500 })
 
   // Filter to only contacts with phone numbers
   const withPhone = (contacts || []).filter(c => c.phone)
+
+  // Guard against accidental/abusive mass sends (and Twilio cost overrun).
+  if (withPhone.length > MAX_BLAST_RECIPIENTS) {
+    return NextResponse.json(
+      { error: `Recipient list (${withPhone.length}) exceeds the ${MAX_BLAST_RECIPIENTS} cap. Narrow the audience.` },
+      { status: 422 }
+    )
+  }
 
   // Create blast record
   const { data: blast, error: bErr } = await supabase.from('blast_messages').insert({
@@ -60,7 +77,7 @@ export async function POST(req: NextRequest) {
     sent_by: user.id,
   }).select().single()
 
-  if (bErr) return NextResponse.json({ error: bErr.message }, { status: 500 })
+  if (bErr) return NextResponse.json({ error: 'Failed to create blast' }, { status: 500 })
 
   // Create recipient records
   if (withPhone.length > 0) {

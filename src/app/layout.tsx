@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { Navigation } from "./components/Navigation"
 import { Footer } from "./components/Footer"
-import { NotificationBanner } from "./components/NotificationBanner"
 import { PublicShell } from "./components/PublicShell"
 import { SITE_URL } from "@/lib/site"
 
@@ -73,7 +72,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="pb-20 md:pb-0">{children}</main>
         <PublicShell>
           <Footer />
-          <NotificationBanner />
         </PublicShell>
       </body>
     </html>

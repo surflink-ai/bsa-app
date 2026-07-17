@@ -6,6 +6,8 @@ import { logAudit } from '@/lib/audit'
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Record<string, string>>({ instagram: '', facebook: '', twitter: '', youtube: '', contact_email: '', contact_address: '', registration_link: '' })
+  const [liveEventId, setLiveEventId] = useState('')
+  const [liveEventLabel, setLiveEventLabel] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -15,7 +17,16 @@ export default function SettingsPage() {
       const { data } = await createClient().from('site_settings').select('*')
       if (data) {
         const s: Record<string, string> = { ...settings }
-        data.forEach(d => { if (typeof d.value === 'string') s[d.key] = d.value; else if (d.value && typeof d.value === 'object' && 'value' in (d.value as Record<string, unknown>)) s[d.key] = (d.value as Record<string, string>).value })
+        data.forEach(d => {
+          if (d.key === 'live_event') {
+            const v = (d.value || {}) as { liveheats_event_id?: string | null; label?: string | null }
+            setLiveEventId(v.liveheats_event_id || '')
+            setLiveEventLabel(v.label || '')
+            return
+          }
+          if (typeof d.value === 'string') s[d.key] = d.value
+          else if (d.value && typeof d.value === 'object' && 'value' in (d.value as Record<string, unknown>)) s[d.key] = (d.value as Record<string, string>).value
+        })
         setSettings(s)
       }
       setLoading(false)
@@ -28,6 +39,11 @@ export default function SettingsPage() {
     for (const [key, value] of Object.entries(settings)) {
       await sb.from('site_settings').upsert({ key, value: { value } }, { onConflict: 'key' })
     }
+    // Live event pointer uses a structured value read by the site + stream.
+    await sb.from('site_settings').upsert({
+      key: 'live_event',
+      value: { liveheats_event_id: liveEventId.trim() || null, label: liveEventLabel.trim() || null },
+    }, { onConflict: 'key' })
     logAudit(sb, 'Updated settings', 'site_settings')
     setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 3000)
   }
@@ -50,6 +66,14 @@ export default function SettingsPage() {
           <FormField label="Email"><input value={settings.contact_email} onChange={e => setSettings({ ...settings, contact_email: e.target.value })} style={inputStyle} /></FormField>
           <FormField label="Address"><textarea value={settings.contact_address} onChange={e => setSettings({ ...settings, contact_address: e.target.value })} rows={3} style={{ ...inputStyle, resize: 'vertical' }} /></FormField>
           <FormField label="Registration Link"><input value={settings.registration_link} onChange={e => setSettings({ ...settings, registration_link: e.target.value })} style={inputStyle} /></FormField>
+        </Card>
+        <Card>
+          <SectionLabel>Live Event</SectionLabel>
+          <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', margin: '0 0 12px' }}>
+            The LiveHeats event ID currently being scored. Powers the live scores API and stream overlay. Clear it when no event is live.
+          </p>
+          <FormField label="LiveHeats Event ID"><input value={liveEventId} onChange={e => setLiveEventId(e.target.value)} style={inputStyle} placeholder="e.g. 506069" inputMode="numeric" /></FormField>
+          <FormField label="Label (optional)"><input value={liveEventLabel} onChange={e => setLiveEventLabel(e.target.value)} style={inputStyle} placeholder="e.g. SOTY Event #3" /></FormField>
         </Card>
       </div>
       <div style={{ marginTop: 24, display: 'flex', gap: 8, alignItems: 'center' }}>

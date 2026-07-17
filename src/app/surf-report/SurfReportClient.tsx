@@ -138,9 +138,10 @@ function BuoyCard({ buoyId, buoy, meta, dark }: { buoyId: string; buoy: BuoyData
   )
 }
 
-export default function SurfReportClient() {
-  const [data, setData] = useState<any>({})
-  const [loading, setLoading] = useState(true)
+export default function SurfReportClient({ initialData }: { initialData?: any } = {}) {
+  const hasInitial = initialData && Object.keys(initialData).length > 0
+  const [data, setData] = useState<any>(initialData || {})
+  const [loading, setLoading] = useState(!hasInitial)
   const [lastUpdate, setLastUpdate] = useState<string>('')
 
   useEffect(() => {

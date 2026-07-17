@@ -43,7 +43,7 @@ const sections = [
     items: [
       { href: '/admin', title: 'Admin Dashboard', desc: 'Committee login for managing articles, athletes, events, streaming, contacts, sponsors, and all platform settings.' },
       { href: '/admin/stream', title: 'Stream Management', desc: 'Control live broadcast source (YouTube/OBS/Cloudflare), VOD library, score overlay, and scheduling.' },
-      { href: '/admin/compete', title: 'Competition Management', desc: 'HeatSync integration for ISA-compliant scoring, judge panels, and heat management. Coming soon.' },
+      { href: '/admin/checkin', title: 'Event Check-in', desc: 'Generate QR codes and check athletes in on event day from any device.' },
       { href: '/admin/juniors', title: 'Junior Programmes', desc: 'Manage coaching programmes, schedules, locations, and age groups from the admin backend.' },
       { href: '/admin/blasts', title: 'WhatsApp Communications', desc: 'Template-based blast messaging to athletes, parents, and contacts with delivery tracking.' },
       { href: '/admin/inquiries', title: 'Inquiry Inbox', desc: 'View and manage submissions from the public contact form. Read, reply, and archive.' },

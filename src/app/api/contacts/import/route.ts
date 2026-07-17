@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requireApiAdmin } from '@/lib/supabase/admin'
 
 // POST: import athletes from existing athletes table as contacts
-export async function POST(req: NextRequest) {
+export async function POST() {
+  const gate = await requireApiAdmin()
+  if (gate instanceof NextResponse) return gate
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Get all athletes
   const { data: athletes, error: athErr } = await supabase
@@ -13,7 +14,7 @@ export async function POST(req: NextRequest) {
     .select('id, name, email, phone, image_url')
     .order('name')
 
-  if (athErr) return NextResponse.json({ error: athErr.message }, { status: 500 })
+  if (athErr) return NextResponse.json({ error: 'Failed to load athletes' }, { status: 500 })
   if (!athletes?.length) return NextResponse.json({ imported: 0, skipped: 0 })
 
   // Get existing contacts to avoid duplicates (by athlete_id)
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { error: insErr } = await supabase.from('contacts').insert(toInsert)
-  if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 })
+  if (insErr) return NextResponse.json({ error: 'Failed to import contacts' }, { status: 500 })
 
   return NextResponse.json({ imported: toInsert.length, skipped: athletes.length - toInsert.length })
 }

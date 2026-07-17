@@ -5,7 +5,7 @@ export const runtime = 'edge'
 
 const GRAPHQL_URL = 'https://liveheats.com/api/graphql'
 const HEADERS = { 'Content-Type': 'application/json', 'Origin': 'https://liveheats.com', 'Referer': 'https://liveheats.com/' }
-const SERIES_ID = '27909'
+const SERIES_ID = process.env.NEXT_PUBLIC_LIVEHEATS_SERIES_ID || '27909'
 
 const DIVISION_MAP: Record<string, string> = {
   '7747': 'Open Men', '7746': 'Open Women', '7741': 'U18 Boys', '7743': 'U18 Girls',
@@ -13,15 +13,23 @@ const DIVISION_MAP: Record<string, string> = {
   '7744': 'Grand Masters', '16304': 'Novis',
 }
 
-async function gql<T>(query: string): Promise<T> {
-  const res = await fetch(GRAPHQL_URL, { method: 'POST', headers: HEADERS, body: JSON.stringify({ query }) })
+const RANK_QUERY = `query Series($id: ID!, $divisionId: ID!) {
+  series(id: $id) { rankings(divisionId: $divisionId) { athlete { id name image } place points results { place points dropped } } }
+}`
+
+async function gql<T>(variables: Record<string, unknown>): Promise<T> {
+  const res = await fetch(GRAPHQL_URL, {
+    method: 'POST',
+    headers: HEADERS,
+    body: JSON.stringify({ query: RANK_QUERY, variables }),
+  })
   return (await res.json()).data
 }
 
 async function getAthleteCard(athleteId: string) {
   const divIds = Object.keys(DIVISION_MAP)
   const rankPromises = divIds.map(divId =>
-    gql<any>(`{ series(id: "${SERIES_ID}") { rankings(divisionId: "${divId}") { athlete { id name image } place points results { place points dropped } } } }`)
+    gql<any>({ id: SERIES_ID, divisionId: divId })
       .then(d => ({ divId, rankings: d.series?.rankings || [] }))
       .catch(() => ({ divId, rankings: [] }))
   )
@@ -75,6 +83,7 @@ function getAccent(rank: number | null) {
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  if (!/^\d+$/.test(id)) return new Response('Invalid athlete id', { status: 400 })
 
   try {
     const data = await getAthleteCard(id)
@@ -300,9 +309,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           }} />
         </div>
       ),
-      { width: 1080, height: 1350 },
+      {
+        width: 1080,
+        height: 1350,
+        headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800' },
+      },
     )
-  } catch (e: any) {
-    return new Response(`Error: ${e.message}`, { status: 500 })
+  } catch {
+    return new Response('Card generation failed', { status: 500 })
   }
 }

@@ -172,7 +172,7 @@ export default async function AthleteDetailPage({ params }: { params: Promise<{ 
   } catch {}
 
   // Also fetch BSA Compete results if this athlete has a local record
-  let compResults: { event_name: string; event_date: string; division: string; round: string; heat_number: number; result_position: number | null; waves: { wave_number: number; score: number }[] }[] = []
+  const compResults: { event_name: string; event_date: string; division: string; round: string; heat_number: number; result_position: number | null; waves: { wave_number: number; score: number }[] }[] = []
   let seasonPoints: { season_name: string; division: string; total_points: number; events_counted: number; best_result: number | null }[] = []
 
   try {

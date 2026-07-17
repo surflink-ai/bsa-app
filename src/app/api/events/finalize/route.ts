@@ -1,22 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requireApiAdmin } from '@/lib/supabase/admin'
+import { MAX_BLAST_RECIPIENTS } from '@/lib/blasts'
 
 // POST: post-event automation — generate results article draft + queue blast
 export async function POST(req: NextRequest) {
+  const gate = await requireApiAdmin()
+  if (gate instanceof NextResponse) return gate
+  const user = gate
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { event_id, event_name, results_summary } = await req.json()
+  const parsed = await req.json().catch(() => null)
+  const { event_id, event_name, results_summary } = parsed || {}
   if (!event_id || !event_name) return NextResponse.json({ error: 'event_id and event_name required' }, { status: 400 })
 
   const actions: string[] = []
 
-  // 1. Create draft article
-  const { data: article, error: artErr } = await supabase.from('articles').insert({
+  // 1. Create draft article (category must satisfy the articles CHECK constraint)
+  const { data: article } = await supabase.from('articles').insert({
     title: `Results: ${event_name}`,
     content: results_summary || `Results from ${event_name} are now available. Check the full rankings at bsa.surf/rankings.`,
-    category: 'competition',
+    category: 'event-recap',
     published: false,
     author_id: user.id,
   }).select().single()
@@ -31,7 +35,7 @@ export async function POST(req: NextRequest) {
     .eq('opted_out', false)
     .not('phone', 'is', null)
 
-  if (contacts && contacts.length > 0) {
+  if (contacts && contacts.length > 0 && contacts.length <= MAX_BLAST_RECIPIENTS) {
     const blastBody = `Results are in for ${event_name}! Check your ranking at bsa.surf/rankings`
 
     const { data: blast } = await supabase.from('blast_messages').insert({

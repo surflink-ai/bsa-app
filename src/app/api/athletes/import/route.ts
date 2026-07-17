@@ -1,13 +1,20 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getOrg, getEvent } from '@/lib/liveheats'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireApiAdmin } from '@/lib/supabase/admin'
 
 export async function POST() {
+  const gate = await requireApiAdmin()
+  if (gate instanceof NextResponse) return gate
+
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!serviceKey) {
+    return NextResponse.json({ error: 'Import is not configured' }, { status: 503 })
+  }
+  // Created lazily (after the admin check) so a missing build-time key never
+  // crashes the build, and the RLS-bypassing client only exists for admins.
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
+
   try {
     const org = await getOrg()
     const past = org.events
@@ -97,7 +104,7 @@ export async function POST() {
       skipped,
       message: `Imported ${imported} new athletes, ${skipped} already existed`,
     })
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Athlete import failed' }, { status: 500 })
   }
 }

@@ -1,7 +1,14 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { getOrg, getEvent } from '@/lib/liveheats'
 import { AthletesClient } from './AthletesClient'
 export const revalidate = 300
+
+export const metadata: Metadata = {
+  title: 'Athletes',
+  description: 'Barbados surfers — profiles, nationalities, and competition history across BSA events and the SOTY Championship.',
+  alternates: { canonical: '/athletes' },
+}
 
 export default async function AthletesPage() {
   const supabase = await createClient()

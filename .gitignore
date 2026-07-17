@@ -5,3 +5,8 @@ node_modules
 .vercel
 /docs/
 .env*.local
+# Build artifacts
+tsconfig.tsbuildinfo
+/coverage
+# Keep the template committed
+!.env.example

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    { "path": "/api/cron/surf-cache", "schedule": "*/30 * * * *" },
+    { "path": "/api/cron/surf-report?kind=dawn", "schedule": "0 9 * * *" },
+    { "path": "/api/cron/surf-report?kind=morning", "schedule": "0 11 * * *" },
+    { "path": "/api/cron/surf-report?kind=afternoon", "schedule": "0 19 * * *" }
+  ]
+}

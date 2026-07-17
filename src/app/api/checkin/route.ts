@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requireApiAdmin } from '@/lib/supabase/admin'
 import { nanoid } from 'nanoid'
 
 // GET: list checkins for an event
 export async function GET(req: NextRequest) {
+  const gate = await requireApiAdmin()
+  if (gate instanceof NextResponse) return gate
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const eventId = new URL(req.url).searchParams.get('event_id')
   if (!eventId) return NextResponse.json({ error: 'event_id required' }, { status: 400 })
@@ -17,17 +18,21 @@ export async function GET(req: NextRequest) {
     .eq('event_id', eventId)
     .order('athlete_name')
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Failed to load check-ins' }, { status: 500 })
   return NextResponse.json({ checkins: data })
 }
 
 // POST: generate checkin QR codes for an event, or check in a single athlete
 export async function POST(req: NextRequest) {
+  const gate = await requireApiAdmin()
+  if (gate instanceof NextResponse) return gate
+  const user = gate
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await req.json()
+  const body = await req.json().catch(() => null)
+  if (!body || typeof body !== 'object') {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
 
   // Check in by QR code
   if (body.qr_code) {

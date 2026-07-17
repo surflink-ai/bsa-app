@@ -123,8 +123,8 @@ export async function getEvent(id: string): Promise<{
   id: string; name: string; date: string; status: string
   eventDivisions: EventDivisionFull[]
 }> {
-  const data = await gql<{ event: { id: string; name: string; date: string; status: string; eventDivisions: EventDivisionFull[] } }>(`{
-    event(id: "${id}") {
+  const data = await gql<{ event: { id: string; name: string; date: string; status: string; eventDivisions: EventDivisionFull[] } }>(`query Event($id: ID!) {
+    event(id: $id) {
       id name date status
       eventDivisions {
         id
@@ -144,17 +144,17 @@ export async function getEvent(id: string): Promise<{
         }
       }
     }
-  }`)
+  }`, { id })
   return data.event
 }
 
 export async function getSeries(id: string): Promise<SeriesInfo> {
-  const data = await gql<{ series: SeriesInfo }>(`{
-    series(id: "${id}") {
+  const data = await gql<{ series: SeriesInfo }>(`query Series($id: ID!) {
+    series(id: $id) {
       id name
       events { id name date status }
     }
-  }`)
+  }`, { id })
   return data.series
 }
 

@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
+import { requireServiceRole } from './_supabase'
+import { bestNTotal } from '../src/lib/scoring'
 
-const supabase = createClient(
-  'https://veggfcumdveuoumrblcn.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const { url, key } = requireServiceRole()
+const supabase = createClient(url, key)
 
 async function fixHeatTotals() {
   // Get all heat_athletes
@@ -26,10 +26,9 @@ async function fixHeatTotals() {
     
     if (!waves || waves.length === 0) continue
     
-    // Best 2 waves (ISA standard)
-    const scores = waves.map(w => w.score).filter(s => s != null).sort((a, b) => b - a)
-    const best2 = scores.slice(0, 2).reduce((a, b) => a + b, 0)
-    const total = Math.round(best2 * 100) / 100
+    // Best 2 waves (ISA standard) — shared, unit-tested helper
+    const scores = waves.map(w => w.score as number | null)
+    const total = bestNTotal(scores)
     
     const { error: updateErr } = await supabase
       .from('comp_heat_athletes')
@@ -38,7 +37,7 @@ async function fixHeatTotals() {
     
     if (!updateErr) {
       updated++
-      if (total > 0) console.log(`  ${ha.athlete_name}: ${total} (${waves.length} waves, best 2: ${scores.slice(0,2).join(' + ')})`)
+      if (total > 0) console.log(`  ${ha.athlete_name}: ${total} (${waves.length} waves)`)
     }
   }
   

@@ -1,12 +1,52 @@
+import type { Metadata } from 'next'
 import { getArticle, getCategoryLabel } from '@/lib/news'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { WaveDivider } from '../../components/WaveDivider'
+import { sanitizeHtml } from '@/lib/sanitize'
+import { SITE_URL } from '@/lib/site'
 export const revalidate = 300
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const article = await getArticle(slug)
+  if (!article) return { title: 'Article' }
+  const images = article.featured_image ? [article.featured_image] : undefined
+  return {
+    title: article.title,
+    description: article.excerpt || `${article.title} — Barbados Surfing Association news.`,
+    alternates: { canonical: `/news/${slug}` },
+    openGraph: {
+      title: article.title,
+      description: article.excerpt || undefined,
+      url: `/news/${slug}`,
+      type: 'article',
+      publishedTime: article.date,
+      images,
+    },
+    twitter: { card: 'summary_large_image', title: article.title, images },
+  }
+}
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const article = await getArticle(slug)
-  if (!article) return <div style={{ paddingTop: '8rem', textAlign: 'center', color: 'rgba(26,26,26,0.4)' }}>Article not found.</div>
+  if (!article) notFound()
+
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: article.title,
+    datePublished: article.date,
+    author: { '@type': 'Organization', name: article.author || 'BSA' },
+    image: article.featured_image ? [article.featured_image] : undefined,
+    publisher: {
+      '@type': 'Organization',
+      name: 'Barbados Surfing Association',
+      logo: { '@type': 'ImageObject', url: `${SITE_URL}/bsa-logo.webp` },
+    },
+    mainEntityOfPage: `${SITE_URL}/news/${slug}`,
+  }
 
   return (
     <div className="pb-20 md:pb-0">
@@ -26,9 +66,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       <section style={{ backgroundColor: '#FFFFFF', padding: '32px 24px 80px' }}>
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
           <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: 'rgba(26,26,26,0.3)', marginBottom: 32 }}>By {article.author}</p>
-          <div className="article-content" style={{ fontSize: 16, lineHeight: 1.9, color: 'rgba(26,26,26,0.65)', fontFamily: "'Space Grotesk',sans-serif" }} dangerouslySetInnerHTML={{ __html: article.content }} />
+          <div className="article-content" style={{ fontSize: 16, lineHeight: 1.9, color: 'rgba(26,26,26,0.65)', fontFamily: "'Space Grotesk',sans-serif" }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.content) }} />
         </div>
       </section>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
     </div>
   )
 }

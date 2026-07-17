@@ -1,8 +1,15 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { ScrollReveal } from '../components/ScrollReveal'
 import { WaveDivider } from '../components/WaveDivider'
 
 export const revalidate = 300
+
+export const metadata: Metadata = {
+  title: 'Juniors',
+  description: 'BSA junior surf programmes — grom development, competitive coaching, and pathways for young Barbadian surfers.',
+  alternates: { canonical: '/juniors' },
+}
 
 const PATHWAY = [
   { stage: "Learn", desc: "Ocean safety, pop-up technique, wave selection", num: "01" },

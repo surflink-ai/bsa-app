@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { NextResponse } from 'next/server'
 
 export interface AdminUser {
   id: string
@@ -8,6 +9,8 @@ export interface AdminUser {
   role: 'super_admin' | 'editor' | 'event_manager'
   avatar_url: string | null
 }
+
+export const ADMIN_ROLES = ['super_admin', 'editor', 'event_manager'] as const
 
 export async function getAdminUser(): Promise<AdminUser | null> {
   const supabase = await createClient()
@@ -20,7 +23,7 @@ export async function getAdminUser(): Promise<AdminUser | null> {
     .eq('id', user.id)
     .single()
 
-  if (!profile || !['super_admin', 'editor', 'event_manager'].includes(profile.role)) {
+  if (!profile || !ADMIN_ROLES.includes(profile.role)) {
     return null
   }
 
@@ -43,6 +46,37 @@ export async function requireSuperAdmin(): Promise<AdminUser> {
   const admin = await requireAdmin()
   if (admin.role !== 'super_admin') redirect('/admin')
   return admin
+}
+
+/**
+ * Guard for API route handlers. Returns the admin user, or a NextResponse
+ * (401/403) to return directly. Use in mutating routes:
+ *
+ *   const gate = await requireApiAdmin()
+ *   if (gate instanceof NextResponse) return gate
+ *   // gate is the AdminUser
+ */
+export async function requireApiAdmin(): Promise<AdminUser | NextResponse> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+  }
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, full_name, role, avatar_url')
+    .eq('id', user.id)
+    .single()
+  if (!profile || !ADMIN_ROLES.includes(profile.role)) {
+    return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+  }
+  return {
+    id: user.id,
+    email: user.email || '',
+    full_name: profile.full_name,
+    role: profile.role,
+    avatar_url: profile.avatar_url,
+  }
 }
 
 export async function getAllAdminUsers(): Promise<AdminUser[]> {

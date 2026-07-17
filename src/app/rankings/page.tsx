@@ -1,7 +1,14 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { getOrg } from '@/lib/liveheats'
 import { RankingsClient } from './RankingsClient'
 import { RankingsClientLH } from './RankingsClientLH'
+
+export const metadata: Metadata = {
+  title: 'Rankings',
+  description: 'Current Surfer of the Year (SOTY) Championship standings and per-division leaderboards for Barbados surfing.',
+  alternates: { canonical: '/rankings' },
+}
 
 export const revalidate = 300
 

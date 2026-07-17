@@ -1,8 +1,25 @@
+import type { Metadata } from 'next'
 import { getEvent } from '@/lib/liveheats'
 import { getEventPhotos } from '@/lib/photos'
 import { createClient } from '@/lib/supabase/server'
 import { EventDetailClient } from './EventDetailClient'
 export const revalidate = 300
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  try {
+    const event = await getEvent(id)
+    return {
+      title: event.name,
+      description: `${event.name} — heats, divisions, and results from this Barbados Surfing Association event.`,
+      alternates: { canonical: `/events/${id}` },
+      openGraph: { title: event.name, url: `/events/${id}`, type: 'website' },
+    }
+  } catch {
+    return { title: 'Event' }
+  }
+}
+
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   try {

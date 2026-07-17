@@ -80,7 +80,11 @@ $$ language sql security definer;
 create or replace function public.guard_profile_role_change()
 returns trigger as $$
 begin
-  if new.role is distinct from old.role and not public.is_super_admin() then
+  -- auth.uid() is null in trusted server contexts (service role, SQL editor,
+  -- migrations) — allow those. Otherwise only super_admins may change a role.
+  if new.role is distinct from old.role
+     and auth.uid() is not null
+     and not public.is_super_admin() then
     raise exception 'Only a super_admin can change a profile role';
   end if;
   return new;

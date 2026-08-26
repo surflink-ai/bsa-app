@@ -47,6 +47,9 @@ const SL_REFRESH = process.env.SURFLINE_REFRESH_TOKEN || ''
 // Static Surfline app client credentials (base64 of clientId:clientSecret)
 const SL_CLIENT_AUTH = 'Basic NWM1OWU3YzNmMGI2Y2IxYWQwMmJhZjY2OnNrX1FxWEpkbjZOeTVzTVJ1MjdBbWcz'
 
+// Auth proxy base — routes token refresh through Vercel to bypass CF fingerprinting
+const AUTH_PROXY_BASE = (process.env.SURFLINE_PROXY_BASE || '').replace('/surfline-proxy', '/surfline-auth').replace(/\/$/, '')
+
 // Auto-refresh: test token, refresh if expired
 async function ensureToken(): Promise<string> {
   if (!SL_TOKEN) return ''
@@ -61,19 +64,18 @@ async function ensureToken(): Promise<string> {
     console.warn('⚠️  Surfline token expired, no refresh token available')
     return ''
   }
-  console.log('🔄 Surfline token expired, attempting refresh...')
+  console.log('🔄 Surfline token expired, attempting refresh via auth proxy...')
   try {
-    const res = await fetch(`${SL_BASE}/trusted/token?isShortLived=false`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        authorizationString: SL_CLIENT_AUTH,
-        grant_type: 'refresh_token',
-        refresh_token: SL_REFRESH,
-        device_id: 'bsa-cache',
-        device_type: 'web',
-      }),
-    })
+    // Route through Vercel auth proxy to bypass CF fingerprinting on Mac's Node.js
+    const authUrl = AUTH_PROXY_BASE
+      ? AUTH_PROXY_BASE
+      : `${SL_BASE}/trusted/token?isShortLived=false`
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (AUTH_PROXY_BASE && SL_PROXY_KEY) headers['x-proxy-secret'] = SL_PROXY_KEY
+    const body = AUTH_PROXY_BASE
+      ? JSON.stringify({ refresh_token: SL_REFRESH, client_auth: SL_CLIENT_AUTH })
+      : JSON.stringify({ authorizationString: SL_CLIENT_AUTH, grant_type: 'refresh_token', refresh_token: SL_REFRESH, device_id: 'bsa-cache', device_type: 'web' })
+    const res = await fetch(authUrl, { method: 'POST', headers, body })
     if (res.ok) {
       const data = await res.json()
       if (data.access_token) {
@@ -82,10 +84,11 @@ async function ensureToken(): Promise<string> {
         return SL_TOKEN
       }
     }
-    console.warn('⚠️  Surfline refresh failed, falling back to free tier')
+    const errText = await res.text().catch(() => '')
+    console.warn(`⚠️  Surfline refresh failed (${res.status}): ${errText.slice(0, 200)}`)
     return ''
-  } catch {
-    console.warn('⚠️  Surfline refresh error, falling back to free tier')
+  } catch (e: any) {
+    console.warn(`⚠️  Surfline refresh error: ${e.message}`)
     return ''
   }
 }

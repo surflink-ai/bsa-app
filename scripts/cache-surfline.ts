@@ -326,6 +326,396 @@ async function fetchWindGuru() {
   return results
 }
 
+// ─── NOAA Buoy constants ──────────────────────────────────────────────
+const BUOY_IDS = ['41040', '41043']
+// Barbados lat/lon for distance calculations
+const BADOS_LAT = 13.1
+const BADOS_LON = -59.5
+
+function degreesToCompass(deg: number): string {
+  const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+                'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+  return dirs[Math.round(deg / 22.5) % 16]
+}
+
+function haversineNm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3440.065 // nm
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLon/2)**2
+  return R * 2 * Math.asin(Math.sqrt(a))
+}
+
+function bearingDeg(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const y = Math.sin(dLon) * Math.cos(lat2 * Math.PI / 180)
+  const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180)
+          - Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLon)
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360
+}
+
+// Parse NOAA stdmet text (space-delimited, MM = missing)
+function parseNoaaTxt(body: string) {
+  const lines = body.split('\n').filter(l => l.trim() && !l.startsWith('#'))
+  return lines.map(line => {
+    const p = line.trim().split(/\s+/)
+    // cols: YY MM DD hh mm WDIR WSPD GST WVHT DPD APD MWD PRES ATMP WTMP DEWP VIS PTDY TIDE
+    const get = (i: number) => p[i] === 'MM' ? null : parseFloat(p[i])
+    const yr = p[0], mo = p[1], dy = p[2], hh = p[3], mm = p[4]
+    const ts = new Date(`${yr}-${mo}-${dy}T${hh}:${mm}:00Z`)
+    return {
+      ts,
+      wvht_m: get(8),
+      dpd_s: get(9),
+      apd_s: get(10),
+      mwd_deg: get(11) !== null ? Math.round(get(11)!) : null,
+      wspd_ms: get(6),
+      wdir_deg: get(5) !== null ? Math.round(get(5)!) : null,
+    }
+  }).filter(r => !isNaN(r.ts.getTime()))
+}
+
+// Parse NOAA .spec text (swell components)
+function parseNoaaSpec(body: string) {
+  const lines = body.split('\n').filter(l => l.trim() && !l.startsWith('#'))
+  return lines.map(line => {
+    const p = line.trim().split(/\s+/)
+    // cols: YY MM DD hh mm WVHT SwH SwP WWH WWP SwD WWD STEEPNESS APD MWD
+    const get = (i: number) => p[i] === 'MM' || p[i] === undefined ? null : parseFloat(p[i])
+    const getStr = (i: number) => p[i] === 'MM' ? null : p[i]
+    const yr = p[0], mo = p[1], dy = p[2], hh = p[3], mm = p[4]
+    const ts = new Date(`${yr}-${mo}-${dy}T${hh}:${mm}:00Z`)
+    return {
+      ts,
+      swh_m: get(6),  // swell height
+      swp_s: get(7),  // swell period
+      wwh_m: get(8),  // wind wave height
+      wwp_s: get(9),  // wind wave period
+      swd: getStr(10), // swell direction compass
+      wwd: getStr(11), // wind wave direction compass
+    }
+  }).filter(r => !isNaN(r.ts.getTime()))
+}
+
+async function fetchAndUpsertBuoys() {
+  const cutoff48h = new Date(Date.now() - 48 * 3600 * 1000)
+  let totalUpserted = 0
+
+  for (const buoyId of BUOY_IDS) {
+    try {
+      const [txtRes, specRes] = await Promise.all([
+        fetch(`https://www.ndbc.noaa.gov/data/realtime2/${buoyId}.txt`, { signal: AbortSignal.timeout(20000) }),
+        fetch(`https://www.ndbc.noaa.gov/data/realtime2/${buoyId}.spec`, { signal: AbortSignal.timeout(20000) }),
+      ])
+      if (!txtRes.ok) { console.warn(`  ⚠️ Buoy ${buoyId} txt: ${txtRes.status}`); continue }
+      const txtBody = await txtRes.text()
+      const specBody = specRes.ok ? await specRes.text() : ''
+
+      const txtRows = parseNoaaTxt(txtBody).filter(r => r.ts >= cutoff48h)
+      const specMap = new Map<number, any>()
+      if (specBody) {
+        for (const s of parseNoaaSpec(specBody)) {
+          if (s.ts >= cutoff48h) specMap.set(s.ts.getTime(), s)
+        }
+      }
+
+      // Build DB rows
+      // First pass: collect all wvht_m values with timestamps for trend calc
+      const rows = txtRows
+        .filter(r => r.wvht_m !== null) // skip fully missing rows
+        .map(r => ({
+          buoy_id: buoyId,
+          ts: r.ts,
+          wvht_m: r.wvht_m,
+          dpd_s: r.dpd_s,
+          apd_s: r.apd_s,
+          mwd_deg: r.mwd_deg,
+          wspd_kt: r.wspd_ms !== null ? Math.round(r.wspd_ms * 1.944 * 10) / 10 : null,
+          wdir_deg: r.wdir_deg,
+          spec: specMap.get(r.ts.getTime()) || null,
+        }))
+
+      // Build a time-sorted index for trend calc
+      const sorted = [...rows].sort((a, b) => a.ts.getTime() - b.ts.getTime())
+      const getWvhtAt = (targetMs: number, windowMs: number): number | null => {
+        let best: any = null
+        for (const r of sorted) {
+          const diff = Math.abs(r.ts.getTime() - targetMs)
+          if (diff <= windowMs) {
+            if (!best || diff < Math.abs(best.ts.getTime() - targetMs)) best = r
+          }
+        }
+        return best?.wvht_m ?? null
+      }
+
+      const upsertRows = rows.map(r => {
+        const sixHAgo = r.ts.getTime() - 6 * 3600 * 1000
+        const old = getWvhtAt(sixHAgo, 30 * 60 * 1000) // ±30min
+        let trend: 'rising' | 'steady' | 'falling' = 'steady'
+        let change_6h_m: number | null = null
+        if (old !== null && r.wvht_m !== null) {
+          change_6h_m = Math.round((r.wvht_m - old) * 100) / 100
+          if (change_6h_m >= 0.15) trend = 'rising'
+          else if (change_6h_m <= -0.15) trend = 'falling'
+        }
+        const s = r.spec
+        const primary = s && s.swh_m !== null ? { height_m: s.swh_m, period_s: s.swp_s, dir_compass: s.swd } : null
+        const secondary = s && s.wwh_m !== null ? { height_m: s.wwh_m, period_s: s.wwp_s, dir_compass: s.wwd } : null
+
+        return {
+          buoy_id: buoyId,
+          timestamp: r.ts.toISOString(),
+          wvht_m: r.wvht_m,
+          dpd_s: r.dpd_s,
+          apd_s: r.apd_s,
+          mwd_deg: r.mwd_deg,
+          wspd_kt: r.wspd_kt,
+          wdir_deg: r.wdir_deg,
+          trend,
+          change_6h_m,
+          primary_swell_json: primary,
+          secondary_swell_json: secondary,
+          raw_json: null,
+        }
+      })
+
+      if (!upsertRows.length) continue
+
+      // Upsert in batches of 50
+      for (let i = 0; i < upsertRows.length; i += 50) {
+        const batch = upsertRows.slice(i, i + 50)
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/buoy_readings`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates',
+          },
+          body: JSON.stringify(batch),
+        })
+        if (!res.ok) {
+          const t = await res.text()
+          console.warn(`  ⚠️ Buoy ${buoyId} upsert error: ${res.status} ${t.slice(0,100)}`)
+        } else {
+          totalUpserted += batch.length
+        }
+      }
+      console.log(`  ✅ Buoy ${buoyId}: ${upsertRows.length} rows upserted`)
+    } catch (e: any) {
+      console.warn(`  ⚠️ Buoy ${buoyId} error: ${e.message}`)
+    }
+  }
+  return totalUpserted
+}
+
+async function fetchAndUpsertOpenMeteo() {
+  const coasts = [
+    { coast: 'east', lat: 13.15, lon: -59.43 },
+    { coast: 'south', lat: 13.05, lon: -59.53 },
+  ]
+  let totalUpserted = 0
+
+  for (const c of coasts) {
+    try {
+      const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${c.lat}&longitude=${c.lon}&hourly=wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_direction,swell_wave_period,wind_wave_height,wind_wave_period&forecast_days=7&timezone=America%2FBarbados`
+      const res = await fetch(url, { signal: AbortSignal.timeout(20000) })
+      if (!res.ok) { console.warn(`  ⚠️ Open-Meteo ${c.coast}: ${res.status}`); continue }
+      const data = await res.json()
+      const h = data.hourly
+      if (!h?.time) continue
+
+      const rows = h.time.map((ts: string, i: number) => ({
+        coast: c.coast,
+        timestamp: new Date(ts).toISOString(),
+        wave_height_m: h.wave_height?.[i] ?? null,
+        wave_period_s: h.wave_period?.[i] ?? null,
+        wave_dir_deg: h.wave_direction?.[i] !== null ? Math.round(h.wave_direction?.[i]) : null,
+        swell_height_m: h.swell_wave_height?.[i] ?? null,
+        swell_period_s: h.swell_wave_period?.[i] ?? null,
+        swell_dir_deg: h.swell_wave_direction?.[i] !== null ? Math.round(h.swell_wave_direction?.[i]) : null,
+        wind_wave_height_m: h.wind_wave_height?.[i] ?? null,
+        wind_wave_period_s: h.wind_wave_period?.[i] ?? null,
+      }))
+
+      for (let i = 0; i < rows.length; i += 100) {
+        const batch = rows.slice(i, i + 100)
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/openmeteo_forecasts`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates',
+          },
+          body: JSON.stringify(batch),
+        })
+        if (!r.ok) {
+          const t = await r.text()
+          console.warn(`  ⚠️ Open-Meteo ${c.coast} upsert: ${r.status} ${t.slice(0,100)}`)
+        } else {
+          totalUpserted += batch.length
+        }
+      }
+      console.log(`  ✅ Open-Meteo ${c.coast}: ${rows.length} hourly rows`)
+    } catch (e: any) {
+      console.warn(`  ⚠️ Open-Meteo ${c.coast} error: ${e.message}`)
+    }
+  }
+  return totalUpserted
+}
+
+async function fetchAndUpsertNHC() {
+  try {
+    const res = await fetch('https://www.nhc.noaa.gov/CurrentStorms.json', { signal: AbortSignal.timeout(15000) })
+    if (!res.ok) { console.warn(`  ⚠️ NHC: ${res.status}`); return 0 }
+    const data = await res.json()
+    const storms = data.activeStorms || []
+    const rows = []
+
+    for (const s of storms) {
+      const lat = s.latitudeNumeric
+      const lon = s.longitudeNumeric
+      const dist = Math.round(haversineNm(lat, lon, BADOS_LAT, BADOS_LON))
+      if (dist > 2500) continue // too far to matter
+
+      const bearing = Math.round(bearingDeg(lat, lon, BADOS_LAT, BADOS_LON))
+      const maxWinds = parseInt(s.intensity, 10) || 0
+      const estPeriod = Math.min(18, 8 + maxWinds / 15)
+      const groupSpeed = 1.5 * estPeriod // kt
+      const etaHours = dist / groupSpeed
+
+      rows.push({
+        storm_id: s.id,
+        name: s.name,
+        classification: s.classification,
+        category: s.classification === 'HU' ? Math.ceil((maxWinds - 64) / 20) : 0,
+        lat,
+        lon,
+        max_winds_kt: maxWinds,
+        movement_speed_kt: s.movementSpeed,
+        movement_dir_deg: s.movementDir,
+        distance_nm: dist,
+        bearing_deg: bearing,
+        est_swell_period_s: Math.round(estPeriod * 10) / 10,
+        est_eta_hours: Math.round(etaHours * 10) / 10,
+        raw_json: s,
+        fetched_at: new Date().toISOString(),
+      })
+    }
+
+    if (rows.length) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/nhc_storms`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify(rows),
+      })
+      if (!r.ok) console.warn(`  ⚠️ NHC upsert: ${r.status} ${(await r.text()).slice(0,100)}`)
+    }
+    console.log(`  ✅ NHC: ${storms.length} active storms, ${rows.length} within 2500nm`)
+    return rows.length
+  } catch (e: any) {
+    console.warn(`  ⚠️ NHC error: ${e.message}`)
+    return 0
+  }
+}
+
+async function trackForecastBias(premium: any) {
+  // Track yesterday's Surfline vs buoy 41040 accuracy
+  try {
+    const now = new Date()
+    // Yesterday in AST (UTC-4)
+    const yesterdayAst = new Date(now.getTime() - 4 * 3600 * 1000)
+    yesterdayAst.setUTCDate(yesterdayAst.getUTCDate() - 1)
+    const yyyymmdd = yesterdayAst.toISOString().slice(0, 10)
+
+    // Actual: avg buoy 41040 WVHT yesterday
+    const startOfYesterday = yyyymmdd + 'T00:00:00.000Z'
+    const endOfYesterday = yyyymmdd + 'T23:59:59.999Z'
+    const buoyRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/buoy_readings?buoy_id=eq.41040&timestamp=gte.${startOfYesterday}&timestamp=lte.${endOfYesterday}&select=wvht_m`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    )
+    if (!buoyRes.ok) return
+    const buoyRows: any[] = await buoyRes.json()
+    const validBuoy = buoyRows.filter(r => r.wvht_m !== null)
+    if (!validBuoy.length) return
+    const avgBuoyM = validBuoy.reduce((s: number, r: any) => s + r.wvht_m, 0) / validBuoy.length
+    const actualFt = Math.round(avgBuoyM * 3.28084 * 100) / 100
+
+    // Predicted Surfline: avg of yesterday's Soup Bowl surf max
+    const soupId = '5842041f4e65fad6a7708b48'
+    const soupWaves = premium?.[soupId]?.waves || []
+    const yesterdaySlWaves = soupWaves.filter((w: any) => {
+      const d = new Date(w.ts * 1000).toISOString().slice(0, 10)
+      return d === yyyymmdd
+    })
+    if (yesterdaySlWaves.length) {
+      const avgSlFt = yesterdaySlWaves.reduce((s: number, w: any) => s + (w.max || 0), 0) / yesterdaySlWaves.length
+      const predictedFt = Math.round(avgSlFt * 100) / 100
+      const errorFt = Math.round((predictedFt - actualFt) * 100) / 100
+
+      await fetch(`${SUPABASE_URL}/rest/v1/forecast_bias`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates',
+        },
+        body: JSON.stringify([{
+          source: 'surfline',
+          coast: 'east',
+          forecast_date: yyyymmdd,
+          predicted_height_ft: predictedFt,
+          actual_height_ft: actualFt,
+          error_ft: errorFt,
+        }]),
+      })
+      console.log(`  📊 Bias tracked: Surfline ${predictedFt}ft predicted vs ${actualFt}ft actual (${errorFt > 0 ? '+' : ''}${errorFt}ft) for ${yyyymmdd}`)
+    }
+
+    // Open-Meteo east bias
+    const omRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/openmeteo_forecasts?coast=eq.east&timestamp=gte.${startOfYesterday}&timestamp=lte.${endOfYesterday}&select=swell_height_m`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    )
+    if (omRes.ok) {
+      const omRows: any[] = await omRes.json()
+      const validOm = omRows.filter(r => r.swell_height_m !== null)
+      if (validOm.length) {
+        const avgOmM = validOm.reduce((s: number, r: any) => s + r.swell_height_m, 0) / validOm.length
+        const predictedFt = Math.round(avgOmM * 3.28084 * 100) / 100
+        const errorFt = Math.round((predictedFt - actualFt) * 100) / 100
+        await fetch(`${SUPABASE_URL}/rest/v1/forecast_bias`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates',
+          },
+          body: JSON.stringify([{
+            source: 'openmeteo',
+            coast: 'east',
+            forecast_date: yyyymmdd,
+            predicted_height_ft: predictedFt,
+            actual_height_ft: actualFt,
+            error_ft: errorFt,
+          }]),
+        })
+      }
+    }
+  } catch (e: any) {
+    console.warn(`  ⚠️ Bias tracking error: ${e.message}`)
+  }
+}
+
 async function main() {
   // Ensure token is valid before making premium calls
   SL_TOKEN = await ensureToken()
@@ -343,6 +733,20 @@ async function main() {
   console.log('🌬️ Fetching WindGuru...')
   const windguru = await fetchWindGuru()
   console.log(`  ✅ ${Object.keys(windguru).length} WindGuru forecasts`)
+
+  if (SUPABASE_KEY) {
+    console.log('🌊 Fetching NOAA buoys...')
+    await fetchAndUpsertBuoys()
+
+    console.log('🌐 Fetching Open-Meteo Marine (ECMWF 7-day)...')
+    await fetchAndUpsertOpenMeteo()
+
+    console.log('🌀 Fetching NHC storm data...')
+    await fetchAndUpsertNHC()
+
+    console.log('📊 Tracking forecast bias...')
+    await trackForecastBias(premium)
+  }
 
   const sources = ['surfline']
   if (premiumCount > 0) sources.push('surfline-premium')
@@ -378,7 +782,7 @@ async function main() {
   })
 
   if (res.ok) {
-    console.log(`✅ Cached to Supabase (${slSpotCount} overview + ${premiumCount} premium + ${Object.keys(windguru).length} WindGuru)`)
+    console.log(`✅ Cached to Supabase (${slSpotCount} overview + ${premiumCount} premium + ${Object.keys(windguru).length} WindGuru + buoys + open-meteo + NHC)`)
   } else {
     const err = await res.text()
     console.error(`❌ Supabase error: ${res.status} ${err}`)

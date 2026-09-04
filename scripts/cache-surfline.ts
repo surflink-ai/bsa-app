@@ -86,10 +86,57 @@ async function ensureToken(): Promise<string> {
     }
     const errText = await res.text().catch(() => '')
     console.warn(`⚠️  Surfline refresh failed (${res.status}): ${errText.slice(0, 200)}`)
-    return ''
+    return await passwordGrant()
   } catch (e: any) {
     console.warn(`⚠️  Surfline refresh error: ${e.message}`)
+    return await passwordGrant()
+  }
+}
+
+// Last resort: mint a fresh token pair via the auth proxy's password grant
+// (credentials live only in Vercel env as SURFLINE_EMAIL / SURFLINE_PASSWORD).
+async function passwordGrant(): Promise<string> {
+  if (!AUTH_PROXY_BASE) return ''
+  console.log('🔐 Attempting Surfline password grant via auth proxy...')
+  try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (SL_PROXY_KEY) headers['x-proxy-secret'] = SL_PROXY_KEY
+    const res = await fetch(AUTH_PROXY_BASE, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ grant_type: 'password', client_auth: SL_CLIENT_AUTH }),
+    })
+    if (!res.ok) {
+      const t = await res.text().catch(() => '')
+      console.warn(`⚠️  Password grant failed (${res.status}): ${t.slice(0, 200)}`)
+      return ''
+    }
+    const data = await res.json()
+    if (!data.access_token) return ''
+    SL_TOKEN = data.access_token
+    console.log('✅ Fresh Surfline token pair minted')
+    persistTokens(data.access_token, data.refresh_token)
+    return SL_TOKEN
+  } catch (e: any) {
+    console.warn(`⚠️  Password grant error: ${e.message}`)
     return ''
+  }
+}
+
+// Persist new tokens into .env.local so future runs skip the re-login
+function persistTokens(access: string, refresh?: string) {
+  try {
+    const fs = require('fs')
+    const path = require('path')
+    const envPath = path.join(__dirname, '..', '.env.local')
+    if (!fs.existsSync(envPath)) return
+    let txt = fs.readFileSync(envPath, 'utf8')
+    txt = txt.replace(/^SURFLINE_ACCESS_TOKEN=.*$/m, `SURFLINE_ACCESS_TOKEN=${access}`)
+    if (refresh) txt = txt.replace(/^SURFLINE_REFRESH_TOKEN=.*$/m, `SURFLINE_REFRESH_TOKEN=${refresh}`)
+    fs.writeFileSync(envPath, txt)
+    console.log('💾 Tokens persisted to .env.local')
+  } catch (e: any) {
+    console.warn(`⚠️  Could not persist tokens: ${e.message}`)
   }
 }
 

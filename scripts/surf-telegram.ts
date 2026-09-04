@@ -34,6 +34,9 @@ const BOT_TOKEN    = (process.env.TELEGRAM_BOT_TOKEN || '').trim()
 const CHAT_ID      = (process.env.TELEGRAM_CHAT_ID || '').trim()
 const DRY_RUN      = process.argv.includes('--dry-run') || process.env.DRY_RUN === '1'
 const OUTLOOK      = process.argv.includes('--outlook')
+// --full: always send the complete per-spot report (skip the flat-day collapse).
+// Used for explicit on-demand requests (/surf) — Adam asked, Adam gets everything.
+const FULL         = process.argv.includes('--full')
 
 // ── constants ────────────────────────────────────────────────────────────────
 const SPOTS = [
@@ -416,7 +419,7 @@ async function main() {
   const nhc = nhcBlock()
   if (nhc) { lines.push(''); lines.push(nhc) }
 
-  if (isFlat()) {
+  if (isFlat() && !FULL) {
     lines.push('')
     lines.push('📉 <i>Flat — under 2ft everywhere.</i>')
     if (OUTLOOK) {

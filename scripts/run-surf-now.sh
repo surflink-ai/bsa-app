@@ -4,4 +4,4 @@ cd /Users/aimi/Documents/Projects/bsa-app || exit 1
 set -a
 source .env.local
 set +a
-exec npx tsx scripts/surf-telegram.ts
+exec npx tsx scripts/surf-telegram.ts --outlook --full

@@ -33,14 +33,20 @@ export async function POST(req: Request) {
     return new Response('Bad JSON', { status: 400 })
   }
 
-  const { refresh_token, client_auth, grant_type } = body
+  const { refresh_token, client_auth, grant_type, username, password } = body
   const wantsPassword = grant_type === 'password'
   if (!client_auth || (!refresh_token && !wantsPassword)) {
     return new Response('Missing refresh_token or client_auth', { status: 400 })
   }
-  if (wantsPassword && (!process.env.SURFLINE_EMAIL || !process.env.SURFLINE_PASSWORD)) {
+  // Password grant requires the proxy secret — never allow anonymous logins
+  if (wantsPassword && !SECRET) {
+    return new Response('password grant requires SURFLINE_PROXY_SECRET to be configured', { status: 501 })
+  }
+  const grantUser = username || process.env.SURFLINE_EMAIL
+  const grantPass = password || process.env.SURFLINE_PASSWORD
+  if (wantsPassword && (!grantUser || !grantPass)) {
     return new Response(
-      JSON.stringify({ error: 'password_grant_unconfigured', detail: 'Set SURFLINE_EMAIL and SURFLINE_PASSWORD in Vercel env' }),
+      JSON.stringify({ error: 'password_grant_unconfigured', detail: 'Provide username/password in body or set SURFLINE_EMAIL and SURFLINE_PASSWORD in Vercel env' }),
       { status: 501, headers: { 'Content-Type': 'application/json' } },
     )
   }
@@ -49,8 +55,8 @@ export async function POST(req: Request) {
     ? {
         authorizationString: client_auth,
         grant_type: 'password',
-        username: process.env.SURFLINE_EMAIL,
-        password: process.env.SURFLINE_PASSWORD,
+        username: grantUser,
+        password: grantPass,
         device_id: 'bsa-cache',
         device_type: 'web',
       }

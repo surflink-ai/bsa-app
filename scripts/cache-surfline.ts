@@ -104,7 +104,14 @@ async function passwordGrant(): Promise<string> {
     const res = await fetch(AUTH_PROXY_BASE, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ grant_type: 'password', client_auth: SL_CLIENT_AUTH }),
+      body: JSON.stringify({
+        grant_type: 'password',
+        client_auth: SL_CLIENT_AUTH,
+        // Credentials come from local .env.local; sent only to our own
+        // secret-gated Vercel proxy over HTTPS.
+        username: process.env.SURFLINE_EMAIL || undefined,
+        password: process.env.SURFLINE_PASSWORD || undefined,
+      }),
     })
     if (!res.ok) {
       const t = await res.text().catch(() => '')

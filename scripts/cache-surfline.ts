@@ -27,8 +27,31 @@ const SL_BASE = 'https://services.surfline.com'
 //
 const IS_VERCEL_PROXY = SL_PROXY.includes('bsa.surf') || SL_PROXY.includes('vercel.app')
 
+// Chrome-TLS-impersonated fetch for Surfline endpoints (bot wall blocks Node's
+// fingerprint; real-Chrome fingerprints pass). URL goes via stdin, never argv.
+import { spawnSync } from 'child_process'
+import path from 'path'
+function slFetch(url: string): { ok: boolean; json: () => any } {
+  const r = spawnSync('python3', [path.join(__dirname, 'sl-fetch.py')], {
+    input: url,
+    encoding: 'utf8',
+    maxBuffer: 32 * 1024 * 1024,
+    timeout: 40000,
+  })
+  const ok = r.status === 0
+  const body = r.stdout || ''
+  return {
+    ok,
+    json: () => {
+      try { return JSON.parse(body) } catch { return null }
+    },
+  }
+}
+
 function slUrl(kbygPath: string, qs: string): string {
-  if (SL_PROXY) {
+  // Proxy transport retired 2026-09-04: datacenter IPs are hard-blocked by
+  // Surfline's bot wall. Direct + Chrome TLS impersonation (slFetch) works.
+  if (SL_PROXY && process.env.SURFLINE_USE_PROXY === '1') {
     if (IS_VERCEL_PROXY) {
       // Vercel proxy: path as query param
       const secretParam = SL_PROXY_KEY ? `&secret=${encodeURIComponent(SL_PROXY_KEY)}` : ''
@@ -54,10 +77,12 @@ const AUTH_PROXY_BASE = (process.env.SURFLINE_PROXY_BASE || '').replace('/surfli
 async function ensureToken(): Promise<string> {
   if (!SL_TOKEN) return ''
   // Quick test
-  const test = await fetch(slUrl('/spots/forecasts/wave', `spotId=5842041f4e65fad6a7708b48&days=1&intervalHours=6&accesstoken=${SL_TOKEN}`))
+  // NOTE: /spots/forecasts/wave was retired by Surfline (404); the aggregate
+  // /spots/forecasts endpoint carries surf+swells+wind per hour now.
+  const test = slFetch(slUrl('/spots/forecasts', `spotId=5842041f4e65fad6a7708b48&days=1&intervalHours=6&accesstoken=${SL_TOKEN}`))
   if (test.ok) {
-    const d = await test.json()
-    if (d?.data?.wave?.length) return SL_TOKEN // Token works
+    const d = test.json()
+    if (d?.data?.forecasts?.length) return SL_TOKEN // Token works
   }
   // Token expired — try refresh
   if (!SL_REFRESH) {
@@ -195,9 +220,9 @@ async function fetchSurflineOverview() {
       const url = SL_TOKEN
         ? slUrl('/regions/overview', `subregionId=${subregionId}&accesstoken=${SL_TOKEN}`)
         : slUrl('/regions/overview', `subregionId=${subregionId}`)
-      const res = await fetch(url)
+      const res = slFetch(url)
       if (!res.ok) { results[coast] = []; continue }
-      const data = await res.json()
+      const data = res.json()
       results[coast] = (data?.data?.spots || []).map((s: any) => ({
         spotId: s._id,
         name: s.name,
@@ -222,26 +247,21 @@ async function fetchSurflinePremium() {
   for (const spot of PREMIUM_SPOTS) {
     await new Promise(r => setTimeout(r, DELAY_BETWEEN_SPOTS_MS))
     try {
-      // Wave forecast — 3 days hourly
-      const waveRes = await fetch(
-        slUrl('/spots/forecasts/wave', `spotId=${spot.id}&days=3&intervalHours=1&accesstoken=${SL_TOKEN}`)
+      // Aggregate forecast — surf + swells + wind per hour (the old /wave,
+      // /wind endpoints were partially retired; aggregate carries it all)
+      const aggRes = slFetch(
+        slUrl('/spots/forecasts', `spotId=${spot.id}&days=3&intervalHours=1&accesstoken=${SL_TOKEN}`)
       )
-      // Wind forecast
-      const windRes = await fetch(
-        slUrl('/spots/forecasts/wind', `spotId=${spot.id}&days=3&intervalHours=3&accesstoken=${SL_TOKEN}`)
-      )
-      // Rating forecast
-      const ratingRes = await fetch(
+      // Rating forecast (LOTUS quality rating, still a separate endpoint)
+      const ratingRes = slFetch(
         slUrl('/spots/forecasts/rating', `spotId=${spot.id}&days=3&intervalHours=3&accesstoken=${SL_TOKEN}`)
       )
 
-      const [waveData, windData, ratingData] = await Promise.all([
-        waveRes.ok ? waveRes.json() : null,
-        windRes.ok ? windRes.json() : null,
-        ratingRes.ok ? ratingRes.json() : null,
-      ])
+      const aggData = aggRes.ok ? aggRes.json() : null
+      const ratingData = ratingRes.ok ? ratingRes.json() : null
+      const hours = aggData?.data?.forecasts || []
 
-      const waves = (waveData?.data?.wave || []).map((w: any) => ({
+      const waves = hours.map((w: any) => ({
         ts: w.timestamp,
         min: w.surf?.min,
         max: w.surf?.max,
@@ -252,9 +272,9 @@ async function fetchSurflinePremium() {
         power: w.power,
       }))
 
-      const winds = (windData?.data?.wind || []).map((w: any) => ({
+      const winds = hours.filter((_: any, i: number) => i % 3 === 0).map((w: any) => ({
         ts: w.timestamp,
-        speed: w.speed, gust: w.gust, dir: w.direction, dirType: w.directionType,
+        speed: w.wind?.speed, gust: w.wind?.gust, dir: w.wind?.direction, dirType: w.wind?.directionType,
       }))
 
       const ratings = (ratingData?.data?.rating || []).map((r: any) => ({

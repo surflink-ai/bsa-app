@@ -195,7 +195,7 @@ async function main() {
   // ── 4. Per-spot blocks ──────────────────────────────────────────────────
   function buildSpotBlock(spot: typeof SPOTS[0]): string {
     const sp = premium[spot.id]
-    if (!sp) return `🏄 <b>${spot.name}</b> (${spot.coast})\n<i>No data</i>`
+    if (!sp) return `🌊 <b>${spot.name}</b> (${spot.coast})\n<i>No data</i>`
 
     // Current conditions (hour closest to now)
     const nowTs = Math.floor(Date.now() / 3600000) * 3600
@@ -285,7 +285,7 @@ async function main() {
     }
 
     const lines = [
-      `🏄 <b>${spot.name}</b> (${spot.coast})`,
+      `🌊 <b>${spot.name}</b> (${spot.coast})`,
       `Size: ${size}${ratingStr ? ' · Surfline: ' + ratingStr.toUpperCase() : ''}`,
       swellStr ? `Swell: ${swellStr}` : '',
       `Wind: ${windStr} ${glassOff}`,
